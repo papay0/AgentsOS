@@ -47,6 +47,16 @@ export default function HomePage() {
     fetchSandboxes();
   };
 
+  const handleStopWorkspace = () => {
+    // Refresh the list after stopping a workspace
+    fetchSandboxes();
+  };
+
+  const handleStartWorkspace = () => {
+    // Refresh the list after starting a workspace
+    fetchSandboxes();
+  };
+
   if (error && !isLoading && sandboxes.length === 0) {
     return (
       <div className="container mx-auto p-6 max-w-4xl">
@@ -82,6 +92,8 @@ export default function HomePage() {
         isLoading={isLoading}
         onRefresh={handleRefresh}
         onCreateNew={handleCreateNew}
+        onStopWorkspace={handleStopWorkspace}
+        onStartWorkspace={handleStartWorkspace}
       />
     </div>
   );

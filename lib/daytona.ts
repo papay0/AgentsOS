@@ -1,4 +1,5 @@
-import { Daytona, SandboxState, Sandbox } from '@daytonaio/sdk';
+import { Daytona, Sandbox } from '@daytonaio/sdk';
+import { SandboxState } from '@daytonaio/api-client';
 import type { CreateWorkspaceResponse } from '@/types/workspace';
 import { logger, type WorkspaceLogData, type ErrorLogData } from './logger';
 import { WorkspaceInstaller } from './workspace-installer';
@@ -295,6 +296,31 @@ export class DaytonaClient {
       };
       this.logger.logError('Failed to list workspaces', errorData);
       throw new Error(`Failed to list workspaces: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async stopWorkspace(sandboxId: string): Promise<void> {
+    try {
+      this.logger.workspace.starting(`Stopping workspace ${sandboxId}`);
+      
+      const sandbox = await this.daytona.get(sandboxId);
+      
+      if (sandbox.state !== SandboxState.STARTED) {
+        this.logger.warn(`Workspace ${sandboxId} is not running (current state: ${sandbox.state})`);
+        return;
+      }
+
+      await sandbox.stop();
+      
+      this.logger.success(`Workspace ${sandboxId} stopped successfully`);
+    } catch (error) {
+      const errorData: ErrorLogData = {
+        error: error instanceof Error ? error : String(error),
+        code: 'WORKSPACE_STOP_FAILED',
+        details: { sandboxId }
+      };
+      this.logger.logError('Failed to stop workspace', errorData);
+      throw new Error(`Failed to stop workspace: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

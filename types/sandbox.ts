@@ -1,4 +1,4 @@
-import type { SandboxState } from '@daytonaio/sdk';
+import type { SandboxState } from '@daytonaio/api-client';
 
 export interface SandboxListItem {
   id: string;

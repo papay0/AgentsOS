@@ -14,13 +14,17 @@ interface SandboxListProps {
   isLoading?: boolean;
   onRefresh?: () => void;
   onCreateNew?: () => void;
+  onStopWorkspace?: () => void;
+  onStartWorkspace?: () => void;
 }
 
 export function SandboxList({ 
   sandboxes, 
   isLoading = false, 
   onRefresh,
-  onCreateNew 
+  onCreateNew,
+  onStopWorkspace,
+  onStartWorkspace
 }: SandboxListProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -106,7 +110,7 @@ export function SandboxList({
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {groupedSandboxes[state].map(sandbox => (
-                  <SandboxCard key={sandbox.id} sandbox={sandbox} />
+                  <SandboxCard key={sandbox.id} sandbox={sandbox} onStop={onStopWorkspace} onStart={onStartWorkspace} />
                 ))}
               </div>
             </div>
@@ -121,7 +125,7 @@ export function SandboxList({
               </h3>
               <div className="space-y-2">
                 {groupedSandboxes[state].map(sandbox => (
-                  <SandboxListItem key={sandbox.id} sandbox={sandbox} />
+                  <SandboxListItem key={sandbox.id} sandbox={sandbox} onStop={onStopWorkspace} onStart={onStartWorkspace} />
                 ))}
               </div>
             </div>

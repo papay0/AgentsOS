@@ -13,7 +13,8 @@ import {
   Lock,
   ChevronRight,
   Copy,
-  Check
+  Check,
+  StopCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,10 +23,15 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { StopWorkspaceDialog } from './stop-workspace-dialog';
+import { toast } from 'sonner';
+import { SandboxState } from '@daytonaio/api-client';
 
 interface SandboxListItemProps {
   sandbox: SandboxListItem;
   onOpen?: (sandboxId: string) => void;
+  onStop?: () => void;
+  onStart?: () => void;
 }
 
 const stateConfig = {
@@ -61,9 +67,12 @@ const stateConfig = {
   }
 };
 
-export function SandboxListItem({ sandbox, onOpen }: SandboxListItemProps) {
+export function SandboxListItem({ sandbox, onOpen, onStop, onStart }: SandboxListItemProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [showStopDialog, setShowStopDialog] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const state = sandbox.state || 'unknown';
   const config = stateConfig[state as keyof typeof stateConfig] || {
     label: state,
@@ -86,6 +95,55 @@ export function SandboxListItem({ sandbox, onOpen }: SandboxListItemProps) {
     await navigator.clipboard.writeText(sandbox.id);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleStopWorkspace = async (sandboxId: string) => {
+    setIsStopping(true);
+    try {
+      const response = await fetch(`/api/workspace-stop/${sandboxId}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to stop workspace');
+      }
+
+      toast.success('Workspace stopped successfully!');
+      
+      if (onStop) {
+        onStop();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to stop workspace');
+      throw error;
+    } finally {
+      setIsStopping(false);
+    }
+  };
+
+  const handleStartWorkspace = async () => {
+    setIsStarting(true);
+    try {
+      const response = await fetch(`/api/workspace-start/${sandbox.id}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to start workspace');
+      }
+
+      toast.success('Workspace started successfully!');
+      
+      if (onStart) {
+        onStart();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to start workspace');
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   return (
@@ -186,22 +244,63 @@ export function SandboxListItem({ sandbox, onOpen }: SandboxListItemProps) {
         </div>
       </div>
 
-      {/* Action Button */}
-      <Button 
-        onClick={handleOpen} 
-        disabled={sandbox.state !== 'started'}
-        variant={sandbox.state === 'started' ? 'default' : 'secondary'}
-        size="sm"
-      >
-        {sandbox.state === 'started' ? (
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
+        {String(sandbox.state) === SandboxState.STARTED ? (
           <>
-            Open
-            <ChevronRight className="w-4 h-4 ml-1" />
+            <Button 
+              onClick={handleOpen} 
+              variant="default"
+              size="sm"
+            >
+              Open
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setShowStopDialog(true)}
+                    variant="outline"
+                    size="sm"
+                    className="px-2"
+                    disabled={isStopping}
+                  >
+                    <StopCircle className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isStopping ? 'Stopping...' : 'Stop Workspace'}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </>
+        ) : String(sandbox.state) === SandboxState.STOPPED ? (
+          <Button 
+            onClick={handleStartWorkspace}
+            disabled={isStarting}
+            variant="default"
+            size="sm"
+          >
+            <Play className="w-4 h-4 mr-1" />
+            {isStarting ? 'Starting...' : 'Start'}
+          </Button>
         ) : (
-          'Start'
+          <Button 
+            onClick={handleOpen} 
+            disabled={true}
+            variant="secondary"
+            size="sm"
+          >
+            {config.label}
+          </Button>
         )}
-      </Button>
+      </div>
+
+      <StopWorkspaceDialog
+        open={showStopDialog}
+        onOpenChange={setShowStopDialog}
+        sandboxId={sandbox.id}
+        onConfirm={handleStopWorkspace}
+      />
     </div>
   );
 }
