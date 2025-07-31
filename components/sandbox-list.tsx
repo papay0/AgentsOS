@@ -47,43 +47,48 @@ export function SandboxList({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Your Workspaces</h2>
-          <p className="text-muted-foreground">
-            {sandboxes.length} workspace{sandboxes.length !== 1 ? 's' : ''} found
-          </p>
-        </div>
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold">Your Workspaces</h2>
+            <p className="text-muted-foreground text-sm">
+              {sandboxes.length} workspace{sandboxes.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <ToggleGroup 
-            type="single" 
-            value={viewMode} 
-            onValueChange={(value) => value && setViewMode(value as 'grid' | 'list')}
-          >
-            <ToggleGroupItem value="grid" aria-label="Grid view">
-              <Grid3X3 className="h-4 w-4" />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="list" aria-label="List view">
-              <List className="h-4 w-4" />
-            </ToggleGroupItem>
-          </ToggleGroup>
+          <div className="flex items-center gap-2 flex-wrap">
+            <ToggleGroup 
+              type="single" 
+              value={viewMode} 
+              onValueChange={(value) => value && setViewMode(value as 'grid' | 'list')}
+              className="hidden sm:flex"
+            >
+              <ToggleGroupItem value="grid" aria-label="Grid view">
+                <Grid3X3 className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="List view">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
 
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-          </Button>
-
-          {onCreateNew && (
-            <Button onClick={onCreateNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Workspace
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onRefresh}
+              disabled={isLoading}
+              className="shrink-0"
+            >
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
-          )}
+
+            {onCreateNew && (
+              <Button onClick={onCreateNew} size="sm" className="shrink-0">
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">New Workspace</span>
+                <span className="sm:hidden">New</span>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
