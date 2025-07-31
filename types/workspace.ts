@@ -18,6 +18,8 @@ export interface TerminalTab {
   terminals: TerminalPane[];
 }
 
+import { SandboxState } from '@daytonaio/sdk';
+
 export interface CreateWorkspaceResponse {
   sandboxId: string;
   terminalUrl: string;
@@ -25,6 +27,22 @@ export interface CreateWorkspaceResponse {
   vscodeUrl: string;
   message: string;
   error?: string;
+}
+
+export interface WorkspaceStatusResponse {
+  status: SandboxState | 'error';
+  servicesHealthy: boolean;
+  message: string;
+}
+
+export interface WorkspaceRestartResponse {
+  success: boolean;
+  message: string;
+  urls?: {
+    vscodeUrl: string;
+    terminalUrl: string;
+    claudeTerminalUrl: string;
+  };
 }
 
 export type ViewMode = 'vscode' | 'terminals';

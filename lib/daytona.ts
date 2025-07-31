@@ -1,6 +1,5 @@
-import { Daytona } from '@daytonaio/sdk';
+import { Daytona, Sandbox, SandboxState } from '@daytonaio/sdk';
 import type { CreateWorkspaceResponse } from '@/types/workspace';
-import type { DaytonaSandbox } from '@/types/daytona';
 
 interface WorkspaceSetupOptions {
   resources?: {
@@ -87,7 +86,7 @@ export class DaytonaClient {
     }
   }
 
-  private async installSystemPackages(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async installSystemPackages(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Installing system packages...');
     const result = await sandbox.process.executeCommand(
       `apt-get update -qq && apt-get install -y -qq curl wget git net-tools`,
@@ -101,7 +100,7 @@ export class DaytonaClient {
     }
   }
 
-  private async installTtyd(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async installTtyd(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Installing terminal (ttyd)...');
     // Install ttyd using the install script for better compatibility
     const result = await sandbox.process.executeCommand(
@@ -124,7 +123,7 @@ export class DaytonaClient {
     }
   }
 
-  private async installCodeServer(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async installCodeServer(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Installing VSCode (code-server)...');
     const result = await sandbox.process.executeCommand(
       `curl -fsSL https://code-server.dev/install.sh | sh`,
@@ -138,7 +137,7 @@ export class DaytonaClient {
     }
   }
 
-  private async installClaudeCode(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async installClaudeCode(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Installing Claude Code CLI...');
     const result = await sandbox.process.executeCommand(
       `npm install -g @anthropic-ai/claude-code`,
@@ -153,7 +152,7 @@ export class DaytonaClient {
     }
   }
 
-  private async setupServices(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async setupServices(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Setting up services...');
     
     // Create Claude startup script first
@@ -178,7 +177,7 @@ export class DaytonaClient {
     await this.healthCheckServices(sandbox, rootDir);
   }
 
-  private async startCodeServer(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async startCodeServer(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Starting VSCode server...');
     await sandbox.process.executeCommand(
       `nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${rootDir} > /tmp/code-server.log 2>&1 & echo "code-server started"`,
@@ -186,7 +185,7 @@ export class DaytonaClient {
     );
   }
 
-  private async startBashTerminal(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async startBashTerminal(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Starting bash terminal...');
     await sandbox.process.executeCommand(
       `nohup ttyd --port 9999 --writable -t 'theme=${DaytonaClient.TTYD_THEME}' bash > /tmp/ttyd.log 2>&1 & echo "ttyd started"`,
@@ -194,7 +193,7 @@ export class DaytonaClient {
     );
   }
 
-  private async startClaudeTerminal(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async startClaudeTerminal(sandbox: Sandbox, rootDir: string): Promise<void> {
     console.log('Starting Claude terminal...');
     await sandbox.process.executeCommand(
       `nohup ttyd --port 9998 --writable -t 'theme=${DaytonaClient.TTYD_THEME}' /tmp/start-claude.sh > /tmp/ttyd-claude.log 2>&1 & echo "claude ttyd started"`,
@@ -203,7 +202,7 @@ export class DaytonaClient {
   }
 
 
-  private async verifyServices(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async verifyServices(sandbox: Sandbox, rootDir: string): Promise<void> {
     // Silent verification - just check if ports are listening
     await sandbox.process.executeCommand(
       `netstat -tlnp | grep -E "(8080|9998|9999)" > /dev/null`,
@@ -211,7 +210,7 @@ export class DaytonaClient {
     );
   }
 
-  private async healthCheckServices(sandbox: DaytonaSandbox, rootDir: string): Promise<void> {
+  private async healthCheckServices(sandbox: Sandbox, rootDir: string): Promise<void> {
     let retryCount = 0;
     const maxRetries = 3;
     
@@ -245,5 +244,185 @@ export class DaytonaClient {
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
+  }
+
+  async getWorkspaceStatus(sandboxId: string): Promise<{
+    status: SandboxState | 'error';
+    servicesHealthy: boolean;
+    message: string;
+  }> {
+    try {
+      console.log(`🔍 Checking workspace status for ${sandboxId}...`);
+      
+      // Get sandbox info
+      const sandbox = await this.daytona.get(sandboxId);
+      const sandboxStatus = sandbox.state;
+      
+      console.log(`📋 Sandbox status: ${sandboxStatus}`);
+      
+      // If sandbox is not started, return early
+      if (sandboxStatus !== 'started') {
+        return {
+          status: sandboxStatus || 'error',
+          servicesHealthy: false,
+          message: `Container is ${sandboxStatus || 'unknown'}`
+        };
+      }
+
+      // Check if services are healthy
+      try {
+        const rootDir = await sandbox.getUserRootDir();
+        if (!rootDir) {
+          throw new Error('Could not get root directory');
+        }
+
+        const healthCheck = await sandbox.process.executeCommand(
+          `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 && echo "" && 
+           curl -s -o /dev/null -w "%{http_code}" http://localhost:9999 && echo "" && 
+           curl -s -o /dev/null -w "%{http_code}" http://localhost:9998`,
+          rootDir,
+          undefined,
+          10000
+        );
+
+        const servicesHealthy = healthCheck.result.includes('200');
+        console.log(`💚 Services healthy: ${servicesHealthy}`);
+
+        return {
+          status: 'started',
+          servicesHealthy,
+          message: servicesHealthy ? 'All services running' : 'Services need restart'
+        };
+
+      } catch (serviceError) {
+        console.log(`⚠️ Service check failed: ${serviceError}`);
+        return {
+          status: 'started',
+          servicesHealthy: false,
+          message: 'Services not responding'
+        };
+      }
+
+    } catch (error) {
+      console.error(`❌ Error checking workspace status:`, error);
+      return {
+        status: 'error',
+        servicesHealthy: false,
+        message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  async startWorkspaceAndServices(sandboxId: string): Promise<{
+    success: boolean;
+    message: string;
+    urls?: {
+      vscodeUrl: string;
+      terminalUrl: string;
+      claudeTerminalUrl: string;
+    };
+  }> {
+    try {
+      console.log(`🚀 Starting workspace ${sandboxId}...`);
+      
+      const sandbox = await this.daytona.get(sandboxId);
+      
+      // Start the sandbox if it's not started
+      if (sandbox.state !== 'started') {
+        console.log('📦 Starting container...');
+        await sandbox.start();
+        
+        // Wait for container to be ready
+        console.log('⏳ Waiting for container to be ready...');
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      }
+
+      // Get root directory
+      const rootDir = await sandbox.getUserRootDir();
+      if (!rootDir) {
+        throw new Error('Failed to get sandbox root directory');
+      }
+
+      // Check if services are already running
+      console.log('🔍 Checking if services are already running...');
+      try {
+        const healthCheck = await sandbox.process.executeCommand(
+          `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 && echo "" && 
+           curl -s -o /dev/null -w "%{http_code}" http://localhost:9999 && echo "" && 
+           curl -s -o /dev/null -w "%{http_code}" http://localhost:9998`,
+          rootDir,
+          undefined,
+          10000
+        );
+
+        if (healthCheck.result.includes('200')) {
+          console.log('✅ Services already running');
+        } else {
+          console.log('🔄 Starting services...');
+          await this.restartServices(sandbox, rootDir);
+        }
+      } catch {
+        console.log('🔄 Services not responding, starting them...');
+        await this.restartServices(sandbox, rootDir);
+      }
+
+      // Get service URLs
+      const [terminalInfo, claudeTerminalInfo, vscodeInfo] = await Promise.all([
+        sandbox.getPreviewLink(9999),
+        sandbox.getPreviewLink(9998),
+        sandbox.getPreviewLink(8080)
+      ]);
+
+      return {
+        success: true,
+        message: 'Workspace started successfully',
+        urls: {
+          vscodeUrl: vscodeInfo.url,
+          terminalUrl: terminalInfo.url,
+          claudeTerminalUrl: claudeTerminalInfo.url
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Error starting workspace:', error);
+      return {
+        success: false,
+        message: `Failed to start workspace: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  private async restartServices(sandbox: Sandbox, rootDir: string): Promise<void> {
+    console.log('🔄 Restarting services...');
+    
+    // Kill existing services
+    await sandbox.process.executeCommand(
+      `pkill -f "code-server" || true; pkill -f "ttyd" || true`,
+      rootDir
+    );
+
+    // Wait a moment for processes to die
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Recreate Claude startup script
+    await sandbox.process.executeCommand(
+      `echo '#!/bin/bash\\necho "Starting Claude Code CLI..."\\ncd ${rootDir}\\nclaude\\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
+      rootDir
+    );
+
+    // Start all services
+    await Promise.all([
+      this.startCodeServer(sandbox, rootDir),
+      this.startBashTerminal(sandbox, rootDir),
+      this.startClaudeTerminal(sandbox, rootDir)
+    ]);
+
+    // Wait for services to start
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // Verify services are running
+    await this.verifyServices(sandbox, rootDir);
+    
+    console.log('✅ Services restarted successfully');
   }
 }
