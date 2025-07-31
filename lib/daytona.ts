@@ -1,4 +1,4 @@
-import { Daytona, SandboxState } from '@daytonaio/sdk';
+import { Daytona, SandboxState, Sandbox } from '@daytonaio/sdk';
 import type { CreateWorkspaceResponse } from '@/types/workspace';
 import { logger, type WorkspaceLogData, type ErrorLogData } from './logger';
 import { WorkspaceInstaller } from './workspace-installer';
@@ -253,6 +253,48 @@ export class DaytonaClient {
         success: false,
         message: `Failed to start workspace: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
+    }
+  }
+
+  async listWorkspaces(labels?: Record<string, string>): Promise<Sandbox[]> {
+    try {
+      this.logger.info('Fetching workspace list...');
+      const sandboxes = await this.daytona.list(labels);
+      
+      this.logger.success(`Found ${sandboxes.length} workspaces`);
+      
+      // Sort by state (started first, then by creation date)
+      return sandboxes.sort((a, b) => {
+        // State priority: started > stopped > other states
+        const stateOrder: Record<string, number> = {
+          'started': 0,
+          'starting': 1,
+          'stopping': 2,
+          'stopped': 3,
+          'error': 4,
+          'pending_build': 5,
+          'building_snapshot': 6,
+        };
+        
+        const aOrder = stateOrder[a.state || 'unknown'] ?? 4;
+        const bOrder = stateOrder[b.state || 'unknown'] ?? 4;
+        
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        
+        // If same state, sort by creation date (newest first)
+        const aDate = new Date(a.createdAt || 0).getTime();
+        const bDate = new Date(b.createdAt || 0).getTime();
+        return bDate - aDate;
+      });
+    } catch (error) {
+      const errorData: ErrorLogData = {
+        error: error instanceof Error ? error : String(error),
+        code: 'WORKSPACE_LIST_FAILED'
+      };
+      this.logger.logError('Failed to list workspaces', errorData);
+      throw new Error(`Failed to list workspaces: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }
