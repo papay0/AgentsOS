@@ -1,5 +1,6 @@
 import { Daytona, Sandbox, SandboxState } from '@daytonaio/sdk';
 import type { CreateWorkspaceResponse } from '@/types/workspace';
+import { logger, type WorkspaceLogData, type ErrorLogData } from './logger';
 
 interface WorkspaceSetupOptions {
   resources?: {
@@ -11,6 +12,7 @@ interface WorkspaceSetupOptions {
 // Daytona client for managing workspaces with VSCode and terminals
 export class DaytonaClient {
   private daytona: Daytona;
+  private logger = logger;
 
   private static readonly TTYD_THEME = JSON.stringify({
     background: "#ffffff",
@@ -41,7 +43,7 @@ export class DaytonaClient {
 
   async createWorkspace(options: WorkspaceSetupOptions = {}): Promise<CreateWorkspaceResponse> {
     try {
-      console.log('Creating workspace...');
+      this.logger.workspace.creating();
       // Create sandbox with specified resources
       const sandbox = await this.daytona.create({
         public: true,
@@ -73,6 +75,22 @@ export class DaytonaClient {
         sandbox.getPreviewLink(8080)
       ]);
       
+      const workspaceData: WorkspaceLogData = {
+        sandboxId: sandbox.id,
+        image: 'node:20',
+        resources: {
+          cpu: options.resources?.cpu || 2,
+          memory: options.resources?.memory || 4
+        },
+        urls: {
+          vscode: vscodeInfo.url,
+          terminal: terminalInfo.url,
+          claude: claudeTerminalInfo.url
+        }
+      };
+      
+      this.logger.logWorkspace('VSCode + Terminal ready! 🚀', workspaceData);
+      
       return {
         sandboxId: sandbox.id,
         terminalUrl: terminalInfo.url,
@@ -81,13 +99,22 @@ export class DaytonaClient {
         message: 'VSCode + Terminal ready! 🚀'
       };
     } catch (error) {
-      console.error('Error creating workspace:', error);
+      const errorData: ErrorLogData = {
+        error: error instanceof Error ? error : String(error),
+        code: 'WORKSPACE_CREATION_FAILED',
+        details: {
+          cpu: options.resources?.cpu || 2,
+          memory: options.resources?.memory || 4,
+          image: 'node:20'
+        }
+      };
+      this.logger.logError('Failed to create workspace', errorData);
       throw new Error(`Failed to create workspace: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   private async installSystemPackages(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Installing system packages...');
+    this.logger.workspace.installing('system packages (curl, wget, git)');
     const result = await sandbox.process.executeCommand(
       `apt-get update -qq && apt-get install -y -qq curl wget git net-tools`,
       rootDir,
@@ -96,12 +123,18 @@ export class DaytonaClient {
     );
     
     if (result.exitCode !== 0) {
+      const errorData: ErrorLogData = {
+        error: result.result,
+        code: 'SYSTEM_PACKAGES_INSTALL_FAILED',
+        details: { exitCode: result.exitCode }
+      };
+      this.logger.logError('System packages installation failed', errorData);
       throw new Error(`System packages installation failed: ${result.result}`);
     }
   }
 
   private async installTtyd(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Installing terminal (ttyd)...');
+    this.logger.workspace.installing('terminal (ttyd)');
     // Install ttyd using the install script for better compatibility
     const result = await sandbox.process.executeCommand(
       `apt-get install -y build-essential cmake git libjson-c-dev libwebsockets-dev && 
@@ -119,12 +152,18 @@ export class DaytonaClient {
     );
     
     if (result.exitCode !== 0) {
+      const errorData: ErrorLogData = {
+        error: result.result,
+        code: 'TTYD_INSTALL_FAILED',
+        details: { exitCode: result.exitCode }
+      };
+      this.logger.logError('ttyd installation failed', errorData);
       throw new Error(`ttyd installation failed: ${result.result}`);
     }
   }
 
   private async installCodeServer(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Installing VSCode (code-server)...');
+    this.logger.workspace.installing('VSCode (code-server)');
     const result = await sandbox.process.executeCommand(
       `curl -fsSL https://code-server.dev/install.sh | sh`,
       rootDir,
@@ -133,12 +172,18 @@ export class DaytonaClient {
     );
     
     if (result.exitCode !== 0) {
+      const errorData: ErrorLogData = {
+        error: result.result,
+        code: 'CODE_SERVER_INSTALL_FAILED',
+        details: { exitCode: result.exitCode }
+      };
+      this.logger.logError('code-server installation failed', errorData);
       throw new Error(`code-server installation failed: ${result.result}`);
     }
   }
 
   private async installClaudeCode(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Installing Claude Code CLI...');
+    this.logger.workspace.installing('Claude Code CLI');
     const result = await sandbox.process.executeCommand(
       `npm install -g @anthropic-ai/claude-code`,
       rootDir,
@@ -147,13 +192,18 @@ export class DaytonaClient {
     );
     
     if (result.exitCode !== 0) {
-      console.log('Claude CLI installation failed, continuing without it');
+      const errorData: ErrorLogData = {
+        error: result.result,
+        code: 'CLAUDE_CLI_INSTALL_FAILED',
+        details: { exitCode: result.exitCode, optional: true }
+      };
+      this.logger.logError('Claude CLI installation failed, continuing without it', errorData);
       return;
     }
   }
 
   private async setupServices(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Setting up services...');
+    this.logger.info('Setting up services...');
     
     // Create Claude startup script first
     await sandbox.process.executeCommand(
@@ -178,7 +228,7 @@ export class DaytonaClient {
   }
 
   private async startCodeServer(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Starting VSCode server...');
+    this.logger.workspace.starting('VSCode server');
     await sandbox.process.executeCommand(
       `nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${rootDir} > /tmp/code-server.log 2>&1 & echo "code-server started"`,
       rootDir
@@ -186,7 +236,7 @@ export class DaytonaClient {
   }
 
   private async startBashTerminal(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Starting bash terminal...');
+    this.logger.workspace.starting('bash terminal');
     await sandbox.process.executeCommand(
       `nohup ttyd --port 9999 --writable -t 'theme=${DaytonaClient.TTYD_THEME}' bash > /tmp/ttyd.log 2>&1 & echo "ttyd started"`,
       rootDir
@@ -194,7 +244,7 @@ export class DaytonaClient {
   }
 
   private async startClaudeTerminal(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('Starting Claude terminal...');
+    this.logger.workspace.starting('Claude terminal');
     await sandbox.process.executeCommand(
       `nohup ttyd --port 9998 --writable -t 'theme=${DaytonaClient.TTYD_THEME}' /tmp/start-claude.sh > /tmp/ttyd-claude.log 2>&1 & echo "claude ttyd started"`,
       rootDir
@@ -225,14 +275,17 @@ export class DaytonaClient {
       );
       
       if (healthCheck.result.includes('200')) {
+        this.logger.success('All services are healthy');
         return;
       }
       
       retryCount++;
       if (retryCount < maxRetries) {
+        this.logger.workspace.retry(retryCount, maxRetries);
         await new Promise(resolve => setTimeout(resolve, 5000));
         
         // Try restarting services
+        this.logger.info('Attempting to restart services...');
         await sandbox.process.executeCommand(
           `pkill ttyd; pkill code-server; sleep 2 && 
            nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${rootDir} > /tmp/code-server.log 2>&1 & 
@@ -244,6 +297,8 @@ export class DaytonaClient {
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
+    
+    this.logger.warn(`Health check failed after ${maxRetries} attempts`);
   }
 
   async getWorkspaceStatus(sandboxId: string): Promise<{
@@ -252,13 +307,13 @@ export class DaytonaClient {
     message: string;
   }> {
     try {
-      console.log(`🔍 Checking workspace status for ${sandboxId}...`);
+      this.logger.workspace.checking(`workspace status for ${sandboxId}`);
       
       // Get sandbox info
       const sandbox = await this.daytona.get(sandboxId);
       const sandboxStatus = sandbox.state;
       
-      console.log(`📋 Sandbox status: ${sandboxStatus}`);
+      this.logger.debug(`Sandbox status: ${sandboxStatus}`);
       
       // If sandbox is not started, return early
       if (sandboxStatus !== 'started') {
@@ -286,7 +341,7 @@ export class DaytonaClient {
         );
 
         const servicesHealthy = healthCheck.result.includes('200');
-        console.log(`💚 Services healthy: ${servicesHealthy}`);
+        this.logger.debug(`Services healthy: ${servicesHealthy}`);
 
         return {
           status: 'started',
@@ -295,7 +350,11 @@ export class DaytonaClient {
         };
 
       } catch (serviceError) {
-        console.log(`⚠️ Service check failed: ${serviceError}`);
+        const errorData: ErrorLogData = {
+          error: serviceError instanceof Error ? serviceError : String(serviceError),
+          code: 'SERVICE_CHECK_FAILED'
+        };
+        this.logger.logError('Service check failed', errorData);
         return {
           status: 'started',
           servicesHealthy: false,
@@ -304,7 +363,12 @@ export class DaytonaClient {
       }
 
     } catch (error) {
-      console.error(`❌ Error checking workspace status:`, error);
+      const errorData: ErrorLogData = {
+        error: error instanceof Error ? error : String(error),
+        code: 'WORKSPACE_STATUS_CHECK_FAILED',
+        details: { sandboxId }
+      };
+      this.logger.logError('Error checking workspace status', errorData);
       return {
         status: 'error',
         servicesHealthy: false,
@@ -323,17 +387,17 @@ export class DaytonaClient {
     };
   }> {
     try {
-      console.log(`🚀 Starting workspace ${sandboxId}...`);
+      this.logger.workspace.creating(`Starting workspace ${sandboxId}`);
       
       const sandbox = await this.daytona.get(sandboxId);
       
       // Start the sandbox if it's not started
       if (sandbox.state !== 'started') {
-        console.log('📦 Starting container...');
+        this.logger.workspace.starting('container');
         await sandbox.start();
         
         // Wait for container to be ready
-        console.log('⏳ Waiting for container to be ready...');
+        this.logger.info('⏳ Waiting for container to be ready...');
         await new Promise(resolve => setTimeout(resolve, 10000));
       }
 
@@ -344,7 +408,7 @@ export class DaytonaClient {
       }
 
       // Check if services are already running
-      console.log('🔍 Checking if services are already running...');
+      this.logger.workspace.checking('if services are already running');
       try {
         const healthCheck = await sandbox.process.executeCommand(
           `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 && echo "" && 
@@ -356,13 +420,13 @@ export class DaytonaClient {
         );
 
         if (healthCheck.result.includes('200')) {
-          console.log('✅ Services already running');
+          this.logger.success('Services already running');
         } else {
-          console.log('🔄 Starting services...');
+          this.logger.workspace.starting('services');
           await this.restartServices(sandbox, rootDir);
         }
       } catch {
-        console.log('🔄 Services not responding, starting them...');
+        this.logger.warn('Services not responding, starting them...');
         await this.restartServices(sandbox, rootDir);
       }
 
@@ -384,7 +448,12 @@ export class DaytonaClient {
       };
 
     } catch (error) {
-      console.error('❌ Error starting workspace:', error);
+      const errorData: ErrorLogData = {
+        error: error instanceof Error ? error : String(error),
+        code: 'WORKSPACE_START_FAILED',
+        details: { sandboxId }
+      };
+      this.logger.logError('Error starting workspace', errorData);
       return {
         success: false,
         message: `Failed to start workspace: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -393,7 +462,7 @@ export class DaytonaClient {
   }
 
   private async restartServices(sandbox: Sandbox, rootDir: string): Promise<void> {
-    console.log('🔄 Restarting services...');
+    this.logger.workspace.starting('restarting services');
     
     // Kill existing services
     await sandbox.process.executeCommand(
@@ -423,6 +492,6 @@ export class DaytonaClient {
     // Verify services are running
     await this.verifyServices(sandbox, rootDir);
     
-    console.log('✅ Services restarted successfully');
+    this.logger.success('Services restarted successfully');
   }
 }
