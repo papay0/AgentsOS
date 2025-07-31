@@ -4,7 +4,7 @@ import React, { use, useEffect, useState, useRef } from 'react';
 import { MobileWorkspaceView } from '@/components/workspace/mobile-workspace-view';
 import { DesktopWorkspaceView } from '@/components/workspace/desktop-workspace-view';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { WorkspaceData, TerminalTab, TerminalPane, ViewMode, WorkspaceViewProps } from '@/types/workspace';
+import type { WorkspaceData, TerminalTab, TerminalPane } from '@/types/workspace';
 
 interface WorkspacePageProps {
   params: Promise<{
@@ -15,7 +15,6 @@ interface WorkspacePageProps {
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const resolvedParams = use(params);
   const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('terminals');
   const isMobile = useIsMobile();
   
   const [tabs, setTabs] = useState<TerminalTab[]>([]);
@@ -37,9 +36,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   const addNewTab = React.useCallback(() => {
     const tabNumber = tabs.length + 1;
     const terminalUrl = tabNumber === 1 ? claudeTerminalUrl : baseTerminalUrl;
+    const tabTitle = tabNumber === 1 ? 'Claude' : `Terminal ${tabNumber}`;
     const newTab: TerminalTab = {
       id: `tab-${Date.now()}`,
-      title: `Tab ${tabNumber}`,
+      title: tabTitle,
       terminals: [{
         id: `terminal-${Date.now()}`,
         url: terminalUrl,
@@ -53,9 +53,30 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   useEffect(() => {
     if (baseTerminalUrl && tabs.length === 0 && !initializedRef.current) {
       initializedRef.current = true;
-      addNewTab();
+      // Add Claude tab first
+      const claudeTab: TerminalTab = {
+        id: `tab-${Date.now()}`,
+        title: 'Claude',
+        terminals: [{
+          id: `terminal-${Date.now()}`,
+          url: claudeTerminalUrl,
+          title: 'Terminal 1'
+        }]
+      };
+      // Add Terminal 2 tab
+      const terminalTab: TerminalTab = {
+        id: `tab-${Date.now() + 1}`,
+        title: 'Terminal 2',
+        terminals: [{
+          id: `terminal-${Date.now() + 1}`,
+          url: baseTerminalUrl,
+          title: 'Terminal 1'
+        }]
+      };
+      setTabs([claudeTab, terminalTab]);
+      setActiveTabId(claudeTab.id);
     }
-  }, [baseTerminalUrl, tabs.length, addNewTab]);
+  }, [baseTerminalUrl, claudeTerminalUrl, tabs.length]);
 
   const addTerminalToCurrentTab = React.useCallback(() => {
     if (!activeTabId) return;
@@ -90,8 +111,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     }
   }, [tabs, activeTabId]);
 
-  const workspaceViewProps: WorkspaceViewProps = {
-    viewMode,
+  const desktopWorkspaceViewProps = {
     vscodeUrl,
     tabs,
     activeTabId,
@@ -100,16 +120,22 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     onRemoveTab: removeTab,
     onAddTerminal: addTerminalToCurrentTab,
     onRemoveTerminal: removeTerminal,
-    onViewModeChange: setViewMode,
   };
 
+  const mobileWorkspaceViewProps = {
+    vscodeUrl,
+    tabs,
+    activeTabId,
+    onTabChange: setActiveTabId,
+    onAddTab: addNewTab,
+  };
 
   return (
-    <div className="fixed inset-0 top-14 bg-gray-100 overflow-hidden">
+    <div className={`fixed inset-0 bg-gray-100 overflow-hidden ${!isMobile ? 'top-14' : 'top-0'}`}>
       {isMobile ? (
-        <MobileWorkspaceView {...workspaceViewProps} />
+        <MobileWorkspaceView {...mobileWorkspaceViewProps} />
       ) : (
-        <DesktopWorkspaceView {...workspaceViewProps} />
+        <DesktopWorkspaceView {...desktopWorkspaceViewProps} />
       )}
     </div>
   );

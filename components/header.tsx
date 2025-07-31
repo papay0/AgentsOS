@@ -5,6 +5,7 @@ import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
 import { Terminal, Globe } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderProps {
   sandboxId?: string;
@@ -12,9 +13,16 @@ interface HeaderProps {
 
 export function Header({ sandboxId }: HeaderProps) {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   
   // Extract sandboxId from URL if not provided as prop
-  const currentSandboxId = sandboxId || (pathname?.match(/\/home\/([^\/]+)/)?.[1]);
+  const currentSandboxId = sandboxId || (pathname?.match(/\/home\/workspace\/([^\/]+)/)?.[1]);
+  
+  // Hide header on mobile workspace pages
+  const isWorkspacePage = pathname?.includes('/home/workspace/');
+  if (isMobile && isWorkspacePage) {
+    return null;
+  }
   
   return (
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
