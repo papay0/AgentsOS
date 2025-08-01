@@ -32,7 +32,6 @@ export default function CreateWorkspacePage() {
         throw new Error(data.error || 'Failed to create terminal container');
       }
 
-      localStorage.setItem(`workspace-${data.sandboxId}`, JSON.stringify(data));
       router.push(`/home/workspace/${data.sandboxId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

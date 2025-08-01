@@ -31,11 +31,22 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       const status: WorkspaceStatusResponse = await response.json();
       setWorkspaceStatus(status);
       
-      // If workspace is started and services are healthy, load workspace data
+      // If workspace is started and services are healthy, fetch workspace URLs
       if (status.status === 'started' && status.servicesHealthy) {
-        const data = localStorage.getItem(`workspace-${resolvedParams.sandboxId}`);
-        if (data) {
-          setWorkspaceData(JSON.parse(data));
+        try {
+          const urlsResponse = await fetch(`/api/workspace-urls/${resolvedParams.sandboxId}`);
+          if (urlsResponse.ok) {
+            const urls = await urlsResponse.json();
+            setWorkspaceData({
+              sandboxId: resolvedParams.sandboxId,
+              ...urls,
+              message: 'Workspace loaded'
+            });
+          } else {
+            console.error('Failed to fetch workspace URLs');
+          }
+        } catch (error) {
+          console.error('Error fetching workspace URLs:', error);
         }
       }
     } catch (error) {
@@ -70,7 +81,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         };
         
         setWorkspaceData(newWorkspaceData);
-        localStorage.setItem(`workspace-${resolvedParams.sandboxId}`, JSON.stringify(newWorkspaceData));
         
         // Update status
         setWorkspaceStatus({

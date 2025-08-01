@@ -46,6 +46,14 @@ export class DaytonaClient {
     return await this.manager.stopWorkspace(sandboxId);
   }
 
+  async getWorkspaceUrls(sandboxId: string): Promise<{
+    terminalUrl: string;
+    claudeTerminalUrl: string;
+    vscodeUrl: string;
+  }> {
+    return await this.manager.getWorkspaceUrls(sandboxId);
+  }
+
   // Workspace Orchestration
   async startWorkspaceAndServices(sandboxId: string): Promise<{
     success: boolean;

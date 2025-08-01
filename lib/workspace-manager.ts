@@ -171,4 +171,35 @@ export class WorkspaceManager {
       }
     });
   }
+
+  async getWorkspaceUrls(sandboxId: string): Promise<{
+    terminalUrl: string;
+    claudeTerminalUrl: string;
+    vscodeUrl: string;
+  }> {
+    try {
+      const sandbox = await this.daytona.get(sandboxId);
+      
+      // Get the preview links for each service
+      const [terminalInfo, claudeTerminalInfo, vscodeInfo] = await Promise.all([
+        sandbox.getPreviewLink(9999),
+        sandbox.getPreviewLink(9998),
+        sandbox.getPreviewLink(8080)
+      ]);
+      
+      return {
+        terminalUrl: terminalInfo.url,
+        claudeTerminalUrl: claudeTerminalInfo.url,
+        vscodeUrl: vscodeInfo.url
+      };
+    } catch (error) {
+      const errorData: ErrorLogData = {
+        error: error instanceof Error ? error : String(error),
+        code: 'GET_URLS_FAILED',
+        details: { sandboxId }
+      };
+      this.logger.logError('Failed to get workspace URLs', errorData);
+      throw error;
+    }
+  }
 }
