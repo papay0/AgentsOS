@@ -7,10 +7,7 @@ import { Terminal, Globe } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
-  SignInButton,
-  SignUpButton,
   SignedIn,
-  SignedOut,
   UserButton,
 } from '@clerk/nextjs';
 
@@ -59,18 +56,6 @@ export function Header({ sandboxId }: HeaderProps) {
           )}
           
           {/* Auth buttons */}
-          <SignedOut>
-            <SignInButton>
-              <Button variant="ghost" size="sm">
-                Sign In
-              </Button>
-            </SignInButton>
-            <SignUpButton>
-              <Button size="sm">
-                Sign Up
-              </Button>
-            </SignUpButton>
-          </SignedOut>
           <SignedIn>
             <UserButton />
           </SignedIn>
