@@ -147,6 +147,9 @@ export function SandboxCard({ sandbox, onOpen, onStop, onStart }: SandboxCardPro
       if (onStart) {
         onStart();
       }
+
+      // Navigate to the workspace after successful start
+      router.push(`/home/workspace/${sandbox.id}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to start workspace');
     } finally {
