@@ -148,12 +148,14 @@ export function SandboxListItem({ sandbox, onOpen, onStop, onStart }: SandboxLis
 
   return (
     <div className={cn(
-      "flex items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-all",
+      "flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-all overflow-hidden",
       sandbox.state === 'error' && "border-red-200 dark:border-red-800"
     )}>
-      {/* State Icon */}
-      <div className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center",
+      {/* Top row on mobile - State Icon and Main Content */}
+      <div className="flex items-start gap-4 w-full sm:flex-1 min-w-0">
+        {/* State Icon */}
+        <div className={cn(
+          "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
         state === 'started' && "bg-green-100 dark:bg-green-900",
         state === 'stopped' && "bg-gray-100 dark:bg-gray-800",
         state === 'error' && "bg-red-100 dark:bg-red-900",
@@ -170,12 +172,12 @@ export function SandboxListItem({ sandbox, onOpen, onStop, onStart }: SandboxLis
           state === 'starting' && "text-blue-600 dark:text-blue-400",
           state === 'stopping' && "text-orange-600 dark:text-orange-400"
         )} />
-      </div>
+        </div>
 
-      {/* Main Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="flex items-center gap-2">
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+        <div className="flex items-start flex-wrap gap-2 mb-1">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <h3 className="font-semibold truncate" title={sandbox.id}>
               {sandbox.id.slice(0, 8)}...{sandbox.id.slice(-8)}
             </h3>
@@ -201,14 +203,16 @@ export function SandboxListItem({ sandbox, onOpen, onStop, onStart }: SandboxLis
               </Tooltip>
             </TooltipProvider>
           </div>
-          <Badge className={config.className} variant="secondary">
-            {config.label}
-          </Badge>
-          {sandbox.public ? (
-            <Globe className="w-4 h-4 text-green-600" />
-          ) : (
-            <Lock className="w-4 h-4 text-gray-600" />
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge className={config.className} variant="secondary">
+              {config.label}
+            </Badge>
+            {sandbox.public ? (
+              <Globe className="w-4 h-4 text-green-600" />
+            ) : (
+              <Lock className="w-4 h-4 text-gray-600" />
+            )}
+          </div>
         </div>
         
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -226,6 +230,7 @@ export function SandboxListItem({ sandbox, onOpen, onStop, onStart }: SandboxLis
             {sandbox.errorReason}
           </p>
         )}
+        </div>
       </div>
 
       {/* Resources */}
@@ -245,7 +250,7 @@ export function SandboxListItem({ sandbox, onOpen, onStop, onStart }: SandboxLis
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
         {String(sandbox.state) === SandboxState.STARTED ? (
           <>
             <Button 

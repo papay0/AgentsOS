@@ -155,44 +155,42 @@ export function SandboxCard({ sandbox, onOpen, onStop, onStart }: SandboxCardPro
   };
 
   return (
-    <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
+    <Card className="h-full flex flex-col hover:shadow-lg transition-shadow overflow-hidden">
       <CardHeader className="pb-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg truncate" title={sandbox.id}>
-                {sandbox.id.slice(0, 8)}...{sandbox.id.slice(-8)}
-              </h3>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={handleCopyId}
-                    >
-                      {copied ? (
-                        <Check className="h-3 w-3 text-green-600" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {copied ? 'Copied!' : 'Copy full ID'}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <p className="text-sm text-muted-foreground truncate">
-              @{sandbox.user}
-            </p>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-lg truncate flex-1" title={sandbox.id}>
+              {sandbox.id.slice(0, 8)}...{sandbox.id.slice(-8)}
+            </h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleCopyId}
+                  >
+                    {copied ? (
+                      <Check className="h-3 w-3 text-green-600" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {copied ? 'Copied!' : 'Copy full ID'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-          <Badge className={config.className}>
-            <StateIcon className="w-3 h-3 mr-1" />
-            {config.label}
-          </Badge>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">@{sandbox.user}</p>
+            <Badge className={config.className}>
+              <StateIcon className="w-3 h-3 mr-1" />
+              {config.label}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
 
