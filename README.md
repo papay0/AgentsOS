@@ -1,36 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/docs/logo.svg" alt="AgentsPod logo" width="120" height="120">
+    <h1>AgentsPod</h1>
+</div>
 
-## Getting Started
+<p align="center">
+    <a href="https://github.com/papay0/agentspod/stargazers"><img src="https://img.shields.io/github/stars/papay0/agentspod?style=social" alt="GitHub stars" /></a>
+    <a href="https://github.com/papay0/agentspod/fork"><img src="https://img.shields.io/github/forks/papay0/agentspod?style=social" alt="GitHub forks" /></a>
+    <a href="https://github.com/papay0/agentspod/blob/main/LICENSE"><img src="https://img.shields.io/github/license/papay0/agentspod" alt="License" /></a>
+    <a href="https://github.com/papay0/agentspod/issues"><img src="https://img.shields.io/github/issues/papay0/agentspod" alt="GitHub issues" /></a>
+</p>
 
-First, run the development server:
+<div align="center">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/docs/screenshot.png" alt="AgentsPod Screenshot" width="800">
+</div>
+
+> Launch on-demand development workspaces with VSCode and Claude Code CLI pre-installed. Code with AI assistance from anywhere, even your phone.
+
+## ✨ Features
+
+- 🖥️ **VSCode in Browser** - Full-featured VS Code editor with extensions and themes
+- 🤖 **Claude Code CLI** - AI-powered development assistant built into your terminal
+- 📱 **Works Everywhere** - Code from any device with a browser (laptop, tablet, phone)
+- ⚡ **Instant Setup** - Launch your environment in under 30 seconds
+- ☁️ **Cloud Resources** - Scalable compute power without local setup constraints
+- 🔒 **Isolated Environments** - Each workspace is completely sandboxed
+- 🎯 **Terminal Splitting** - Multiple terminals with tabbed interface
+- 🌐 **Open Source** - Free to use and contribute to
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Daytona API Key ([Get one here](https://www.daytona.io/))
+- Node.js 20+ and npm
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/papay0/agentspod.git
+   cd agentspod
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment**
+   ```bash
+   cp .env.example .env.local
+   # Add your DAYTONA_API_KEY to .env.local
+   ```
+
+4. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   ```
+   http://localhost:3000
+   ```
+
+## 🎯 How It Works
+
+1. **Click "Launch Workspace"** - Start your development environment with one click
+2. **Wait ~30 seconds** - We install VSCode, Claude CLI, and configure everything
+3. **Start Coding** - Your complete AI-powered development environment is ready
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **UI**: shadcn/ui, Tailwind CSS
+- **Backend**: Daytona SDK for workspace orchestration
+- **Editor**: code-server (VSCode in browser)
+- **Terminal**: ttyd for web-based terminal access
+- **AI**: Claude Code CLI integration
+
+## 📖 Usage
+
+### Creating a Workspace
+
+1. Navigate to the home page
+2. Click "Launch Workspace"
+3. Wait for the workspace to be created and configured
+4. Access your development environment with VSCode and terminal
+
+### Managing Workspaces
+
+- **Start/Stop**: Control workspace states from the dashboard
+- **Multiple Terminals**: Create and manage multiple terminal sessions
+- **AI Assistance**: Use Claude Code CLI directly in the terminal
+- **File Management**: Full file system access through VSCode
+
+## 🔧 Development
+
+### Available Scripts
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev      # Start development server
+npm run build    # Build for production
+npm start        # Start production server
+npm run lint     # Run ESLint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+DAYTONA_API_KEY=your_daytona_api_key_here
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🤝 Contributing
 
-## Learn More
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-To learn more about Next.js, take a look at the following resources:
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📝 License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🙏 Acknowledgments
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Daytona](https://www.daytona.io/) for providing the infrastructure platform
+- [Claude Code](https://claude.ai/code) for the AI development assistant
+- [VS Code](https://code.visualstudio.com/) for the amazing editor
+- All contributors who help make this project better
+
+---
+
+<div align="center">
+    <p>Made with ❤️ by the open source community</p>
+    <p>
+        <a href="https://github.com/papay0/agentspod/issues">Report Bug</a> ·
+        <a href="https://github.com/papay0/agentspod/issues">Request Feature</a> ·
+        <a href="https://github.com/papay0/agentspod/discussions">Discussions</a>
+    </p>
+</div>
