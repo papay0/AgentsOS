@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 
 interface TerminalIframeProps {
   url: string;
@@ -9,18 +9,18 @@ interface TerminalIframeProps {
   backgroundColor?: string;
 }
 
-export function TerminalIframe({ 
-  url, 
-  title = 'Terminal', 
-  className = '',
-  backgroundColor = '#ffffff'
-}: TerminalIframeProps) {
-  return (
-    <iframe
-      src={url}
-      className={`w-full h-full border-0 ${className}`}
-      title={title}
-      style={{ backgroundColor }}
-    />
-  );
-}
+export const TerminalIframe = forwardRef<HTMLIFrameElement, TerminalIframeProps>(
+  ({ url, title = 'Terminal', className = '', backgroundColor = '#ffffff' }, ref) => {
+    return (
+      <iframe
+        ref={ref}
+        src={url}
+        className={`w-full h-full border-0 ${className}`}
+        title={title}
+        style={{ backgroundColor }}
+      />
+    );
+  }
+);
+
+TerminalIframe.displayName = 'TerminalIframe';
