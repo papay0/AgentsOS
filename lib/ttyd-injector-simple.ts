@@ -244,7 +244,8 @@ export class SimpleTTYDInjector {
         console.log('✅ Paste simulated via clipboard API');
         return true;
         
-      } catch (clipboardError) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_clipboardError) {
         console.log('⚠️ Clipboard API failed, trying direct text input');
         return this.simulateTextInput(text);
       }

@@ -138,7 +138,8 @@ export class FocusTTYDInjector {
           await this.sendKeyToFocusedIframe('Ctrl+V');
           console.log('✅ Paste sent via clipboard API');
           return true;
-        } catch (clipboardError) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_clipboardError) {
           console.log('⚠️ Clipboard API failed, falling back to text input');
         }
       }
@@ -226,7 +227,8 @@ export class FocusTTYDInjector {
       for (const target of targets) {
         try {
           target?.dispatchEvent?.(event);
-        } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_e) {
           // Silent fail for each target
         }
       }

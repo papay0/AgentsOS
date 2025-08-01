@@ -13,12 +13,10 @@ import {
   MoveHorizontalIcon as End,
   Delete,
   X,
-  Copy,
   Clipboard,
   Trash2,
   RefreshCw,
   Wifi,
-  WifiOff,
   Loader2
 } from 'lucide-react';
 

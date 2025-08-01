@@ -145,7 +145,8 @@ export class TTYDClient {
     console.log('Sent resume command');
   }
 
-  sendKey(key: string, ctrl = false, alt = false, shift = false) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  sendKey(key: string, ctrl = false, _alt = false, _shift = false) {
     let sequence = '';
     
     // Handle special keys with escape sequences

@@ -13,7 +13,6 @@ import {
   MoveHorizontalIcon as End,
   Delete,
   X,
-  Copy,
   Clipboard,
   Trash2,
   RefreshCw
@@ -116,26 +115,26 @@ export function CommandPalette({ targetIframeRef, className = '' }: CommandPalet
     }
   }, [pasteValue, sendText]);
 
-  // Key codes for special keys
-  const KEY_CODES: { [key: string]: number } = {
-    'Enter': 13,
-    'Escape': 27,
-    'Backspace': 8,
-    'Tab': 9,
-    'Delete': 46,
-    'ArrowUp': 38,
-    'ArrowDown': 40,
-    'ArrowLeft': 37,
-    'ArrowRight': 39,
-    'Home': 36,
-    'End': 35,
-  };
-
   const sendKeyEventV2 = useCallback((key: string, keyCode?: number, ctrlKey = false, shiftKey = false) => {
     if (!targetIframeRef.current) {
       console.warn('No iframe ref available');
       return;
     }
+
+    // Key codes for special keys
+    const KEY_CODES: { [key: string]: number } = {
+      'Enter': 13,
+      'Escape': 27,
+      'Backspace': 8,
+      'Tab': 9,
+      'Delete': 46,
+      'ArrowUp': 38,
+      'ArrowDown': 40,
+      'ArrowLeft': 37,
+      'ArrowRight': 39,
+      'Home': 36,
+      'End': 35,
+    };
 
     const actualKeyCode = keyCode || KEY_CODES[key] || key.charCodeAt(0);
     

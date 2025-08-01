@@ -230,7 +230,8 @@ export class ClipboardTTYDInjector {
     }
   }
 
-  private showDetailedInstruction(instruction: string, textToCopy: string, originalCommand: string): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private showDetailedInstruction(instruction: string, textToCopy: string, _originalCommand: string): void {
     const modal = document.createElement('div');
     modal.innerHTML = `
       <div style="

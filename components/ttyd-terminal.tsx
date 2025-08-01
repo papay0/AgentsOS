@@ -6,22 +6,37 @@ import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
 
-interface XtermTerminalProps {
+interface TTYDTerminalProps {
+  /** WebSocket URL for the ttyd server */
   wsUrl: string;
+  /** Called when connection status changes */
   onConnectionChange?: (connected: boolean) => void;
+  /** Called when status message changes */
   onStatusChange?: (status: string) => void;
+  /** Custom CSS class for the terminal container */
+  className?: string;
 }
 
-export interface XtermTerminalRef {
+export interface TTYDTerminalRef {
+  /** Send a command to the terminal */
   sendCommand: (command: string, addEnter?: boolean) => void;
+  /** Send a special key combination */
   sendKey: (key: string) => void;
+  /** Check if terminal is connected */
   isConnected: () => boolean;
 }
 
-const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({ 
+/**
+ * TTYDTerminal - A ttyd terminal component
+ * 
+ * Connects directly to ttyd servers using the correct WebSocket protocol.
+ * Perfect for cloud development environments and remote terminal access.
+ */
+const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({ 
   wsUrl, 
   onConnectionChange, 
-  onStatusChange 
+  onStatusChange,
+  className = "h-96 p-2"
 }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
@@ -33,7 +48,6 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
     sendCommand: (command: string, addEnter = true) => {
       if (websocket.current?.readyState === WebSocket.OPEN) {
         const data = addEnter ? command + '\r' : command;
-        console.log('📤 Sending custom:', data);
         
         // INPUT = '0' (0x30) + command bytes as binary
         const commandBytes = new TextEncoder().encode(data);
@@ -47,34 +61,16 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
       if (websocket.current?.readyState === WebSocket.OPEN) {
         let data = '';
         switch (key) {
-          case 'Ctrl+C':
-            data = '\x03';
-            break;
-          case 'Ctrl+L':
-            data = '\x0c';
-            break;
-          case 'Ctrl+D':
-            data = '\x04';
-            break;
-          case 'Enter':
-            data = '\r';
-            break;
-          case 'ArrowUp':
-            data = '\x1b[A';
-            break;
-          case 'ArrowDown':
-            data = '\x1b[B';
-            break;
-          case 'ArrowLeft':
-            data = '\x1b[D';
-            break;
-          case 'ArrowRight':
-            data = '\x1b[C';
-            break;
-          default:
-            data = key;
+          case 'Ctrl+C': data = '\x03'; break;
+          case 'Ctrl+L': data = '\x0c'; break;
+          case 'Ctrl+D': data = '\x04'; break;
+          case 'Enter': data = '\r'; break;
+          case 'ArrowUp': data = '\x1b[A'; break;
+          case 'ArrowDown': data = '\x1b[B'; break;
+          case 'ArrowLeft': data = '\x1b[D'; break;
+          case 'ArrowRight': data = '\x1b[C'; break;
+          default: data = key;
         }
-        console.log('📤 Sending key:', key, '=>', data);
         
         // INPUT = '0' (0x30) + key bytes as binary
         const keyBytes = new TextEncoder().encode(data);
@@ -89,22 +85,12 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
 
   const connectWebSocket = useCallback(() => {
     onStatusChange?.('Connecting...');
-    console.log('🔗 Connecting to WebSocket:', wsUrl);
-
-    // Try different endpoint paths in case /ws doesn't work
-    const wsUrlToTry = wsUrl;
-    
-    // If this is the first try and it's /ws, try it
-    // If it fails, we'll try other paths
-    console.log('🔄 Trying WebSocket URL:', wsUrlToTry);
 
     // ttyd requires the "tty" subprotocol
-    websocket.current = new WebSocket(wsUrlToTry, ['tty']);
+    websocket.current = new WebSocket(wsUrl, ['tty']);
     websocket.current.binaryType = 'arraybuffer';
-    console.log('🔧 Created WebSocket with "tty" protocol and arraybuffer binary type');
 
     websocket.current.onopen = () => {
-      console.log('✅ WebSocket connected');
       setIsConnected(true);
       onConnectionChange?.(true);
       onStatusChange?.('Connected');
@@ -117,7 +103,6 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
         rows: 30        // Terminal height
       });
       
-      console.log('📤 Sending auth/init:', authMessage);
       websocket.current!.send(new TextEncoder().encode(authMessage));
       
       // Wait for ttyd to process auth, then send proper resize
@@ -132,19 +117,14 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
             payload[0] = 0x31; // '1' as byte
             payload.set(resizeBytes, 1);
             
-            console.log('📏 Sending proper binary resize:', dimensions);
             websocket.current!.send(payload);
           }
         }
       }, 200);
 
-      // Wait for ttyd to send initial data, then try to wake up the shell
-      console.log('🤝 Waiting for ttyd to send initial prompt...');
-      
       // After receiving the initial messages, try to get a shell prompt
       setTimeout(() => {
         if (websocket.current?.readyState === WebSocket.OPEN) {
-          console.log('🔄 Sending newline to wake up shell');
           // INPUT = '0' (0x30) + command bytes as binary
           const commandBytes = new TextEncoder().encode('\r');
           const payload = new Uint8Array(commandBytes.length + 1);
@@ -156,63 +136,32 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
     };
 
     websocket.current.onmessage = (event) => {
-      console.log('📥 Received raw:', event.data);
-      console.log('📥 Data type:', typeof event.data);
-      console.log('📥 Data length:', event.data.length);
-      
       if (terminal.current) {
-        // ttyd sends messages with different prefixes
-        // '0' = output data, '1' = resize, '2' = set title
         const data = event.data;
         
         if (typeof data === 'string') {
           if (data.startsWith('0')) {
             // Output data - remove the '0' prefix
             const output = data.slice(1);
-            console.log('📝 Writing to terminal:', JSON.stringify(output));
             terminal.current.write(output);
-          } else {
-            console.log('📋 Non-output message:', data);
           }
         } else {
-          // Handle binary data (Blob)
-          console.log('📦 Received binary data:', data);
-          
+          // Handle binary data (ArrayBuffer/Blob)
           if (data instanceof Blob) {
             // Convert Blob to text
             data.arrayBuffer().then(buffer => {
               const text = new TextDecoder().decode(buffer);
-              console.log('📦 Decoded blob as text:', JSON.stringify(text));
               
               if (text.startsWith('0')) {
                 // Output data - remove the '0' prefix
                 const output = text.slice(1);
-                console.log('📝 Writing blob output to terminal:', JSON.stringify(output));
                 terminal.current?.write(output);
-              } else if (text.startsWith('1')) {
-                // Terminal title - remove the '1' prefix
-                const title = text.slice(1);
-                console.log('📋 Terminal title:', title);
-                // Could set document title here if needed
-              } else if (text.startsWith('2')) {
-                // Theme/settings - remove the '2' prefix
-                const settings = text.slice(1);
-                console.log('📋 Terminal settings:', settings);
-                try {
-                  const themeData = JSON.parse(settings);
-                  console.log('🎨 Received theme from ttyd:', themeData);
-                } catch {
-                  console.log('📋 Non-JSON settings:', settings);
-                }
-              } else {
-                console.log('📋 Unknown message type:', text);
               }
             }).catch(err => {
-              console.error('❌ Failed to decode blob:', err);
+              console.error('Failed to decode blob:', err);
             });
           } else if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
             const text = new TextDecoder().decode(data);
-            console.log('📦 Decoded binary as text:', JSON.stringify(text));
             if (text.startsWith('0')) {
               terminal.current.write(text.slice(1));
             }
@@ -222,20 +171,14 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
     };
 
     websocket.current.onclose = (event) => {
-      console.log(`🔌 WebSocket closed: ${event.code} - ${event.reason}`);
       setIsConnected(false);
       onConnectionChange?.(false);
-      onStatusChange?.(`Disconnected (${event.code})`);
+      onStatusChange?.(event.code === 1000 ? 'Disconnected' : `Connection failed (${event.code})`);
       
-      // Only auto-reconnect for network issues, not protocol errors
-      if (event.code === 1006 && event.reason === '') {
-        console.log('🚫 Stopping reconnection - likely protocol issue');
-        onStatusChange?.('Connection failed - check ttyd compatibility');
-      } else if (event.code !== 1000) {
-        // Auto-reconnect after 3 seconds for other errors
+      // Auto-reconnect for network issues (not user-initiated close)
+      if (event.code !== 1000) {
         setTimeout(() => {
           if (websocket.current?.readyState === WebSocket.CLOSED) {
-            console.log('🔄 Attempting reconnection...');
             connectWebSocket();
           }
         }, 3000);
@@ -243,14 +186,13 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
     };
 
     websocket.current.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
-      onStatusChange?.('Error');
+      console.error('WebSocket error:', error);
+      onStatusChange?.('Connection error');
     };
 
     // Handle terminal input
     if (terminal.current) {
       terminal.current.onData((data) => {
-        console.log('📤 Sending terminal input:', data);
         if (websocket.current?.readyState === WebSocket.OPEN) {
           // INPUT = '0' (0x30) + data bytes as binary
           const inputBytes = new TextEncoder().encode(data);
@@ -263,7 +205,6 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
 
       // Handle resize
       terminal.current.onResize((dimensions) => {
-        console.log('📏 Terminal resized:', dimensions);
         if (websocket.current?.readyState === WebSocket.OPEN) {
           // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
           const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
@@ -331,12 +272,12 @@ const XtermTerminal = forwardRef<XtermTerminalRef, XtermTerminalProps>(({
   return (
     <div 
       ref={terminalRef}
-      className="h-96 p-2"
+      className={className}
       style={{ minHeight: '400px' }}
     />
   );
 });
 
-XtermTerminal.displayName = 'XtermTerminal';
+TTYDTerminal.displayName = 'TTYDTerminal';
 
-export default XtermTerminal;
+export default TTYDTerminal;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState } from 'react';
 import { Terminal, Plus, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {

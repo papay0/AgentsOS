@@ -111,7 +111,8 @@ export class KeyboardTTYDInjector {
           
           this.iframe.contentWindow.dispatchEvent(keyupEvent);
         }
-      } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_e) {
         console.log('⚠️ Could not dispatch to contentWindow (CORS), using iframe only');
       }
       
@@ -178,7 +179,8 @@ export class KeyboardTTYDInjector {
           if (this.iframe.contentWindow) {
             this.iframe.contentWindow.dispatchEvent(event);
           }
-        } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_e) {
           // Silent fail for CORS
         }
         

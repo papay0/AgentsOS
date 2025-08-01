@@ -14,7 +14,6 @@ import {
   MoveHorizontalIcon as End,
   Delete,
   X,
-  Copy,
   Clipboard,
   Trash2,
   RefreshCw,
