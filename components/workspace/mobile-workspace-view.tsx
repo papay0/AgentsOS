@@ -95,7 +95,6 @@ export function MobileWorkspaceView({
               src={tab.terminals[0]?.url || ''}
               className="w-full h-full border-0"
               title={tab.title}
-              sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
               style={{ backgroundColor: '#ffffff' }}
             />
           </div>

@@ -56,7 +56,6 @@ export function TerminalPane({ terminal, onRemove }: TerminalPaneProps) {
           src={terminal.url}
           className="w-full h-full border-0"
           title={terminal.title}
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
           style={{ backgroundColor: '#ffffff' }}
         />
       </div>

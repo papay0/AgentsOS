@@ -14,7 +14,6 @@ export function VSCodeEditor({ url, className = '' }: VSCodeEditorProps) {
         src={url}
         className="w-full h-full border-0"
         title="VSCode Editor"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads"
         style={{ backgroundColor: '#1e1e1e' }}
       />
     </div>
