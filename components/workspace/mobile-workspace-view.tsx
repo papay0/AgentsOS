@@ -2,16 +2,26 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { VSCodeEditor } from './vscode-editor';
-import { Plus, Code2, Settings } from 'lucide-react';
-import type { WorkspaceViewProps } from '@/types/workspace';
+import { Plus, Code2, Settings, Globe } from 'lucide-react';
+import type { TerminalTab } from '@/types/workspace';
+
+interface MobileWorkspaceViewProps {
+  vscodeUrl: string;
+  tabs: TerminalTab[];
+  activeTabId: string | null;
+  onTabChange: (tabId: string) => void;
+  onAddTab: () => void;
+  sandboxId: string;
+}
 
 export function MobileWorkspaceView({ 
   vscodeUrl, 
   tabs, 
   activeTabId, 
   onTabChange, 
-  onAddTab
-}: Omit<WorkspaceViewProps, 'viewMode' | 'onViewModeChange' | 'onAddTerminal' | 'onRemoveTerminal' | 'onRemoveTab'>) {
+  onAddTab,
+  sandboxId
+}: MobileWorkspaceViewProps) {
   const [currentView, setCurrentView] = useState<'terminal' | 'vscode'>('terminal');
   const [showSettings, setShowSettings] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +66,12 @@ export function MobileWorkspaceView({
   const handleCloseWorkspace = () => {
     // Close workspace and go home
     window.location.href = '/home';
+  };
+
+  const handleOpenApp = () => {
+    const appUrl = `https://3000-${sandboxId}.proxy.daytona.work/`;
+    window.open(appUrl, '_blank', 'width=1200,height=800');
+    setShowSettings(false);
   };
 
   return (
@@ -160,6 +176,15 @@ export function MobileWorkspaceView({
           <div className="fixed bottom-20 right-6 z-50 animate-in slide-in-from-bottom-2 duration-200">
             <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden min-w-52">
               <div className="py-2">
+                <button
+                  onClick={handleOpenApp}
+                  className="block w-full px-6 py-4 text-left text-gray-900 hover:bg-gray-50/80 text-base font-medium transition-colors active:bg-gray-100"
+                >
+                  <div className="flex items-center">
+                    <Globe className="h-4 w-4 text-gray-600" />
+                    <span className="ml-3">Open App</span>
+                  </div>
+                </button>
                 <button
                   onClick={handleGoHome}
                   className="block w-full px-6 py-4 text-left text-gray-900 hover:bg-gray-50/80 text-base font-medium transition-colors active:bg-gray-100"

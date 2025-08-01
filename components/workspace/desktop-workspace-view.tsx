@@ -8,7 +8,19 @@ import {
 } from "@/components/ui/resizable";
 import { VSCodeEditor } from './vscode-editor';
 import { TerminalPanel } from './terminal-panel';
-import type { WorkspaceViewProps } from '@/types/workspace';
+import type { TerminalTab } from '@/types/workspace';
+
+interface DesktopWorkspaceViewProps {
+  vscodeUrl: string;
+  tabs: TerminalTab[];
+  activeTabId: string | null;
+  onTabChange: (tabId: string) => void;
+  onAddTab: () => void;
+  onRemoveTab: (tabId: string) => void;
+  onAddTerminal: () => void;
+  onRemoveTerminal: (terminalId: string) => void;
+  sandboxId: string;
+}
 
 export function DesktopWorkspaceView({ 
   vscodeUrl, 
@@ -18,8 +30,9 @@ export function DesktopWorkspaceView({
   onAddTab, 
   onRemoveTab, 
   onAddTerminal, 
-  onRemoveTerminal 
-}: Omit<WorkspaceViewProps, 'viewMode' | 'onViewModeChange'>) {
+  onRemoveTerminal,
+  sandboxId
+}: DesktopWorkspaceViewProps) {
   return (
     <ResizablePanelGroup direction="horizontal" className="h-full">
       <ResizablePanel defaultSize={60} minSize={30} maxSize={80}>
@@ -37,6 +50,7 @@ export function DesktopWorkspaceView({
           onRemoveTab={onRemoveTab}
           onAddTerminal={onAddTerminal}
           onRemoveTerminal={onRemoveTerminal}
+          sandboxId={sandboxId}
         />
       </ResizablePanel>
     </ResizablePanelGroup>

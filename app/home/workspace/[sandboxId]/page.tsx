@@ -202,6 +202,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     onRemoveTab: removeTab,
     onAddTerminal: addTerminalToCurrentTab,
     onRemoveTerminal: removeTerminal,
+    sandboxId: resolvedParams.sandboxId,
   };
 
   const mobileWorkspaceViewProps = {
@@ -210,12 +211,13 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     activeTabId,
     onTabChange: setActiveTabId,
     onAddTab: addNewTab,
+    sandboxId: resolvedParams.sandboxId,
   };
 
   // Show loading state
   if (isLoading) {
     return (
-      <div className={`fixed inset-0 bg-gray-100 overflow-hidden ${!isMobile ? 'top-14' : 'top-0'} flex items-center justify-center`}>
+      <div className="fixed inset-0 top-14 bg-gray-100 overflow-hidden flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p className="text-gray-600">Checking workspace status...</p>
@@ -227,7 +229,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   // Show restart UI if workspace needs to be started
   if (workspaceStatus && (workspaceStatus.status !== 'started' || !workspaceStatus.servicesHealthy)) {
     return (
-      <div className={`fixed inset-0 bg-gray-100 overflow-hidden ${!isMobile ? 'top-14' : 'top-0'} flex items-center justify-center`}>
+      <div className="fixed inset-0 top-14 bg-gray-100 overflow-hidden flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="mb-6">
             {workspaceStatus.status === 'stopped' ? (
@@ -281,7 +283,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
   // Show workspace UI if everything is started
   if (workspaceData && workspaceStatus?.status === 'started' && workspaceStatus?.servicesHealthy) {
     return (
-      <div className={`fixed inset-0 bg-gray-100 overflow-hidden ${!isMobile ? 'top-14' : 'top-0'}`}>
+      <div className="fixed inset-0 top-14 bg-gray-100 overflow-hidden">
         {isMobile ? (
           <MobileWorkspaceView {...mobileWorkspaceViewProps} />
         ) : (
@@ -293,7 +295,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
 
   // Fallback error state
   return (
-    <div className={`fixed inset-0 bg-gray-100 overflow-hidden ${!isMobile ? 'top-14' : 'top-0'} flex items-center justify-center`}>
+    <div className="fixed inset-0 top-14 bg-gray-100 overflow-hidden flex items-center justify-center">
       <div className="text-center">
         <p className="text-gray-600">Something went wrong</p>
         <button 

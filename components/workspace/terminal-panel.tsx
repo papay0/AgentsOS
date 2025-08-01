@@ -16,6 +16,7 @@ interface TerminalPanelProps {
   onRemoveTab: (tabId: string) => void;
   onAddTerminal: () => void;
   onRemoveTerminal: (terminalId: string) => void;
+  sandboxId: string;
 }
 
 export function TerminalPanel({
@@ -25,7 +26,8 @@ export function TerminalPanel({
   onAddTab,
   onRemoveTab,
   onAddTerminal,
-  onRemoveTerminal
+  onRemoveTerminal,
+  sandboxId
 }: TerminalPanelProps) {
   const activeTab = tabs.find(tab => tab.id === activeTabId);
 
@@ -46,6 +48,7 @@ export function TerminalPanel({
         onRemoveTab={onRemoveTab}
         onAddTerminal={onAddTerminal}
         activeTab={activeTab}
+        sandboxId={sandboxId}
       />
       
       <div className="flex-1 bg-white overflow-hidden">

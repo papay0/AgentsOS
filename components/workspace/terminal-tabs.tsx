@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Terminal, X, Plus } from 'lucide-react';
+import { Terminal, X, Plus, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { TerminalTab } from '@/types/workspace';
 
@@ -13,6 +13,7 @@ interface TerminalTabsProps {
   onRemoveTab: (tabId: string) => void;
   onAddTerminal: () => void;
   activeTab: TerminalTab | undefined;
+  sandboxId: string;
 }
 
 export function TerminalTabs({
@@ -22,8 +23,13 @@ export function TerminalTabs({
   onAddTab,
   onRemoveTab,
   onAddTerminal,
-  activeTab
+  activeTab,
+  sandboxId
 }: TerminalTabsProps) {
+  const handleOpenApp = () => {
+    const appUrl = `https://3000-${sandboxId}.proxy.daytona.work/`;
+    window.open(appUrl, '_blank', 'width=1200,height=800');
+  };
   return (
     <div className="h-9 bg-gray-200 border-b border-gray-300 flex items-center px-0 flex-shrink-0">
       <div className="flex items-center flex-1 overflow-x-auto">
@@ -64,6 +70,15 @@ export function TerminalTabs({
         </Button>
       </div>
       <div className="flex items-center gap-1 mr-2">
+        <Button
+          onClick={handleOpenApp}
+          size="sm"
+          variant="outline"
+          className="px-2 py-1 text-xs h-6 border-gray-300 text-gray-700 hover:bg-gray-100"
+        >
+          <Globe className="h-3 w-3 mr-1" />
+          Open App
+        </Button>
         <Button
           onClick={onAddTerminal}
           size="sm"
