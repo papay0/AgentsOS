@@ -5,7 +5,7 @@ import { CommandPaletteWS } from '@/components/workspace/command-palette-ws';
 import { CommandPaletteAPI } from '@/components/workspace/command-palette-api';
 import { CommandPaletteInjector } from '@/components/workspace/command-palette-injector';
 import { CommandPaletteDirect } from '@/components/workspace/command-palette-direct';
-import { TerminalPane } from '@/components/workspace/terminal-pane';
+import { TerminalIframe } from '@/components/workspace/terminal-iframe';
 import { testTTYDConnection } from '@/lib/ttyd-direct';
 import { interceptWebSockets } from '@/lib/websocket-inspector';
 import { debugWebSocketConnections } from '@/lib/debug-websockets';
@@ -148,10 +148,10 @@ export default function TestCommandsPage() {
       <div className="flex-1 p-4">
         <div className="max-w-4xl mx-auto flex flex-col gap-4">
           <div className="h-[400px] overflow-hidden">
-            <TerminalPane
+            <TerminalIframe
               ref={terminalRef}
-              terminal={terminal}
-              onRemove={() => console.log('Remove terminal')}
+              url={terminal.url}
+              title={terminal.title}
             />
           </div>
           

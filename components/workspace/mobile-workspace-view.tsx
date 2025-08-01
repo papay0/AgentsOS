@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { VSCodeEditor } from './vscode-editor';
-import { TerminalIframe } from './terminal-iframe';
+import { TTYDTerminal, TerminalCommandPalette } from '@/components/terminal';
 import { Plus, Code2, Settings, Globe } from 'lucide-react';
 import type { TerminalTab } from '@/types/workspace';
+import type { TTYDTerminalRef } from '@/components/terminal';
 
 interface MobileWorkspaceViewProps {
   vscodeUrl: string;
@@ -26,6 +27,7 @@ export function MobileWorkspaceView({
   const [currentView, setCurrentView] = useState<'terminal' | 'vscode'>('terminal');
   const [showSettings, setShowSettings] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const terminalRefs = useRef<{ [key: string]: TTYDTerminalRef | null }>({});
 
   const handleAddTab = () => {
     onAddTab();
@@ -84,7 +86,7 @@ export function MobileWorkspaceView({
           <VSCodeEditor url={vscodeUrl} />
         </div>
         
-        {/* Terminal iframes - keep all mounted to preserve state */}
+        {/* Terminal components - keep all mounted to preserve state */}
         {tabs.map((tab) => (
           <div 
             key={tab.id}
@@ -92,10 +94,19 @@ export function MobileWorkspaceView({
               activeTabId === tab.id && currentView === 'terminal' ? 'block' : 'hidden'
             }`}
           >
-            <TerminalIframe
-              url={tab.terminals[0]?.url || ''}
-              title={tab.title}
-            />
+            <div className="h-full relative">
+              <TTYDTerminal
+                ref={(el) => {
+                  terminalRefs.current[tab.id] = el;
+                }}
+                wsUrl={(tab.terminals[0]?.url || '').replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws'}
+              />
+              <TerminalCommandPalette
+                terminalRef={{ current: terminalRefs.current[tab.id] }}
+                isConnected={true}
+                className="absolute bottom-0 left-0 right-0"
+              />
+            </div>
           </div>
         ))}
       </div>

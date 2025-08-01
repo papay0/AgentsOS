@@ -11,6 +11,7 @@ import {
 import { TerminalPane } from './terminal-pane';
 import { CommandPaletteWS } from './command-palette-ws';
 import type { TerminalTab } from '@/types/workspace';
+import type { TTYDTerminalRef } from '@/components/terminal';
 
 interface TerminalGridProps {
   tab: TerminalTab;
@@ -22,7 +23,7 @@ export function TerminalGrid({ tab, onRemoveTerminal, onAddTerminal }: TerminalG
   const { terminals } = tab;
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [activeTerminalId, setActiveTerminalId] = useState<string | null>(terminals[0]?.id || null);
-  const terminalRefs = useRef<{ [key: string]: HTMLIFrameElement | null }>({});
+  const terminalRefs = useRef<{ [key: string]: TTYDTerminalRef | null }>({});
   
   if (terminals.length === 0) {
     return (

@@ -1,18 +1,24 @@
 'use client';
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useRef, useImperativeHandle } from 'react';
 import { Terminal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TerminalIframe } from './terminal-iframe';
+import { TTYDTerminal, TerminalCommandPalette } from '@/components/terminal';
 import type { TerminalPane as TerminalPaneType } from '@/types/workspace';
+import type { TTYDTerminalRef } from '@/components/terminal';
 
 interface TerminalPaneProps {
   terminal: TerminalPaneType;
   onRemove: (id: string) => void;
 }
 
-export const TerminalPane = forwardRef<HTMLIFrameElement, TerminalPaneProps>(
+export const TerminalPane = forwardRef<TTYDTerminalRef, TerminalPaneProps>(
   ({ terminal, onRemove }, ref) => {
+    const localTerminalRef = useRef<TTYDTerminalRef>(null);
+    
+    // Forward the ref to the parent
+    useImperativeHandle(ref, () => localTerminalRef.current!, []);
+    
     return (
       <div className="h-full bg-white border border-gray-300 overflow-hidden flex flex-col">
         <div className="h-7 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3 flex-shrink-0">
@@ -32,11 +38,15 @@ export const TerminalPane = forwardRef<HTMLIFrameElement, TerminalPaneProps>(
           </div>
         </div>
         
-        <div className="flex-1 bg-white overflow-hidden group">
-          <TerminalIframe
-            ref={ref}
-            url={terminal.url}
-            title={terminal.title}
+        <div className="flex-1 bg-white overflow-hidden group relative">
+          <TTYDTerminal
+            ref={localTerminalRef}
+            wsUrl={terminal.url.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws'}
+          />
+          <TerminalCommandPalette
+            terminalRef={localTerminalRef}
+            isConnected={true}
+            className="absolute bottom-0 left-0 right-0"
           />
         </div>
       </div>
