@@ -5,19 +5,24 @@ import { TTYD_THEME } from './workspace-constants';
 export class WorkspaceServices {
   private logger = logger;
 
-  async setupServices(sandbox: Sandbox, rootDir: string): Promise<void> {
+  async setupServices(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
     this.logger.info('Setting up services...');
     
-    // Create Claude startup script first
+    // Create startup scripts
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\necho "Starting Claude Code CLI..."\ncd ${rootDir}\nclaude\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
+      `echo '#!/bin/bash\necho "Starting Claude Code CLI..."\ncd ${projectDir}\nclaude\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
+      rootDir
+    );
+    
+    await sandbox.process.executeCommand(
+      `echo '#!/bin/bash\ncd ${projectDir}\nexec bash' > /tmp/start-bash.sh && chmod +x /tmp/start-bash.sh`,
       rootDir
     );
 
     // Start all services in parallel
     await Promise.all([
-      this.startCodeServer(sandbox, rootDir),
-      this.startBashTerminal(sandbox, rootDir),
+      this.startCodeServer(sandbox, rootDir, projectDir),
+      this.startBashTerminal(sandbox, rootDir, projectDir),
       this.startClaudeTerminal(sandbox, rootDir)
     ]);
 
@@ -30,18 +35,25 @@ export class WorkspaceServices {
     await this.healthCheckServices(sandbox, rootDir);
   }
 
-  async startCodeServer(sandbox: Sandbox, rootDir: string): Promise<void> {
+  async startCodeServer(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
     this.logger.workspace.starting('VSCode server');
     await sandbox.process.executeCommand(
-      `nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${rootDir} > /tmp/code-server.log 2>&1 & echo "code-server started"`,
+      `nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${projectDir} > /tmp/code-server.log 2>&1 & echo "code-server started"`,
       rootDir
     );
   }
 
-  async startBashTerminal(sandbox: Sandbox, rootDir: string): Promise<void> {
+  async startBashTerminal(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
     this.logger.workspace.starting('bash terminal');
+    
+    // Create a startup script that changes to project directory
     await sandbox.process.executeCommand(
-      `nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' bash > /tmp/ttyd.log 2>&1 & echo "ttyd started"`,
+      `echo '#!/bin/bash\ncd ${projectDir}\nexec bash' > /tmp/start-bash.sh && chmod +x /tmp/start-bash.sh`,
+      rootDir
+    );
+    
+    await sandbox.process.executeCommand(
+      `nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' /tmp/start-bash.sh > /tmp/ttyd.log 2>&1 & echo "ttyd started"`,
       rootDir
     );
   }
@@ -103,7 +115,7 @@ export class WorkspaceServices {
     this.logger.warn(`Health check failed after ${maxRetries} attempts`);
   }
 
-  async restartServices(sandbox: Sandbox, rootDir: string): Promise<void> {
+  async restartServices(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
     this.logger.workspace.starting('restarting services');
     
     // Kill existing services
@@ -115,16 +127,21 @@ export class WorkspaceServices {
     // Wait a moment for processes to die
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Recreate Claude startup script
+    // Recreate startup scripts
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\\necho "Starting Claude Code CLI..."\\ncd ${rootDir}\\nclaude\\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
+      `echo '#!/bin/bash\\necho "Starting Claude Code CLI..."\\ncd ${projectDir}\\nclaude\\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
+      rootDir
+    );
+    
+    await sandbox.process.executeCommand(
+      `echo '#!/bin/bash\\ncd ${projectDir}\\nexec bash' > /tmp/start-bash.sh && chmod +x /tmp/start-bash.sh`,
       rootDir
     );
 
     // Start all services
     await Promise.all([
-      this.startCodeServer(sandbox, rootDir),
-      this.startBashTerminal(sandbox, rootDir),
+      this.startCodeServer(sandbox, rootDir, projectDir),
+      this.startBashTerminal(sandbox, rootDir, projectDir),
       this.startClaudeTerminal(sandbox, rootDir)
     ]);
 
