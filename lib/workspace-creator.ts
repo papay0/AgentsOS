@@ -4,6 +4,7 @@ import { WorkspaceManager } from './workspace-manager';
 import { WorkspaceInstaller } from './workspace-installer';
 import { WorkspaceServices } from './workspace-services';
 import { WorkspaceOrchestrator } from './workspace-orchestrator';
+import { trackWorkspaceCreated } from './analytics';
 
 interface WorkspaceSetupOptions {
   resources?: {
@@ -76,6 +77,9 @@ export class WorkspaceCreator {
       };
       
       this.logger.logWorkspace('VSCode + Terminal ready! 🚀', workspaceData);
+      
+      // Track workspace creation
+      trackWorkspaceCreated(sandbox.id);
       
       return {
         sandboxId: sandbox.id,

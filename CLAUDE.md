@@ -16,7 +16,8 @@ AgentsPod is a cloud development environment platform that enables developers to
 
 ### Environment Setup
 - Requires `DAYTONA_API_KEY` environment variable for workspace creation
-- Create `.env.local` file with your Daytona API key
+- Uses Firebase configuration (`NEXT_PUBLIC_FIREBASE_*` variables)
+- Create `.env.local` file with your Daytona API key and Firebase config
 
 ## Architecture Overview
 
@@ -28,6 +29,8 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 - **Styling**: Tailwind CSS v4 with CSS variables (New York theme)
 - **Icons**: Lucide React for consistent iconography
 - **Cloud Platform**: Daytona SDK for workspace orchestration
+- **Database**: Firebase Firestore for waitlist and user data
+- **Analytics**: Firebase Analytics for usage tracking
 - **Code Editor**: code-server for VSCode in browser
 - **Terminal**: ttyd for web-based terminal access with light theme
 - **State Management**: React hooks with TypeScript
@@ -65,7 +68,15 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 └── theme-toggle.tsx       # Dark/light mode toggle
 
 /lib
-├── daytona.ts            # DaytonaClient service layer
+├── daytona.ts            # DaytonaClient facade
+├── workspace-manager.ts  # Basic workspace operations
+├── workspace-creator.ts  # Workspace creation orchestration
+├── workspace-orchestrator.ts # Complex service coordination
+├── workspace-installer.ts # Package installation
+├── workspace-services.ts # Service management
+├── firebase.ts           # Firebase configuration
+├── analytics.ts          # Analytics tracking utilities
+├── logger.ts             # Custom logging system
 └── utils.ts              # Utility functions
 
 /types
@@ -135,6 +146,21 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 ```bash
 # Required for workspace creation
 DAYTONA_API_KEY=your_daytona_api_key_here
+
+# Firebase configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
+
+### Firebase Integration
+- **Analytics**: Automatic tracking of workspace usage, user engagement, and feature adoption
+- **Firestore**: Ready for waitlist functionality and user data storage
+- **Configuration**: Uses your own Firebase project setup
+- **Analytics Events**: workspace_created, workspace_started, workspace_stopped, page_view, button_click, feature_used
 
 The application is designed to be simple, fast, and reliable for creating development environments with minimal configuration.

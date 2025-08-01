@@ -1,9 +1,18 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { Terminal, Code, Smartphone, Github, Star, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { trackButtonClick, trackPageView } from '@/lib/analytics';
 
 export default function HomePage() {
+  // Track landing page view on client side
+  useEffect(() => {
+    trackPageView('landing_page');
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-16">
@@ -33,12 +42,26 @@ export default function HomePage() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/home" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto px-10 py-4 text-lg bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all">
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto px-10 py-4 text-lg bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all"
+                onClick={() => trackButtonClick('launch_workspace', 'hero_section')}
+              >
                 Launch Workspace
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto px-10 py-4 text-lg border-2 hover:bg-gray-50 dark:hover:bg-gray-800" asChild>
-              <a href="https://github.com/papay0/agentspod" target="_blank" rel="noopener noreferrer">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full sm:w-auto px-10 py-4 text-lg border-2 hover:bg-gray-50 dark:hover:bg-gray-800" 
+              asChild
+            >
+              <a 
+                href="https://github.com/papay0/agentspod" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={() => trackButtonClick('star_github', 'hero_section')}
+              >
                 <Star className="mr-2 h-5 w-5" />
                 Star on GitHub
               </a>

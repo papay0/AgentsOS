@@ -32,6 +32,7 @@
 ### Prerequisites
 
 - Daytona API Key ([Get one here](https://www.daytona.io/))
+- Firebase Project ([Create one here](https://console.firebase.google.com/))
 - Node.js 20+ and npm
 
 ### Installation
@@ -50,7 +51,7 @@
 3. **Set up environment**
    ```bash
    cp .env.example .env.local
-   # Add your DAYTONA_API_KEY to .env.local
+   # Add your DAYTONA_API_KEY and Firebase config to .env.local
    ```
 
 4. **Start the development server**
@@ -74,6 +75,8 @@
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **UI**: shadcn/ui, Tailwind CSS
 - **Backend**: Daytona SDK for workspace orchestration
+- **Database**: Firebase Firestore (for waitlist and analytics)
+- **Analytics**: Firebase Analytics
 - **Editor**: code-server (VSCode in browser)
 - **Terminal**: ttyd for web-based terminal access
 - **AI**: Claude Code CLI integration
@@ -108,8 +111,28 @@ npm run lint     # Run ESLint
 ### Environment Variables
 
 ```bash
+# Required
 DAYTONA_API_KEY=your_daytona_api_key_here
+
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
+
+### Firebase Setup
+
+AgentsPod uses Firebase for analytics and waitlist functionality:
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Analytics and Firestore
+3. Go to Project Settings → General → Your apps
+4. Copy your Firebase config values to `.env.local`
+5. Firebase will automatically track workspace usage and user engagement
 
 ## 🤝 Contributing
 
