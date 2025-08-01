@@ -16,8 +16,9 @@ AgentsPod is a cloud development environment platform that enables developers to
 
 ### Environment Setup
 - Requires `DAYTONA_API_KEY` environment variable for workspace creation
+- Requires Clerk authentication keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`)
 - Uses Firebase configuration (`NEXT_PUBLIC_FIREBASE_*` variables)
-- Create `.env.local` file with your Daytona API key and Firebase config
+- Create `.env.local` file with your Daytona API key, Clerk keys, and Firebase config
 
 ## Architecture Overview
 
@@ -25,6 +26,7 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 
 ### Key Technologies
 - **Framework**: Next.js 15.4.4 with App Router + React 19.1.0
+- **Authentication**: Clerk for user management, sign-in/sign-up flows
 - **UI Components**: shadcn/ui component library with 40+ pre-built components
 - **Styling**: Tailwind CSS v4 with CSS variables (New York theme)
 - **Icons**: Lucide React for consistent iconography
@@ -36,24 +38,27 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 - **State Management**: React hooks with TypeScript
 
 ### Application Flow
-1. **Landing Page** (`/`) - Professional homepage showcasing features
-2. **Launch Page** (`/home`) - Simple workspace creation interface
-3. **Workspace** (`/home/workspace/[sandboxId]`) - Full development environment
-4. **API Layer** (`/api/create-workspace`) - Workspace creation endpoint
+1. **Landing Page** (`/`) - Public homepage showcasing features
+2. **Authentication** - Clerk handles sign-in/sign-up (required for `/home/*`)
+3. **Launch Page** (`/home`) - Protected workspace creation interface
+4. **Workspace** (`/home/workspace/[sandboxId]`) - Protected development environment
+5. **API Layer** (`/api/create-workspace`) - Workspace creation endpoint
 
 ### Project Structure
 ```
 /app                          # Next.js App Router
-├── layout.tsx               # Root layout with Geist font
-├── page.tsx                 # Landing page
+├── layout.tsx               # Root layout with ClerkProvider + Geist font
+├── page.tsx                 # Public landing page
 ├── home/
-│   ├── page.tsx            # Workspace launch page
+│   ├── page.tsx            # Protected workspace launch page
 │   └── workspace/
 │       └── [sandboxId]/
-│           └── page.tsx    # Full workspace environment
+│           └── page.tsx    # Protected workspace environment
 └── api/
     └── create-workspace/
         └── route.ts        # Workspace creation API
+
+/middleware.ts               # Clerk route protection
 
 /components
 ├── ui/                     # shadcn/ui component library (40+ components)
@@ -63,7 +68,7 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 │   ├── terminal-tabs.tsx  # Terminal tab interface
 │   ├── terminal-grid.tsx  # Resizable terminal layout
 │   └── terminal-pane.tsx  # Individual terminal instance
-├── header.tsx             # Application header
+├── header.tsx             # Application header with auth buttons
 ├── theme-provider.tsx     # Theme management
 └── theme-toggle.tsx       # Dark/light mode toggle
 
@@ -147,6 +152,10 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 # Required for workspace creation
 DAYTONA_API_KEY=your_daytona_api_key_here
 
+# Authentication (Clerk)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+
 # Firebase configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -156,6 +165,13 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
+
+### Authentication System
+- **Route Protection**: `/` is public, `/home/*` routes require authentication
+- **Middleware**: `middleware.ts` handles route protection using Clerk
+- **Components**: Header shows sign-in/sign-up buttons or user profile
+- **Provider**: `ClerkProvider` wraps the entire application in `layout.tsx`
+- **Flow**: Users must authenticate before accessing workspace features
 
 ### Firebase Integration
 - **Analytics**: Automatic tracking of workspace usage, user engagement, and feature adoption

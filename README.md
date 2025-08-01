@@ -32,6 +32,7 @@
 ### Prerequisites
 
 - Daytona API Key ([Get one here](https://www.daytona.io/))
+- Clerk Account ([Create one here](https://clerk.com/))
 - Firebase Project ([Create one here](https://console.firebase.google.com/))
 - Node.js 20+ and npm
 
@@ -51,7 +52,7 @@
 3. **Set up environment**
    ```bash
    cp .env.example .env.local
-   # Add your DAYTONA_API_KEY and Firebase config to .env.local
+   # Add your DAYTONA_API_KEY, Clerk keys, and Firebase config to .env.local
    ```
 
 4. **Start the development server**
@@ -74,6 +75,7 @@
 
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **UI**: shadcn/ui, Tailwind CSS
+- **Authentication**: Clerk for user management and auth
 - **Backend**: Daytona SDK for workspace orchestration
 - **Database**: Firebase Firestore (for waitlist and analytics)
 - **Analytics**: Firebase Analytics
@@ -114,6 +116,10 @@ npm run lint     # Run ESLint
 # Required
 DAYTONA_API_KEY=your_daytona_api_key_here
 
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+
 # Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
@@ -123,6 +129,16 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 ```
+
+### Authentication Setup (Clerk)
+
+AgentsPod uses Clerk for user authentication:
+
+1. Create a Clerk application at [Clerk Dashboard](https://dashboard.clerk.com/)
+2. Go to API Keys in your Clerk dashboard
+3. Copy your Publishable Key and Secret Key to `.env.local`
+4. The app will automatically handle sign-in/sign-up flows
+5. Landing page (`/`) is public, all `/home/*` routes require authentication
 
 ### Firebase Setup
 

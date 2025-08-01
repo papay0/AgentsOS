@@ -6,6 +6,13 @@ import { Button } from './ui/button';
 import { Terminal, Globe } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs';
 
 interface HeaderProps {
   sandboxId?: string;
@@ -50,6 +57,24 @@ export function Header({ sandboxId }: HeaderProps) {
               Open App
             </Button>
           )}
+          
+          {/* Auth buttons */}
+          <SignedOut>
+            <SignInButton>
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
+            </SignInButton>
+            <SignUpButton>
+              <Button size="sm">
+                Sign Up
+              </Button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+          
           <ThemeToggle />
         </div>
       </div>
