@@ -17,8 +17,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AgentsPod - AI Development Environment",
-  description: "Create containerized development environments with AI agent capabilities",
+  title: "AgentsPod - Vibe Code from Anywhere",
+  description: "Claude Code + VSCode in your browser. Zero setup. Even works on your phone.",
+  openGraph: {
+    title: "Vibe Code from Anywhere",
+    description: "Claude Coder + VSCode in your browser. Zero setup. Even works on your phone.",
+    url: "https://agentspod.dev",
+    siteName: "AgentsPod",
+    images: [
+      {
+        url: "/api/og",
+        width: 1200,
+        height: 630,
+        alt: "AgentsPod - Vibe Code from Anywhere",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vibe Code from Anywhere",
+    description: "Claude Code + VSCode in your browser. Zero setup. Even works on your phone.",
+    images: ["/api/og"],
+  },
+  metadataBase: new URL("https://agentspod.dev"),
 };
 
 export default function RootLayout({

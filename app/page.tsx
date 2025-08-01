@@ -82,13 +82,13 @@ export default function HomePage() {
           </Badge>
           
           <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            AgentsPod
+            Vibe Code from Anywhere
           </h1>
           
           <p className="text-2xl text-gray-600 dark:text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-            VSCode + Claude Code CLI in the browser. 
+            Claude Code + VSCode in your browser. 
             <br />
-            <span className="text-blue-600 dark:text-blue-400 font-medium">Code with AI assistance from anywhere, even your phone.</span>
+            <span className="text-blue-600 dark:text-blue-400 font-medium">Zero setup. Even works on your phone.</span>
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -136,9 +136,9 @@ export default function HomePage() {
             <div className="bg-blue-100 dark:bg-blue-900 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
               <Code className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">VSCode in Browser</h3>
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Full VSCode</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Full VSCode editor with extensions and themes. No downloads, no setup required.
+              Complete code editor with extensions. Just open your browser - no downloads.
             </p>
           </div>
 
@@ -146,9 +146,9 @@ export default function HomePage() {
             <div className="bg-green-100 dark:bg-green-900 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
               <Terminal className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Claude Code CLI</h3>
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">AI Coding Assistant</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              AI coding assistant built into your terminal for instant help and suggestions.
+            Claude Code helps you code directly in the terminal. Ask questions, get suggestions.
             </p>
           </div>
 
@@ -156,18 +156,18 @@ export default function HomePage() {
             <div className="bg-purple-100 dark:bg-purple-900 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
               <Smartphone className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Works Everywhere</h3>
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Code on Your Phone</h3>
             <p className="text-gray-600 dark:text-gray-400">
-              Laptop, tablet, phone. If it has a browser, you can code with AI assistance.
+              Coffee shop? Beach? Commuting? Code from anywhere with just your phone or tablet.
             </p>
           </div>
         </div>
 
         {/* Screenshots Showcase */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg border border-gray-100 dark:border-gray-700 mb-16">
-          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">See it in action</h2>
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">No setup, just code</h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 text-center mb-12 max-w-3xl mx-auto">
-            Professional development environment that works seamlessly across all your devices
+            Your complete dev environment launches in seconds - on any device with a browser
           </p>
           
           {/* Desktop View */}
@@ -187,7 +187,7 @@ export default function HomePage() {
               />
             </div>
             <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
-              Split-screen layout with VSCode editor and multi-tab terminal with Claude Code CLI
+              VSCode and AI terminal side-by-side - everything you need to build
             </p>
           </div>
 
@@ -205,9 +205,9 @@ export default function HomePage() {
                     src="/screenshots/mobile-terminal.png"
                   />
                 </div>
-                <h4 className="text-lg font-semibold mt-6 mb-2 text-gray-900 dark:text-white">Terminal on Mobile</h4>
+                <h4 className="text-lg font-semibold mt-6 mb-2 text-gray-900 dark:text-white">Code from your couch</h4>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Full terminal access with Claude Code CLI on your phone
+                  Full terminal with AI assistant - actually works great on mobile
                 </p>
               </div>
               
@@ -218,48 +218,21 @@ export default function HomePage() {
                     src="/screenshots/mobile-vscode.png"
                   />
                 </div>
-                <h4 className="text-lg font-semibold mt-6 mb-2 text-gray-900 dark:text-white">VSCode on Mobile</h4>
+                <h4 className="text-lg font-semibold mt-6 mb-2 text-gray-900 dark:text-white">Edit anywhere (if needed)</h4>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Complete code editor with file explorer and extensions
+                  Full VSCode editor on your phone - surprisingly usable
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* How it works */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg border border-gray-100 dark:border-gray-700 mb-16">
-          <h2 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-white">How it works</h2>
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="flex items-center gap-6">
-              <div className="bg-blue-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">1</div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Click &quot;Launch Workspace&quot;</h3>
-                <p className="text-gray-600 dark:text-gray-400">Start your development environment with one click</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">2</div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">We spin up your environment</h3>
-                <p className="text-gray-600 dark:text-gray-400">VSCode and Claude CLI are installed and configured (takes ~30 seconds)</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="bg-purple-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">3</div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Start coding with AI</h3>
-                <p className="text-gray-600 dark:text-gray-400">Your complete development environment with AI assistance is ready</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* CTA */}
         <div className="text-center bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-12 shadow-xl">
-          <h2 className="text-3xl font-bold mb-4 text-white">Ready to code anywhere?</h2>
+          <h2 className="text-3xl font-bold mb-4 text-white">Start your vibe coding journey</h2>
           <p className="text-blue-100 mb-8 text-lg max-w-2xl mx-auto">
-            Launch your AI-powered development environment now. It&apos;s free, open source, and takes less than a minute.
+            Free, open source, and works on your phone. No setup, no SSH keys, no downloads.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/home" className="w-full sm:w-auto">
@@ -278,7 +251,7 @@ export default function HomePage() {
 
         {/* Waitlist Section - only show in production mode */}
         {shouldShowWaitlist && (
-          <div id="waitlist-section" className="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg border border-gray-100 dark:border-gray-700 mb-16">
+          <div id="waitlist-section" className="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg border border-gray-100 dark:border-gray-700 mb-16 mt-16">
             <div className="max-w-2xl mx-auto text-center">
               <h2 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">Join the Waitlist</h2>
               <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
