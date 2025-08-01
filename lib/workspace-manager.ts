@@ -154,6 +154,25 @@ export class WorkspaceManager {
     }
   }
 
+  async deleteWorkspace(sandboxId: string): Promise<void> {
+    try {
+      this.logger.workspace.starting(`Deleting workspace ${sandboxId}`);
+      
+      const sandbox = await this.daytona.get(sandboxId);
+      await sandbox.delete();
+      
+      this.logger.success(`Workspace ${sandboxId} deleted successfully`);
+    } catch (error) {
+      const errorData: ErrorLogData = {
+        error: error instanceof Error ? error : String(error),
+        code: 'WORKSPACE_DELETE_FAILED',
+        details: { sandboxId }
+      };
+      this.logger.logError('Failed to delete workspace', errorData);
+      throw new Error(`Failed to delete workspace: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   async getSandbox(sandboxId: string): Promise<Sandbox> {
     return await this.daytona.get(sandboxId);
   }

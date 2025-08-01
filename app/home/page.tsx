@@ -27,7 +27,8 @@ export default function HomePage() {
         throw new Error('Failed to fetch workspaces');
       }
 
-      setSandboxes(data.sandboxes);
+      // Filter out sandboxes in "destroying" state to prevent showing them during deletion
+      setSandboxes(data.sandboxes.filter(sandbox => sandbox.state !== 'destroying'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -54,6 +55,15 @@ export default function HomePage() {
 
   const handleStartWorkspace = () => {
     // Refresh the list after starting a workspace
+    fetchSandboxes();
+  };
+
+  const handleDeleteWorkspace = (deletedSandboxId?: string) => {
+    if (deletedSandboxId) {
+      // Optimistically remove the deleted workspace from the UI
+      setSandboxes(prev => prev.filter(sandbox => sandbox.id !== deletedSandboxId));
+    }
+    // Also refresh the list to sync with server state
     fetchSandboxes();
   };
 
@@ -94,6 +104,7 @@ export default function HomePage() {
         onCreateNew={handleCreateNew}
         onStopWorkspace={handleStopWorkspace}
         onStartWorkspace={handleStartWorkspace}
+        onDeleteWorkspace={handleDeleteWorkspace}
       />
     </div>
   );

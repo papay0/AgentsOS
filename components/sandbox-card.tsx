@@ -15,7 +15,8 @@ import {
   ExternalLink,
   Copy,
   Check,
-  StopCircle
+  StopCircle,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -25,6 +26,7 @@ import type { SandboxListItem } from '@/types/sandbox';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { StopWorkspaceDialog } from './stop-workspace-dialog';
+import { DeleteWorkspaceDialog } from './delete-workspace-dialog';
 import { toast } from 'sonner';
 import { SandboxState } from '@daytonaio/api-client';
 
@@ -33,6 +35,7 @@ interface SandboxCardProps {
   onOpen?: (sandboxId: string) => void;
   onStop?: () => void;
   onStart?: () => void;
+  onDelete?: () => void;
 }
 
 const stateConfig = {
@@ -74,12 +77,14 @@ const stateConfig = {
   }
 };
 
-export function SandboxCard({ sandbox, onOpen, onStop, onStart }: SandboxCardProps) {
+export function SandboxCard({ sandbox, onOpen, onStop, onStart, onDelete }: SandboxCardProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [showStopDialog, setShowStopDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const state = sandbox.state || 'unknown';
   const config = stateConfig[state as keyof typeof stateConfig] || {
     label: state,
@@ -154,6 +159,31 @@ export function SandboxCard({ sandbox, onOpen, onStop, onStart }: SandboxCardPro
       toast.error(error instanceof Error ? error.message : 'Failed to start workspace');
     } finally {
       setIsStarting(false);
+    }
+  };
+
+  const handleDeleteWorkspace = async (sandboxId: string) => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/workspace-delete/${sandboxId}`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete workspace');
+      }
+
+      toast.success('Workspace deleted successfully!');
+      
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete workspace');
+      throw error;
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -316,15 +346,33 @@ export function SandboxCard({ sandbox, onOpen, onStop, onStart }: SandboxCardPro
             </TooltipProvider>
           </div>
         ) : String(sandbox.state) === SandboxState.STOPPED ? (
-          <Button 
-            onClick={handleStartWorkspace}
-            disabled={isStarting}
-            className="w-full"
-            variant="default"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            {isStarting ? 'Starting...' : 'Start Workspace'}
-          </Button>
+          <div className="flex gap-2 w-full">
+            <Button 
+              onClick={handleStartWorkspace}
+              disabled={isStarting || isDeleting}
+              className="flex-1"
+              variant="default"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              {isStarting ? 'Starting...' : 'Start Workspace'}
+            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setShowDeleteDialog(true)}
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    disabled={isDeleting || isStarting}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isDeleting ? 'Deleting...' : 'Delete Workspace'}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         ) : (
           <Button 
             onClick={handleOpen} 
@@ -342,6 +390,13 @@ export function SandboxCard({ sandbox, onOpen, onStop, onStart }: SandboxCardPro
         onOpenChange={setShowStopDialog}
         sandboxId={sandbox.id}
         onConfirm={handleStopWorkspace}
+      />
+
+      <DeleteWorkspaceDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        sandboxId={sandbox.id}
+        onConfirm={handleDeleteWorkspace}
       />
     </Card>
   );
