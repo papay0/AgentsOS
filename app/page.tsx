@@ -1,20 +1,69 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { Terminal, Code, Smartphone, Github, Star, Heart } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Terminal, Code, Smartphone, Github, Star, Heart, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { trackButtonClick, trackPageView } from '@/lib/analytics';
+import { addToWaitlist } from '@/lib/waitlist';
+import { isDevelopment } from '@/lib/env';
 
 export default function HomePage() {
+  const [isDevMode] = useState(isDevelopment());
+  const [showProdMode, setShowProdMode] = useState(false);
+  const [email, setEmail] = useState('');
+  const [useCase, setUseCase] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
   // Track landing page view on client side
   useEffect(() => {
     trackPageView('landing_page');
   }, []);
 
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      await addToWaitlist(email, 'landing_page', useCase);
+      setIsSubmitted(true);
+      trackButtonClick('waitlist_signup', 'landing_page');
+    } catch (err) {
+      setError('Something went wrong. Please try again.');
+      console.error('Waitlist signup error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const shouldShowWaitlist = !isDevMode || showProdMode;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-slate-800">
+      {/* Debug toggle - only show in dev mode */}
+      {isDevMode && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            onClick={() => setShowProdMode(!showProdMode)}
+            variant="outline"
+            size="sm"
+            className="bg-white/90 backdrop-blur-sm border-2 shadow-lg"
+          >
+            {showProdMode ? 'Dev Mode' : 'Prod Mode'}
+          </Button>
+        </div>
+      )}
+      
       <div className="container mx-auto px-4 py-16">
         {/* Hero */}
         <div className="text-center mb-20">
@@ -41,15 +90,25 @@ export default function HomePage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/home" className="w-full sm:w-auto">
+            {shouldShowWaitlist ? (
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto px-10 py-4 text-lg bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all"
-                onClick={() => trackButtonClick('launch_workspace', 'hero_section')}
+                onClick={() => document.getElementById('waitlist-section')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                Launch Workspace
+                Join Waitlist
               </Button>
-            </Link>
+            ) : (
+              <Link href="/home" className="w-full sm:w-auto">
+                <Button 
+                  size="lg" 
+                  className="w-full sm:w-auto px-10 py-4 text-lg bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all"
+                  onClick={() => trackButtonClick('launch_workspace', 'hero_section')}
+                >
+                  Launch Workspace
+                </Button>
+              </Link>
+            )}
             <Button 
               variant="outline" 
               size="lg" 
@@ -150,6 +209,69 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
+
+        {/* Waitlist Section - only show in production mode */}
+        {shouldShowWaitlist && (
+          <div id="waitlist-section" className="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg border border-gray-100 dark:border-gray-700 mb-16">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="text-4xl font-bold mb-6 text-gray-900 dark:text-white">Join the Waitlist</h2>
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+                Get notified when the hosted version of AgentsPod is ready for prime time!
+              </p>
+
+              {isSubmitted ? (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-8 border border-green-200 dark:border-green-800">
+                  <Mail className="h-12 w-12 mx-auto text-green-600 dark:text-green-400 mb-4" />
+                  <h3 className="text-2xl font-semibold text-green-900 dark:text-green-100 mb-3">
+                    You&apos;re on the list! 🎉
+                  </h3>
+                  <p className="text-green-700 dark:text-green-300">
+                    Thanks for joining! I&apos;ll notify you as soon as AgentsPod is ready.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleWaitlistSubmit} className="space-y-6">
+                  <div className="space-y-4">
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isSubmitting}
+                      className="w-full h-14 text-lg"
+                      required
+                    />
+                    <Input
+                      type="text"
+                      placeholder="How do you plan to use AgentsPod? (optional)"
+                      value={useCase}
+                      onChange={(e) => setUseCase(e.target.value)}
+                      disabled={isSubmitting}
+                      className="w-full h-14 text-lg"
+                    />
+                  </div>
+                  
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    size="lg"
+                    className="w-full sm:w-auto px-12 py-4 text-lg bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all"
+                  >
+                    {isSubmitting ? 'Joining...' : 'Join Waitlist'}
+                  </Button>
+                  
+                  {error && (
+                    <p className="text-red-600 text-center">{error}</p>
+                  )}
+                  
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Or <a href="https://github.com/papay0/agentspod" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline font-medium hover:text-blue-700 dark:hover:text-blue-300">host it yourself</a> - it&apos;s completely open source!
+                  </p>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
