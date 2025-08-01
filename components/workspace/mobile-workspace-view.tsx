@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { VSCodeEditor } from './vscode-editor';
+import { TerminalIframe } from './terminal-iframe';
 import { Plus, Code2, Settings, Globe } from 'lucide-react';
 import type { TerminalTab } from '@/types/workspace';
 
@@ -91,11 +92,9 @@ export function MobileWorkspaceView({
               activeTabId === tab.id && currentView === 'terminal' ? 'block' : 'hidden'
             }`}
           >
-            <iframe
-              src={tab.terminals[0]?.url || ''}
-              className="w-full h-full border-0"
+            <TerminalIframe
+              url={tab.terminals[0]?.url || ''}
               title={tab.title}
-              style={{ backgroundColor: '#ffffff' }}
             />
           </div>
         ))}

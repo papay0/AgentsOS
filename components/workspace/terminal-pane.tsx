@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { Terminal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TerminalIframe } from './terminal-iframe';
 import type { TerminalPane as TerminalPaneType } from '@/types/workspace';
 
 interface TerminalPaneProps {
@@ -11,25 +12,6 @@ interface TerminalPaneProps {
 }
 
 export function TerminalPane({ terminal, onRemove }: TerminalPaneProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  React.useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    const handleLoad = () => {
-      try {
-        if (iframe.contentWindow) {
-          iframe.contentWindow.onbeforeunload = null;
-        }
-      } catch {
-        // Cross-origin restrictions - ignore
-      }
-    };
-
-    iframe.addEventListener('load', handleLoad);
-    return () => iframe.removeEventListener('load', handleLoad);
-  }, []);
 
   return (
     <div className="h-full bg-white border border-gray-300 overflow-hidden flex flex-col">
@@ -51,12 +33,9 @@ export function TerminalPane({ terminal, onRemove }: TerminalPaneProps) {
       </div>
       
       <div className="flex-1 bg-white overflow-hidden group">
-        <iframe
-          ref={iframeRef}
-          src={terminal.url}
-          className="w-full h-full border-0"
+        <TerminalIframe
+          url={terminal.url}
           title={terminal.title}
-          style={{ backgroundColor: '#ffffff' }}
         />
       </div>
     </div>
