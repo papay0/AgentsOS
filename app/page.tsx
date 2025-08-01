@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Terminal, Code, Smartphone, Github, Star, Heart, Mail } from 'lucide-react';
+import { Terminal, Code, Smartphone, Star, Heart, Mail, Monitor, Phone } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Iphone15Pro } from '@/components/ui/iphone-15-pro';
 import { trackButtonClick, trackPageView } from '@/lib/analytics';
 import { addToWaitlist } from '@/lib/waitlist';
 import { isDevelopment } from '@/lib/env';
@@ -161,6 +163,70 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Screenshots Showcase */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg border border-gray-100 dark:border-gray-700 mb-16">
+          <h2 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">See it in action</h2>
+          <p className="text-xl text-gray-600 dark:text-gray-300 text-center mb-12 max-w-3xl mx-auto">
+            Professional development environment that works seamlessly across all your devices
+          </p>
+          
+          {/* Desktop View */}
+          <div className="mb-12">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Monitor className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">Desktop Experience</h3>
+            </div>
+            <div className="relative rounded-xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700">
+              <Image
+                src="/screenshots/desktop-workspace.png"
+                alt="AgentsPod Desktop - VSCode and Terminal side by side"
+                width={1200}
+                height={675}
+                className="w-full h-auto"
+                priority
+              />
+            </div>
+            <p className="text-center text-gray-600 dark:text-gray-400 mt-4">
+              Split-screen layout with VSCode editor and multi-tab terminal with Claude Code CLI
+            </p>
+          </div>
+
+          {/* Mobile Views */}
+          <div>
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Phone className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">Mobile Experience</h3>
+            </div>
+            <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+              <div className="text-center">
+                <div className="relative inline-block drop-shadow-2xl max-w-[300px]">
+                  <Iphone15Pro
+                    className="size-full"
+                    src="/screenshots/mobile-terminal.png"
+                  />
+                </div>
+                <h4 className="text-lg font-semibold mt-6 mb-2 text-gray-900 dark:text-white">Terminal on Mobile</h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Full terminal access with Claude Code CLI on your phone
+                </p>
+              </div>
+              
+              <div className="text-center">
+                <div className="relative inline-block drop-shadow-2xl max-w-[300px]">
+                  <Iphone15Pro
+                    className="size-full"
+                    src="/screenshots/mobile-vscode.png"
+                  />
+                </div>
+                <h4 className="text-lg font-semibold mt-6 mb-2 text-gray-900 dark:text-white">VSCode on Mobile</h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Complete code editor with file explorer and extensions
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* How it works */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-lg border border-gray-100 dark:border-gray-700 mb-16">
           <h2 className="text-4xl font-bold text-center mb-12 text-gray-900 dark:text-white">How it works</h2>
@@ -203,7 +269,7 @@ export default function HomePage() {
             </Link>
             <Button size="lg" className="w-full sm:w-auto px-10 py-4 text-lg bg-white/10 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-blue-600 transition-all" asChild>
               <a href="https://github.com/papay0/agentspod" target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-5 w-5" />
+                <Terminal className="mr-2 h-5 w-5" />
                 View Source Code
               </a>
             </Button>

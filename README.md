@@ -1,5 +1,4 @@
 <div align="center">
-    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/docs/logo.svg" alt="AgentsPod logo" width="120" height="120">
     <h1>AgentsPod</h1>
 </div>
 
@@ -10,8 +9,19 @@
     <a href="https://github.com/papay0/agentspod/issues"><img src="https://img.shields.io/github/issues/papay0/agentspod" alt="GitHub issues" /></a>
 </p>
 
+## 📸 Screenshots
+
+### Desktop Experience
 <div align="center">
-    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/docs/screenshot.png" alt="AgentsPod Screenshot" width="800">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/desktop-workspace.png" alt="AgentsPod Desktop - VSCode and Terminal" width="800">
+    <p><em>Split-screen layout with VSCode editor and multi-tab terminal featuring Claude Code CLI</em></p>
+</div>
+
+### Mobile Experience
+<div align="center">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-terminal.png" alt="AgentsPod Mobile Terminal" width="250" style="margin: 0 20px;">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-vscode.png" alt="AgentsPod Mobile VSCode" width="250" style="margin: 0 20px;">
+    <p><em>Full terminal and VSCode experience on mobile devices</em></p>
 </div>
 
 > Launch on-demand development workspaces with VSCode and Claude Code CLI pre-installed. Code with AI assistance from anywhere, even your phone.
