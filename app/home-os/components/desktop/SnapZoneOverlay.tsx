@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SNAP_OVERLAY_Z_INDEX } from '../constants/layout';
+import { SNAP_OVERLAY_Z_INDEX } from '../../constants/layout';
 
 interface SnapZone {
   id: 'left' | 'right' | 'top';

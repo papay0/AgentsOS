@@ -22,3 +22,9 @@ export const WINDOW_Z_INDEX_BASE = 10;
 export const WINDOW_Z_INDEX_MAX = 90; // Keep windows below dock
 export const DOCK_Z_INDEX = 100;
 export const SNAP_OVERLAY_Z_INDEX = 60;
+
+// Mobile specific constants
+export const MOBILE_BREAKPOINT = 768;
+export const MOBILE_MENU_BAR_HEIGHT = 32;
+export const MOBILE_DOCK_HEIGHT = 88;
+export const MOBILE_APPS_PER_PAGE = 16;

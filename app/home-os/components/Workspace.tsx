@@ -2,13 +2,16 @@
 
 import { useWindowStore } from '../stores/windowStore';
 import { useState, useEffect } from 'react';
-import Window from './Window';
-import Dock from './Dock';
-import MenuBar from './MenuBar';
-import SnapZoneOverlay from './SnapZoneOverlay';
+import { useIsMobile } from '@/hooks/use-mobile';
+import Window from './desktop/Window';
+import Dock from './desktop/Dock';
+import MenuBar from './desktop/MenuBar';
+import SnapZoneOverlay from './desktop/SnapZoneOverlay';
+import MobileWorkspace from './mobile/MobileWorkspace';
 
 export default function Workspace() {
   const windows = useWindowStore((state) => state.windows);
+  const isMobile = useIsMobile();
   const [globalSnapState, setGlobalSnapState] = useState<{
     activeZone: { 
       id: 'left' | 'right' | 'top'; 
@@ -28,6 +31,12 @@ export default function Workspace() {
     return () => window.removeEventListener('snapZoneChange', handleSnapZoneChange as EventListener);
   }, []);
 
+  // Render mobile workspace on mobile devices
+  if (isMobile) {
+    return <MobileWorkspace />;
+  }
+
+  // Render desktop workspace on desktop devices
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900">
       {/* Menu Bar */}

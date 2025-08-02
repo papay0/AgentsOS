@@ -1,8 +1,8 @@
 'use client';
 
-import { useWindowStore } from '../stores/windowStore';
+import { useWindowStore } from '../../stores/windowStore';
 import { Plus, Code, Bot, FolderOpen, Terminal, Globe } from 'lucide-react';
-import { DOCK_Z_INDEX } from '../constants/layout';
+import { DOCK_Z_INDEX } from '../../constants/layout';
 
 export default function Dock() {
   const { windows, addWindow, restoreWindow, focusWindow } = useWindowStore();

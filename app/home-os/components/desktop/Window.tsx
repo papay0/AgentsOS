@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useRef, useCallback } from 'react';
-import { Window as WindowType } from '../stores/windowStore';
-import { useWindowStore } from '../stores/windowStore';
-import { useDrag } from '../hooks/useDrag';
-import { useResize } from '../hooks/useResize';
-import { useSnapZones } from '../hooks/useSnapZones';
+import { Window as WindowType } from '../../stores/windowStore';
+import { useWindowStore } from '../../stores/windowStore';
+import { useDrag } from '../../hooks/useDrag';
+import { useResize } from '../../hooks/useResize';
+import { useSnapZones } from '../../hooks/useSnapZones';
 import { X, Minus, Square } from 'lucide-react';
-import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT } from '../constants/layout';
+import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT } from '../../constants/layout';
 
 interface WindowProps {
   window: WindowType;
