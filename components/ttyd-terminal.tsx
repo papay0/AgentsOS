@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
-import { Terminal } from '@xterm/xterm';
+import { Terminal, ITerminalAddon } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
 
 interface TTYDTerminalProps {
@@ -38,7 +38,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
 }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
-  const fitAddon = useRef<{ fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null>(null);
+  const fitAddon = useRef<ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null>(null);
   const websocket = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -240,7 +240,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       import('@xterm/addon-web-links').then(mod => mod.WebLinksAddon)
     ]).then(([FitAddon, WebLinksAddon]) => {
       if (terminal.current) {
-        fitAddon.current = new FitAddon();
+        fitAddon.current = new FitAddon() as ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined };
         terminal.current.loadAddon(fitAddon.current);
         terminal.current.loadAddon(new WebLinksAddon());
       }
