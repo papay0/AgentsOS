@@ -2,8 +2,6 @@
 
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Terminal } from '@xterm/xterm';
-import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
 import '@xterm/xterm/css/xterm.css';
 
 interface TTYDTerminalProps {
@@ -40,7 +38,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
 }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
-  const fitAddon = useRef<FitAddon | null>(null);
+  const fitAddon = useRef<{ fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null>(null);
   const websocket = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -236,10 +234,17 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       allowTransparency: false,
     });
 
-    // Add addons
-    fitAddon.current = new FitAddon();
-    terminal.current.loadAddon(fitAddon.current);
-    terminal.current.loadAddon(new WebLinksAddon());
+    // Dynamically import and add addons
+    Promise.all([
+      import('@xterm/addon-fit').then(mod => mod.FitAddon),
+      import('@xterm/addon-web-links').then(mod => mod.WebLinksAddon)
+    ]).then(([FitAddon, WebLinksAddon]) => {
+      if (terminal.current) {
+        fitAddon.current = new FitAddon();
+        terminal.current.loadAddon(fitAddon.current);
+        terminal.current.loadAddon(new WebLinksAddon());
+      }
+    });
 
     // Open terminal in DOM
     terminal.current.open(terminalRef.current);
@@ -249,7 +254,6 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       if (terminalRef.current) {
         const xtermScreen = terminalRef.current.querySelector('.xterm-screen');
         const xtermViewport = terminalRef.current.querySelector('.xterm-viewport');
-        const xtermHelper = terminalRef.current.querySelector('.xterm-helper-textarea');
         
         if (xtermScreen) {
           (xtermScreen as HTMLElement).style.height = '100%';
