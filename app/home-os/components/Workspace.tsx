@@ -9,7 +9,7 @@ export default function Workspace() {
   const windows = useWindowStore((state) => state.windows);
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-blue-900 via-purple-900 to-gray-900">
+    <div className="relative w-full h-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900">
       {/* Menu Bar */}
       <MenuBar />
       

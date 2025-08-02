@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Header } from "@/components/header";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from '@clerk/nextjs';
 
@@ -59,12 +58,7 @@ export default function RootLayout({
             defaultTheme="system"
             storageKey="agentspod-ui-theme"
           >
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-1 pt-14">
-                {children}
-              </main>
-            </div>
+            {children}
             <Toaster />
           </ThemeProvider>
         </body>
