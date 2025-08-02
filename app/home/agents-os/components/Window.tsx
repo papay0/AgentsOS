@@ -4,6 +4,7 @@ import React, { useRef, useCallback } from 'react';
 import { Window as WindowType } from '../stores/windowStore';
 import { useWindowStore } from '../stores/windowStore';
 import { useDrag } from '../hooks/useDrag';
+import { useResize } from '../hooks/useResize';
 import { X, Minus, Square } from 'lucide-react';
 
 interface WindowProps {
@@ -14,19 +15,41 @@ export default function Window({ window }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
   
-  const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow } = useWindowStore();
+  const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, resizeWindow, updateWindow } = useWindowStore();
 
   // Handle window dragging
   const handleDrag = useCallback((deltaX: number, deltaY: number) => {
+    if (window.maximized) return; // Don't allow dragging maximized windows
     const newX = Math.max(0, window.position.x + deltaX);
     const newY = Math.max(0, window.position.y + deltaY);
     moveWindow(window.id, newX, newY);
-  }, [window.id, window.position, moveWindow]);
+  }, [window.id, window.position, moveWindow, window.maximized]);
 
   const { isDragging } = useDrag({
     elementRef: titleBarRef,
     onDrag: handleDrag,
     onDragStart: () => focusWindow(window.id),
+  });
+
+  // Handle window resizing
+  const handleResize = useCallback((width: number, height: number, x?: number, y?: number) => {
+    // Update both size and position if provided
+    if (x !== undefined && y !== undefined) {
+      updateWindow(window.id, {
+        size: { width, height },
+        position: { x, y }
+      });
+    } else {
+      resizeWindow(window.id, width, height);
+    }
+  }, [window.id, updateWindow, resizeWindow]);
+
+  const { isResizing, handleResizeStart } = useResize({
+    windowRef: windowRef,
+    onResize: handleResize,
+    onResizeStart: () => focusWindow(window.id),
+    minWidth: 250,
+    minHeight: 200,
   });
 
   const handleClose = () => removeWindow(window.id);
@@ -80,6 +103,7 @@ export default function Window({ window }: WindowProps) {
         bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700
         ${window.focused ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-300 dark:ring-gray-600'}
         ${isDragging ? 'cursor-grabbing' : 'cursor-default'}
+        ${isResizing ? 'select-none' : ''}
         transition-all duration-150 ease-out
         will-change-transform
       `}
@@ -137,6 +161,55 @@ export default function Window({ window }: WindowProps) {
       <div className="h-full pb-8 overflow-hidden">
         <WindowContent window={window} />
       </div>
+
+      {/* Resize Handles - Only show when not maximized */}
+      {!window.maximized && (
+        <>
+          {/* Edge Handles */}
+          <div
+            className="absolute top-0 left-2 right-2 h-1 cursor-n-resize hover:bg-blue-500/20 transition-colors"
+            style={{ top: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'n')}
+          />
+          <div
+            className="absolute bottom-0 left-2 right-2 h-1 cursor-s-resize hover:bg-blue-500/20 transition-colors"
+            style={{ bottom: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 's')}
+          />
+          <div
+            className="absolute top-2 bottom-2 right-0 w-1 cursor-e-resize hover:bg-blue-500/20 transition-colors"
+            style={{ right: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'e')}
+          />
+          <div
+            className="absolute top-2 bottom-2 left-0 w-1 cursor-w-resize hover:bg-blue-500/20 transition-colors"
+            style={{ left: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'w')}
+          />
+
+          {/* Corner Handles */}
+          <div
+            className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize hover:bg-blue-500/30 transition-colors"
+            style={{ top: '-2px', right: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'ne')}
+          />
+          <div
+            className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize hover:bg-blue-500/30 transition-colors"
+            style={{ top: '-2px', left: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'nw')}
+          />
+          <div
+            className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize hover:bg-blue-500/30 transition-colors"
+            style={{ bottom: '-2px', right: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'se')}
+          />
+          <div
+            className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize hover:bg-blue-500/30 transition-colors"
+            style={{ bottom: '-2px', left: '-2px' }}
+            onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'sw')}
+          />
+        </>
+      )}
     </div>
   );
 }
