@@ -147,6 +147,15 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 - Responsive design with Tailwind CSS
 - Professional UI following shadcn/ui design system
 
+### Testing Guidelines
+- **ALWAYS write comprehensive tests after each successful feature implementation**
+- **NO SKIPPED TESTS**: Every test must pass, never use `.skip()` - either implement fully or don't include
+- Use Vitest + React Testing Library for component testing
+- Mock complex UI components (dropdowns, modals) to prevent timeout issues
+- Test all user interactions, accessibility, and edge cases
+- Run `npm run test:run` after implementing features to ensure all tests pass
+- Maintain 100% test coverage for critical components
+
 ### Environment Variables
 ```bash
 # Required for workspace creation

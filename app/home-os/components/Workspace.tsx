@@ -33,12 +33,19 @@ export default function Workspace() {
 
   // Render mobile workspace on mobile devices
   if (isMobile) {
-    return <MobileWorkspace />;
+    return (
+      <div data-testid="mobile-workspace">
+        <MobileWorkspace />
+      </div>
+    );
   }
 
   // Render desktop workspace on desktop devices
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900">
+    <div 
+      data-testid="desktop-workspace"
+      className="relative w-full h-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900"
+    >
       {/* Menu Bar */}
       <MenuBar />
       

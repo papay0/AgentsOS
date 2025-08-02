@@ -181,7 +181,7 @@ export default function Window({ window }: WindowProps) {
 
       {/* Resize Handles - Only show when not maximized */}
       {!window.maximized && (
-        <>
+        <div data-testid="resize-handles">
           {/* Edge Handles */}
           <div
             className="absolute top-0 left-2 right-2 h-1 cursor-n-resize hover:bg-blue-500/20 transition-colors"
@@ -225,7 +225,7 @@ export default function Window({ window }: WindowProps) {
             style={{ bottom: '-2px', left: '-2px' }}
             onPointerDown={(e) => handleResizeStart(e.nativeEvent, 'sw')}
           />
-        </>
+        </div>
       )}
     </div>
   );
