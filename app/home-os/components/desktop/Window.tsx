@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState, memo } from 'react';
 import { Window as WindowType } from '../../stores/windowStore';
 import { useWindowStore } from '../../stores/windowStore';
 import { useDrag } from '../../hooks/useDrag';
@@ -17,6 +17,9 @@ interface WindowProps {
 export default function Window({ window }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isOptimizedDragging, setIsOptimizedDragging] = useState(false);
+  const [suppressTransitions, setSuppressTransitions] = useState(false);
   
   const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, resizeWindow, updateWindow, setWindowAnimating } = useWindowStore();
 
@@ -25,25 +28,55 @@ export default function Window({ window }: WindowProps) {
     windowId: window.id,
   });
 
-  // Handle window dragging with snap zone detection
+  // Handle window dragging with optimized transform updates
   const handleDrag = useCallback((deltaX: number, deltaY: number, currentX: number, currentY: number) => {
-    if (window.maximized) return; // Don't allow dragging maximized windows
+    if (window.maximized) return;
     
-    const newX = Math.max(0, window.position.x + deltaX);
-    const newY = Math.max(0, window.position.y + deltaY);
-    
-    // Update window position
-    moveWindow(window.id, newX, newY);
+    // Update transform offset for smooth dragging
+    setDragOffset(prev => ({
+      x: prev.x + deltaX,
+      y: prev.y + deltaY
+    }));
     
     // Check for snap zones during drag
     handleDragMove(currentX, currentY);
-  }, [window.id, window.position, moveWindow, window.maximized, handleDragMove]);
+  }, [window.maximized, handleDragMove]);
+
+  const handleDragStart = useCallback(() => {
+    focusWindow(window.id);
+    setIsOptimizedDragging(true);
+  }, [window.id, focusWindow]);
+
+  const handleDragEndOptimized = useCallback((currentX: number, currentY: number) => {
+    // Calculate final position
+    const finalX = Math.max(0, window.position.x + dragOffset.x);
+    const finalY = Math.max(0, window.position.y + dragOffset.y);
+    
+    // Suppress transitions immediately and for longer to prevent any visual glitch
+    setSuppressTransitions(true);
+    
+    // Update the store position first, while still in optimized dragging mode
+    moveWindow(window.id, finalX, finalY);
+    
+    // Use requestAnimationFrame to ensure the store update is applied
+    requestAnimationFrame(() => {
+      // Now stop optimized dragging and reset offset
+      setIsOptimizedDragging(false);
+      setDragOffset({ x: 0, y: 0 });
+      
+      // Keep transitions disabled for longer to ensure smooth transition
+      setTimeout(() => setSuppressTransitions(false), 100);
+    });
+    
+    // Handle snap zones
+    handleDragEnd(currentX, currentY);
+  }, [window.id, window.position, dragOffset, moveWindow, handleDragEnd]);
 
   const { isDragging } = useDrag({
     elementRef: titleBarRef,
     onDrag: handleDrag,
-    onDragStart: () => focusWindow(window.id),
-    onDragEnd: (currentX, currentY) => handleDragEnd(currentX, currentY),
+    onDragStart: handleDragStart,
+    onDragEnd: handleDragEndOptimized,
   });
 
   // Handle window resizing
@@ -115,25 +148,41 @@ export default function Window({ window }: WindowProps) {
   };
 
   const getWindowStyles = () => {
-    const baseStyles = {
-      position: 'absolute' as const,
-      left: window.position.x,
-      top: window.position.y,
-      width: window.maximized ? '100%' : window.size.width,
-      height: window.maximized ? `calc(100% - ${TOTAL_DOCK_AREA}px)` : window.size.height, // Leave space for dock + spacing
-      zIndex: window.zIndex,
-      transform: window.maximized ? 'none' : undefined,
-    };
-
     if (window.maximized) {
       return {
-        ...baseStyles,
+        position: 'absolute' as const,
         left: 0,
-        top: 0, // 0 relative to workspace container (which is already offset by 32px)
+        top: 0,
+        width: '100%',
+        height: `calc(100% - ${TOTAL_DOCK_AREA}px)`,
+        zIndex: window.zIndex,
+        transform: 'none',
       };
     }
 
-    return baseStyles;
+    // Use left/top for reliable positioning, only use transform for drag optimization
+    if (isOptimizedDragging) {
+      return {
+        position: 'absolute' as const,
+        left: window.position.x,
+        top: window.position.y,
+        width: window.size.width,
+        height: window.size.height,
+        zIndex: window.zIndex,
+        transform: `translate3d(${dragOffset.x}px, ${dragOffset.y}px, 0)`,
+        willChange: 'transform',
+      };
+    }
+
+    return {
+      position: 'absolute' as const,
+      left: window.position.x,
+      top: window.position.y,
+      width: window.size.width,
+      height: window.size.height,
+      zIndex: window.zIndex,
+      willChange: 'auto',
+    };
   };
 
   return (
@@ -141,13 +190,18 @@ export default function Window({ window }: WindowProps) {
       ref={windowRef}
       style={getWindowStyles()}
       className={`
-        bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700
-        ${window.focused ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-300 dark:ring-gray-600'}
+        bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700
+        ${window.focused 
+          ? 'ring-2 ring-blue-500 shadow-2xl shadow-blue-500/20' 
+          : 'ring-1 ring-gray-300 dark:ring-gray-600 shadow-xl'
+        }
         ${isDragging ? 'cursor-grabbing' : 'cursor-default'}
         ${isResizing ? 'select-none' : ''}
         ${window.isAnimating ? 'pointer-events-none' : ''}
-        transition-all duration-300 ease-out
-        will-change-transform
+        ${isDragging || isOptimizedDragging || suppressTransitions ? 'transition-none' : 'focus-smooth'}
+        ${isDragging ? 'scale-[1.01]' : 'scale-100'}
+        transform-gpu
+        contain-layout
       `}
       onClick={() => focusWindow(window.id)}
     >
@@ -202,7 +256,7 @@ export default function Window({ window }: WindowProps) {
       </div>
 
       {/* Window Content */}
-      <div className="h-full pb-8 overflow-hidden">
+      <div className={`h-full pb-8 overflow-hidden ${isDragging ? 'opacity-90 pointer-events-none' : ''}`}>
         <WindowContent window={window} />
       </div>
 
@@ -258,7 +312,7 @@ export default function Window({ window }: WindowProps) {
   );
 }
 
-function WindowContent({ window }: { window: WindowType }) {
+const WindowContent = memo(function WindowContent({ window }: { window: WindowType }) {
   const getContentBackground = () => {
     switch (window.type) {
       case 'vscode': return 'bg-gray-900 text-green-400';
@@ -332,4 +386,4 @@ function WindowContent({ window }: { window: WindowType }) {
       )}
     </div>
   );
-}
+});

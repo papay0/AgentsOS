@@ -27,34 +27,42 @@ export function useWindowAnimation({
     // Calculate transform values
     const scaleX = targetRect.width / currentRect.width;
     const scaleY = targetRect.height / currentRect.height;
-    const translateX = targetRect.x - currentRect.x + (targetRect.width - currentRect.width) / 2;
-    const translateY = targetRect.y - currentRect.y + (targetRect.height - currentRect.height) / 2;
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Calculate the exact target position relative to the viewport
+    const targetCenterX = targetRect.x + targetRect.width / 2;
+    const targetCenterY = targetRect.y + targetRect.height / 2;
+    const currentCenterX = currentRect.x + currentRect.width / 2;
+    const currentCenterY = currentRect.y + currentRect.height / 2;
+    
+    const translateX = targetCenterX - currentCenterX;
+    const translateY = targetCenterY - currentCenterY;
 
     // Cancel any existing animation
     if (animationRef.current) {
       animationRef.current.cancel();
     }
-
-    // Create animation keyframes
+    
+    // Create animation keyframes - simple and reliable
     const keyframes = type === 'minimize' 
       ? [
           { 
             transform: 'translate(0, 0) scale(1)', 
-            opacity: '1' 
+            opacity: '1'
           },
           { 
-            transform: `translate(${translateX}px, ${translateY}px) scale(${Math.min(scaleX, scaleY)})`, 
-            opacity: '0.3' 
+            transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`, 
+            opacity: '0.3'
           }
         ]
       : [
           { 
-            transform: `translate(${translateX}px, ${translateY}px) scale(${Math.min(scaleX, scaleY)})`, 
-            opacity: '0.3' 
+            transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`, 
+            opacity: '0.3'
           },
           { 
             transform: 'translate(0, 0) scale(1)', 
-            opacity: '1' 
+            opacity: '1'
           }
         ];
 

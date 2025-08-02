@@ -14,6 +14,11 @@ AgentsPod is a cloud development environment platform that enables developers to
 - `npm start` - Start the production server
 - `npm run lint` - Run Next.js linting
 
+### Testing Guidelines
+- Only run tests when completely done with a feature to avoid wasting time
+- Don't run tests during development or incremental changes
+- Run full test suite only when ready to finalize changes
+
 ### Environment Setup
 - Requires `DAYTONA_API_KEY` environment variable for workspace creation
 - Requires Clerk authentication keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`)

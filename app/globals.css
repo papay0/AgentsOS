@@ -139,4 +139,25 @@
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
+  
+  /* Performance optimizations for window management */
+  .transform-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  .contain-layout {
+    contain: layout style paint;
+  }
+  
+  /* Smooth focus transitions */
+  .focus-smooth {
+    transition: box-shadow 0.15s ease-out, transform 0.15s ease-out;
+  }
+  
+  /* Hardware accelerated transforms */
+  .translate-3d {
+    transform: translate3d(var(--translate-x, 0), var(--translate-y, 0), 0);
+  }
 }

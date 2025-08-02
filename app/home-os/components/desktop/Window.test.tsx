@@ -287,4 +287,47 @@ describe('Window Component', () => {
       expect(stopPropagationSpy).toHaveBeenCalled()
     })
   })
+
+  describe('Drag Performance Optimizations', () => {
+    it('applies transition-none class during drag operations', () => {
+      const window = createMockWindow()
+      const { container } = render(<Window window={window} />)
+      
+      const windowElement = container.querySelector('.bg-white.dark\\:bg-gray-800') as HTMLElement
+      expect(windowElement).toBeInTheDocument()
+      
+      // Initially should have transitions
+      expect(windowElement).toHaveClass('focus-smooth')
+      expect(windowElement).not.toHaveClass('transition-none')
+    })
+
+    it('applies proper styling during optimized dragging', () => {
+      const window = createMockWindow()
+      const { container } = render(<Window window={window} />)
+      
+      const windowElement = container.querySelector('.bg-white.dark\\:bg-gray-800') as HTMLElement
+      expect(windowElement).toBeInTheDocument()
+      
+      // Should have performance-related classes
+      expect(windowElement).toHaveClass('transform-gpu')
+      expect(windowElement).toHaveClass('contain-layout')
+    })
+
+    it('handles window positioning correctly with left/top values', () => {
+      const window = createMockWindow({ 
+        position: { x: 200, y: 150 },
+        size: { width: 800, height: 600 }
+      })
+      const { container } = render(<Window window={window} />)
+      
+      const windowElement = container.querySelector('.bg-white.dark\\:bg-gray-800') as HTMLElement
+      expect(windowElement).toBeInTheDocument()
+      
+      // Should use the position values from the store
+      expect(windowElement).toHaveStyle(`left: 200px`)
+      expect(windowElement).toHaveStyle(`top: 150px`)
+      expect(windowElement).toHaveStyle(`width: 800px`)
+      expect(windowElement).toHaveStyle(`height: 600px`)
+    })
+  })
 })

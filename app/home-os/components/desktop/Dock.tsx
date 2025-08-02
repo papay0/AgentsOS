@@ -65,22 +65,26 @@ export default function Dock() {
     focusWindow(windowId);
 
     // Then try to animate if elements are available
-    setTimeout(() => {
-      const windowElement = document.querySelector(`[data-testid="window-${windowId}"]`) as HTMLElement;
-      const dockIcon = document.querySelector(`[data-dock-icon="${window.type}"]`) as HTMLElement;
-      
-      if (windowElement && dockIcon) {
-        setWindowAnimating(windowId, true);
-        animateRestoreFromTarget(windowElement, dockIcon, {
-          x: window.position.x,
-          y: window.position.y + 32, // Account for menu bar
-          width: window.size.width,
-          height: window.size.height
-        }).addEventListener('finish', () => {
-          setWindowAnimating(windowId, false);
-        });
-      }
-    }, 50); // Small delay to ensure DOM is updated
+    if (typeof document !== 'undefined') {
+      setTimeout(() => {
+        if (typeof document === 'undefined') return; // Safety check for SSR/tests
+        
+        const windowElement = document.querySelector(`[data-testid="window-${windowId}"]`) as HTMLElement;
+        const dockIcon = document.querySelector(`[data-dock-icon="${window.type}"]`) as HTMLElement;
+        
+        if (windowElement && dockIcon) {
+          setWindowAnimating(windowId, true);
+          animateRestoreFromTarget(windowElement, dockIcon, {
+            x: window.position.x,
+            y: window.position.y + 32, // Account for menu bar
+            width: window.size.width,
+            height: window.size.height
+          }).addEventListener('finish', () => {
+            setWindowAnimating(windowId, false);
+          });
+        }
+      }, 50); // Small delay to ensure DOM is updated
+    }
   };
 
   const getAppIcon = (type: string) => {
