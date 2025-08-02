@@ -72,10 +72,13 @@ export function MobileWorkspaceView({
           <VSCodeEditor url={vscodeUrl} />
         )}
         
-        {/* Terminal components */}
-        {currentView === 'terminal' && tabs.map((tab) => (
-          activeTabId === tab.id && (
-            <div key={tab.id} className="h-full">
+        {/* Terminal components - Keep all mounted to prevent reloading */}
+        <div className="h-full relative">
+          {currentView === 'terminal' && tabs.map((tab) => (
+            <div 
+              key={tab.id} 
+              className={`absolute inset-0 w-full h-full ${activeTabId === tab.id ? 'z-10' : 'z-0 pointer-events-none opacity-0'}`}
+            >
               <TTYDTerminal
                 ref={(el) => {
                   terminalRefs.current[tab.id] = el;
@@ -83,8 +86,8 @@ export function MobileWorkspaceView({
                 wsUrl={(tab.terminals[0]?.url || '').replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws'}
               />
             </div>
-          )
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Bottom Navigation - Always visible */}
