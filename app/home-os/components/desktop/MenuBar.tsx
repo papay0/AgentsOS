@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Wifi, Battery, Sun, Moon, Monitor } from 'lucide-react';
+import { Clock, Sun, Moon, Monitor } from 'lucide-react';
 import { SignedIn, UserButton } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/theme-provider';
@@ -43,17 +43,24 @@ function MenuBarThemeToggle() {
 
 export default function MenuBar() {
   const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
-    const updateTime = () => {
-      setCurrentTime(new Date().toLocaleTimeString([], { 
+    const updateTimeAndDate = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString([], { 
         hour: '2-digit', 
         minute: '2-digit' 
       }));
+      setCurrentDate(now.toLocaleDateString([], {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      }));
     };
 
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
+    updateTimeAndDate();
+    const interval = setInterval(updateTimeAndDate, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -92,17 +99,13 @@ export default function MenuBar() {
         {/* Theme switcher */}
         <MenuBarThemeToggle />
 
-        {/* System indicators */}
-        <div className="flex items-center space-x-1 opacity-80">
-          <Wifi className="w-4 h-4" />
-        </div>
-        <div className="flex items-center space-x-1 opacity-80">
-          <Battery className="w-4 h-4" />
-          <span className="text-xs">87%</span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <Clock className="w-4 h-4" />
-          <span className="text-xs">{currentTime}</span>
+        {/* Date and time */}
+        <div className="flex items-center space-x-2">
+          <span className="text-xs">{currentDate}</span>
+          <div className="flex items-center space-x-1">
+            <Clock className="w-4 h-4" />
+            <span className="text-xs">{currentTime}</span>
+          </div>
         </div>
       </div>
     </div>

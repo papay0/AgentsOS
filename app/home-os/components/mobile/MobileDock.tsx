@@ -8,7 +8,7 @@ interface MobileDockProps {
   onHomePress?: () => void; // Optional since not currently used
 }
 
-export default function MobileDock({ apps, onAppOpen, onHomePress }: MobileDockProps) {
+export default function MobileDock({ apps, onAppOpen }: MobileDockProps) {
   const DockIcon = ({ app }: { app: MobileApp }) => (
     <button
       onClick={() => onAppOpen(app)}

@@ -13,6 +13,7 @@ export interface Window {
   maximized: boolean;
   focused: boolean;
   content?: string; // For dummy content
+  isAnimating?: boolean; // For window animations
 }
 
 interface WindowStore {
@@ -30,6 +31,7 @@ interface WindowStore {
   restoreWindow: (id: string) => void;
   moveWindow: (id: string, x: number, y: number) => void;
   resizeWindow: (id: string, width: number, height: number) => void;
+  setWindowAnimating: (id: string, isAnimating: boolean) => void;
   initializeWindows: () => void;
 }
 
@@ -107,6 +109,12 @@ export const useWindowStore = create<WindowStore>()(
     resizeWindow: (id, width, height) => set((state) => ({
       windows: state.windows.map((w) => 
         w.id === id ? { ...w, size: { width, height } } : w
+      ),
+    })),
+
+    setWindowAnimating: (id, isAnimating) => set((state) => ({
+      windows: state.windows.map((w) => 
+        w.id === id ? { ...w, isAnimating } : w
       ),
     })),
 

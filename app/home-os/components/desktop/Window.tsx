@@ -6,6 +6,7 @@ import { useWindowStore } from '../../stores/windowStore';
 import { useDrag } from '../../hooks/useDrag';
 import { useResize } from '../../hooks/useResize';
 import { useSnapZones } from '../../hooks/useSnapZones';
+import { useWindowAnimation } from '../../hooks/useWindowAnimation';
 import { X, Minus, Square } from 'lucide-react';
 import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT } from '../../constants/layout';
 
@@ -17,7 +18,7 @@ export default function Window({ window }: WindowProps) {
   const windowRef = useRef<HTMLDivElement>(null);
   const titleBarRef = useRef<HTMLDivElement>(null);
   
-  const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, resizeWindow, updateWindow } = useWindowStore();
+  const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, resizeWindow, updateWindow, setWindowAnimating } = useWindowStore();
 
   // Snap zones integration
   const { handleDragMove, handleDragEnd } = useSnapZones({
@@ -69,8 +70,31 @@ export default function Window({ window }: WindowProps) {
     minHeight: MIN_WINDOW_HEIGHT,
   });
 
+  // Window animation hook
+  const { animateMinimizeToTarget } = useWindowAnimation({
+    onAnimationComplete: () => {
+      setWindowAnimating(window.id, false);
+    }
+  });
+
   const handleClose = () => removeWindow(window.id);
-  const handleMinimize = () => minimizeWindow(window.id);
+  
+  const handleMinimize = useCallback(() => {
+    // Find the dock icon for this window type
+    const dockIcon = document.querySelector(`[data-dock-icon="${window.type}"]`) as HTMLElement;
+    
+    if (windowRef.current && dockIcon) {
+      setWindowAnimating(window.id, true);
+      const animation = animateMinimizeToTarget(windowRef.current, dockIcon);
+      animation.addEventListener('finish', () => {
+        minimizeWindow(window.id);
+      });
+    } else {
+      // Fallback to immediate minimize if dock icon not found
+      minimizeWindow(window.id);
+    }
+  }, [window.id, window.type, animateMinimizeToTarget, minimizeWindow, setWindowAnimating]);
+
   const handleMaximize = () => {
     if (window.maximized) {
       restoreWindow(window.id);
@@ -121,6 +145,7 @@ export default function Window({ window }: WindowProps) {
         ${window.focused ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-300 dark:ring-gray-600'}
         ${isDragging ? 'cursor-grabbing' : 'cursor-default'}
         ${isResizing ? 'select-none' : ''}
+        ${window.isAnimating ? 'pointer-events-none' : ''}
         transition-all duration-300 ease-out
         will-change-transform
       `}
@@ -128,28 +153,30 @@ export default function Window({ window }: WindowProps) {
     >
       {/* Title Bar */}
       <div
-        ref={titleBarRef}
         className={`
           flex items-center justify-between h-8 px-3 bg-gray-50 dark:bg-gray-700 
           rounded-t-lg border-b border-gray-200 dark:border-gray-600
-          ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
           select-none
         `}
       >
-        <div className="flex items-center space-x-2">
+        <div 
+          ref={titleBarRef}
+          className={`flex-1 flex items-center space-x-2 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        >
           <span className="text-sm">{getWindowIcon()}</span>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
             {window.title}
           </span>
         </div>
         
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1" onPointerDown={(e) => e.stopPropagation()}>
           <button
             onClick={(e) => {
               e.stopPropagation();
               handleMinimize();
             }}
-            className="w-3 h-3 bg-yellow-500 hover:bg-yellow-600 rounded-full flex items-center justify-center group"
+            className="w-3 h-3 bg-yellow-500 hover:bg-yellow-600 rounded-full flex items-center justify-center group transition-colors"
+            data-testid="minimize-button"
           >
             <Minus className="w-2 h-2 text-yellow-800 opacity-0 group-hover:opacity-100" />
           </button>
@@ -158,7 +185,7 @@ export default function Window({ window }: WindowProps) {
               e.stopPropagation();
               handleMaximize();
             }}
-            className="w-3 h-3 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center group"
+            className="w-3 h-3 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center group transition-colors"
           >
             <Square className="w-2 h-2 text-green-800 opacity-0 group-hover:opacity-100" />
           </button>
@@ -167,7 +194,7 @@ export default function Window({ window }: WindowProps) {
               e.stopPropagation();
               handleClose();
             }}
-            className="w-3 h-3 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center group"
+            className="w-3 h-3 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center group transition-colors"
           >
             <X className="w-2 h-2 text-red-800 opacity-0 group-hover:opacity-100" />
           </button>

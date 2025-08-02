@@ -5,7 +5,7 @@ import MobileSettings from './MobileSettings'
 // Mock Clerk components
 vi.mock('@clerk/nextjs', () => ({
   SignedIn: ({ children }: { children: React.ReactNode }) => <div data-testid="signed-in">{children}</div>,
-  UserButton: ({ appearance }: { appearance?: any }) => (
+  UserButton: ({ appearance }: { appearance?: { elements?: Record<string, string> } }) => (
     <div data-testid="user-button" data-appearance={JSON.stringify(appearance)}>
       User Avatar
     </div>

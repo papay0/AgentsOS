@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
-import { render, screen, fireEvent } from '@/src/test/utils'
+import { describe, it, expect, beforeEach, vi, type Mock, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@/src/test/utils'
 import { useWindowStore } from '../../stores/windowStore'
 import { createMockWindow } from '@/src/test/utils'
+import { useWindowAnimation } from '../../hooks/useWindowAnimation'
 
 // Unmock the Window component to test the real implementation
 vi.unmock('@/app/home-os/components/desktop/Window')
@@ -14,12 +15,29 @@ const mockedUseWindowStore = vi.mocked(useWindowStore as unknown as Mock)
 
 vi.mock('../../stores/windowStore')
 
+// Mock animation hook
+vi.mock('../../hooks/useWindowAnimation')
+
 describe('Window Component', () => {
   const mockUpdateWindow = vi.fn()
   const mockFocusWindow = vi.fn()
   const mockMinimizeWindow = vi.fn()
   const mockMaximizeWindow = vi.fn()
   const mockRemoveWindow = vi.fn()
+  const mockSetWindowAnimating = vi.fn()
+  const mockRestoreWindow = vi.fn()
+  const mockMoveWindow = vi.fn()
+  const mockResizeWindow = vi.fn()
+
+  const mockAnimateMinimizeToTarget = vi.fn()
+  const mockAnimation = {
+    addEventListener: vi.fn((event, callback) => {
+      if (event === 'finish') {
+        // Simulate animation finishing
+        setTimeout(callback, 100)
+      }
+    })
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -31,12 +49,36 @@ describe('Window Component', () => {
         minimizeWindow: mockMinimizeWindow,
         maximizeWindow: mockMaximizeWindow,
         removeWindow: mockRemoveWindow,
+        setWindowAnimating: mockSetWindowAnimating,
+        restoreWindow: mockRestoreWindow,
+        moveWindow: mockMoveWindow,
+        resizeWindow: mockResizeWindow,
       }
       if (typeof selector === 'function') {
         return selector(mockStore)
       }
       return mockStore
     })
+
+    // Mock useWindowAnimation
+    mockAnimateMinimizeToTarget.mockReturnValue(mockAnimation)
+    vi.mocked(useWindowAnimation).mockReturnValue({
+      animateMinimizeToTarget: mockAnimateMinimizeToTarget,
+      animateRestoreFromTarget: vi.fn(),
+      cancelAnimation: vi.fn(),
+      isAnimating: false
+    })
+
+    // Mock document.querySelector for dock icons
+    document.body.innerHTML = `
+      <div data-dock-icon="vscode" title="VSCode"></div>
+      <div data-dock-icon="claude" title="Claude"></div>
+      <div data-dock-icon="terminal" title="Terminal"></div>
+    `
+  })
+
+  afterEach(() => {
+    document.body.innerHTML = ''
   })
 
   describe('Basic Rendering', () => {
@@ -69,6 +111,9 @@ describe('Window Component', () => {
 
   describe('Window Controls', () => {
     it('calls minimize when minimize button clicked', () => {
+      // Remove dock icons to test immediate minimize
+      document.body.innerHTML = ''
+      
       const window = createMockWindow()
       const { container } = render(<Window window={window} />)
       
@@ -156,6 +201,90 @@ describe('Window Component', () => {
       expect(minimizeButton).toBeInTheDocument()
       expect(maximizeButton).toBeInTheDocument()
       expect(closeButton).toBeInTheDocument()
+    })
+  })
+
+  describe('Minimize Animation', () => {
+    it('triggers minimize animation when dock icon is found', async () => {
+      const window = createMockWindow({ type: 'vscode' })
+      const { container } = render(<Window window={window} />)
+      
+      const minimizeButton = container.querySelector('.bg-yellow-500') as HTMLElement
+      fireEvent.click(minimizeButton)
+      
+      // Should set animating state
+      expect(mockSetWindowAnimating).toHaveBeenCalledWith(window.id, true)
+      
+      // Should call animate function with window and dock elements
+      expect(mockAnimateMinimizeToTarget).toHaveBeenCalled()
+      
+      // Wait for animation to "finish"
+      await waitFor(() => {
+        expect(mockMinimizeWindow).toHaveBeenCalledWith(window.id)
+      }, { timeout: 200 })
+    })
+
+    it('falls back to immediate minimize when dock icon is not found', () => {
+      // Remove dock icons
+      document.body.innerHTML = ''
+      
+      const window = createMockWindow()
+      const { container } = render(<Window window={window} />)
+      
+      const minimizeButton = container.querySelector('.bg-yellow-500') as HTMLElement
+      fireEvent.click(minimizeButton)
+      
+      // Should not call animation functions
+      expect(mockSetWindowAnimating).not.toHaveBeenCalled()
+      expect(mockAnimateMinimizeToTarget).not.toHaveBeenCalled()
+      
+      // Should immediately minimize
+      expect(mockMinimizeWindow).toHaveBeenCalledWith(window.id)
+    })
+
+    it('handles different window types correctly', () => {
+      const claudeWindow = createMockWindow({ id: 'claude-1', type: 'claude' })
+      const { container } = render(<Window window={claudeWindow} />)
+      
+      const minimizeButton = container.querySelector('.bg-yellow-500') as HTMLElement
+      fireEvent.click(minimizeButton)
+      
+      // Should find the claude dock icon
+      const claudeDockIcon = document.querySelector('[data-dock-icon="claude"]')
+      expect(claudeDockIcon).toBeTruthy()
+      expect(mockAnimateMinimizeToTarget).toHaveBeenCalled()
+    })
+  })
+
+  describe('Click Event Handling', () => {
+    it('stops event propagation on button clicks', () => {
+      const window = createMockWindow()
+      const { container } = render(<Window window={window} />)
+      
+      const minimizeButton = container.querySelector('.bg-yellow-500') as HTMLElement
+      const clickEvent = new MouseEvent('click', { bubbles: true })
+      const stopPropagationSpy = vi.spyOn(clickEvent, 'stopPropagation')
+      
+      fireEvent(minimizeButton, clickEvent)
+      
+      expect(stopPropagationSpy).toHaveBeenCalled()
+    })
+
+    it('prevents drag interference with button clicks', () => {
+      const window = createMockWindow()
+      const { container } = render(<Window window={window} />)
+      
+      const buttonContainer = container.querySelector('.bg-yellow-500')?.parentElement as HTMLElement
+      expect(buttonContainer).toBeInTheDocument()
+      
+      // Create a mock event with stopPropagation
+      const pointerDownEvent = new MouseEvent('pointerdown', { bubbles: true })
+      const stopPropagationSpy = vi.spyOn(pointerDownEvent, 'stopPropagation')
+      
+      // Fire the event
+      fireEvent(buttonContainer, pointerDownEvent)
+      
+      expect(stopPropagationSpy).toHaveBeenCalled()
     })
   })
 })

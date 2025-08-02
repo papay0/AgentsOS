@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@/src/test/utils'
+import { render, screen, fireEvent } from '@/src/test/utils'
 import React from 'react'
 
 // Unmock the MenuBar component to test the real implementation
@@ -64,11 +64,15 @@ describe('MenuBar Component', () => {
       expect(screen.getByText('02:30 PM')).toBeInTheDocument()
     })
 
-    it('displays system status icons', () => {
+    it('shows current date', () => {
       render(<MenuBar />)
       
-      // Check for battery percentage
-      expect(screen.getByText('87%')).toBeInTheDocument()
+      // Should show date in format like "Mon, Jan 1"
+      expect(screen.getByText('Mon, Jan 1')).toBeInTheDocument()
+    })
+
+    it('displays theme toggle', () => {
+      render(<MenuBar />)
       
       // Icons should be present (even if they're SVGs, the container elements exist)
       const buttons = screen.getAllByRole('button')
@@ -164,11 +168,11 @@ describe('MenuBar Component', () => {
       expect(userButton).toBeInTheDocument()
     })
 
-    it('has right section with system status', () => {
+    it('has right section with date and time', () => {
       render(<MenuBar />)
       
       // Check right section elements
-      expect(screen.getByText('87%')).toBeInTheDocument() // Battery
+      expect(screen.getByText('Mon, Jan 1')).toBeInTheDocument() // Date
       expect(screen.getByText(/\d+:\d+/)).toBeInTheDocument() // Time
     })
 
@@ -208,20 +212,12 @@ describe('MenuBar Component', () => {
   })
 
   describe('System Status Display', () => {
-    it('shows battery status with percentage', () => {
+    it('shows date display', () => {
       render(<MenuBar />)
       
-      const batteryText = screen.getByText('87%')
-      expect(batteryText).toBeInTheDocument()
-      expect(batteryText).toHaveClass('text-xs')
-    })
-
-    it('displays wifi indicator', () => {
-      const { container } = render(<MenuBar />)
-      
-      // WiFi icon should be present in the system indicators section
-      const wifiSection = container.querySelector('.opacity-80')
-      expect(wifiSection).toBeInTheDocument()
+      const dateText = screen.getByText('Mon, Jan 1')
+      expect(dateText).toBeInTheDocument()
+      expect(dateText).toHaveClass('text-xs')
     })
 
     it('shows time with clock icon', () => {

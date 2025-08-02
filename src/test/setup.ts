@@ -27,7 +27,7 @@ import React from 'react'
 vi.mock('@clerk/nextjs', () => ({
   ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
   SignedIn: ({ children }: { children: React.ReactNode }) => children,
-  SignedOut: ({ children }: { children: React.ReactNode }) => null,
+  SignedOut: ({ }: { children: React.ReactNode }) => null,
   UserButton: () => React.createElement('div', { 'data-testid': 'user-button' }, 'User'),
   useUser: () => ({ user: { id: 'test-user' } }),
 }))

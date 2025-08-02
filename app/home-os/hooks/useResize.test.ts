@@ -3,6 +3,19 @@ import { renderHook, act } from '@testing-library/react'
 import { useResize } from './useResize'
 import { createRef } from 'react'
 
+// Define a proper type for our mock pointer events
+interface MockPointerEvent {
+  preventDefault: () => void
+  stopPropagation: () => void
+  clientX: number
+  clientY: number
+  pointerId: number
+  target: {
+    setPointerCapture: (pointerId: number) => void
+    releasePointerCapture: (pointerId: number) => void
+  }
+}
+
 // Mock requestAnimationFrame and cancelAnimationFrame
 const mockRequestAnimationFrame = vi.fn()
 const mockCancelAnimationFrame = vi.fn()
@@ -49,10 +62,13 @@ describe('useResize Hook', () => {
         bottom: 450,
       }),
       style: {},
-    } as any
+    } as HTMLElement
 
     windowRef = createRef<HTMLElement>()
-    ;(windowRef as any).current = mockElement
+    Object.defineProperty(windowRef, 'current', {
+      writable: true,
+      value: mockElement
+    })
 
     mockOnResize = vi.fn()
     mockOnResizeStart = vi.fn()
@@ -116,7 +132,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(mockEvent, 'se')
@@ -142,7 +158,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(mockEvent, 'ne')
@@ -165,7 +181,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       expect(() => {
         act(() => {
@@ -192,7 +208,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(mockEvent, 'se')
@@ -230,7 +246,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(mockEvent, 'e')
@@ -254,7 +270,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(mockEvent, 's')
@@ -277,7 +293,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(mockEvent, 'nw')
@@ -331,7 +347,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(startEvent, 'se')
@@ -356,7 +372,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(startEvent, 'e')
@@ -392,7 +408,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(startEvent, 'n')
@@ -441,7 +457,7 @@ describe('useResize Hook', () => {
         clientY: 250,
         pointerId: 1,
         target: { setPointerCapture: vi.fn() },
-      } as any
+      } as MockPointerEvent
 
       act(() => {
         result.current.handleResizeStart(startEvent, 'sw')

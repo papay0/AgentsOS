@@ -34,10 +34,13 @@ describe('useDrag Hook', () => {
       removeEventListener: vi.fn(),
       setPointerCapture: vi.fn(),
       releasePointerCapture: vi.fn(),
-    } as any
+    } as HTMLElement
 
     elementRef = createRef<HTMLElement>()
-    ;(elementRef as any).current = mockElement
+    Object.defineProperty(elementRef, 'current', {
+      writable: true,
+      value: mockElement
+    })
 
     mockOnDrag = vi.fn()
     mockOnDragStart = vi.fn()
@@ -100,8 +103,8 @@ describe('useDrag Hook', () => {
       }))
 
       // Get the pointer down handler
-      const pointerDownHandler = (mockElement.addEventListener as any).mock.calls
-        .find((call: any) => call[0] === 'pointerdown')[1]
+      const pointerDownHandler = vi.mocked(mockElement.addEventListener).mock.calls
+        .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
       // Simulate pointer down event
       const mockEvent = {
@@ -127,8 +130,8 @@ describe('useDrag Hook', () => {
         onDrag: mockOnDrag,
       }))
 
-      const pointerDownHandler = (mockElement.addEventListener as any).mock.calls
-        .find((call: any) => call[0] === 'pointerdown')[1]
+      const pointerDownHandler = vi.mocked(mockElement.addEventListener).mock.calls
+        .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
       const mockEvent = {
         preventDefault: vi.fn(),
@@ -228,8 +231,8 @@ describe('useDrag Hook', () => {
       }))
 
       // Get pointer down handler
-      const pointerDownHandler = (mockElement.addEventListener as any).mock.calls
-        .find((call: any) => call[0] === 'pointerdown')[1]
+      const pointerDownHandler = vi.mocked(mockElement.addEventListener).mock.calls
+        .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
       act(() => {
         pointerDownHandler({
@@ -294,10 +297,13 @@ describe('useDrag Hook', () => {
       }))
 
       // Remove element reference
-      ;(elementRef as any).current = null
+      Object.defineProperty(elementRef, 'current', {
+        writable: true,
+        value: null
+      })
 
-      const pointerDownHandler = (mockElement.addEventListener as any).mock.calls
-        .find((call: any) => call[0] === 'pointerdown')[1]
+      const pointerDownHandler = vi.mocked(mockElement.addEventListener).mock.calls
+        .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
       expect(() => {
         act(() => {
@@ -320,8 +326,8 @@ describe('useDrag Hook', () => {
         onDragStart: mockOnDragStart,
       }))
 
-      const pointerDownHandler = (mockElement.addEventListener as any).mock.calls
-        .find((call: any) => call[0] === 'pointerdown')[1]
+      const pointerDownHandler = vi.mocked(mockElement.addEventListener).mock.calls
+        .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
       // First drag start
       act(() => {
@@ -338,7 +344,7 @@ describe('useDrag Hook', () => {
 
       // Reset state manually for test
       act(() => {
-        result.current.isDragging = false as any
+        result.current.isDragging = false
       })
 
       // Second drag start

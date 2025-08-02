@@ -1,12 +1,20 @@
 'use client';
 
 import { useWindowStore } from '../../stores/windowStore';
+import { useWindowAnimation } from '../../hooks/useWindowAnimation';
 import { Plus, Code, Bot, FolderOpen, Terminal, Globe } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
 
 export default function Dock() {
-  const { windows, addWindow, restoreWindow, focusWindow } = useWindowStore();
+  const { windows, addWindow, restoreWindow, focusWindow, setWindowAnimating } = useWindowStore();
   const minimizedWindows = windows.filter(w => w.minimized);
+
+  // Window animation hook for restore animations
+  const { animateRestoreFromTarget } = useWindowAnimation({
+    onAnimationComplete: () => {
+      // Animation complete callback handled per window
+    }
+  });
 
   const handleAppClick = (type: 'vscode' | 'claude' | 'terminal' | 'file-manager' | 'preview') => {
     // Check if there's already a window of this type
@@ -49,8 +57,30 @@ export default function Dock() {
   };
 
   const handleMinimizedWindowClick = (windowId: string) => {
+    const window = windows.find(w => w.id === windowId);
+    if (!window) return;
+
+    // First restore the window to make it visible
     restoreWindow(windowId);
     focusWindow(windowId);
+
+    // Then try to animate if elements are available
+    setTimeout(() => {
+      const windowElement = document.querySelector(`[data-testid="window-${windowId}"]`) as HTMLElement;
+      const dockIcon = document.querySelector(`[data-dock-icon="${window.type}"]`) as HTMLElement;
+      
+      if (windowElement && dockIcon) {
+        setWindowAnimating(windowId, true);
+        animateRestoreFromTarget(windowElement, dockIcon, {
+          x: window.position.x,
+          y: window.position.y + 32, // Account for menu bar
+          width: window.size.width,
+          height: window.size.height
+        }).addEventListener('finish', () => {
+          setWindowAnimating(windowId, false);
+        });
+      }
+    }, 50); // Small delay to ensure DOM is updated
   };
 
   const getAppIcon = (type: string) => {
@@ -83,6 +113,7 @@ export default function Dock() {
           onClick={() => handleAppClick('vscode')}
           className={getAppColor('vscode')}
           title="VSCode"
+          dataAttribute="vscode"
         >
           {getAppIcon('vscode')}
         </DockIcon>
@@ -91,6 +122,7 @@ export default function Dock() {
           onClick={() => handleAppClick('claude')}
           className={getAppColor('claude')}
           title="Claude"
+          dataAttribute="claude"
         >
           {getAppIcon('claude')}
         </DockIcon>
@@ -99,6 +131,7 @@ export default function Dock() {
           onClick={() => handleAppClick('terminal')}
           className={getAppColor('terminal')}
           title="Terminal"
+          dataAttribute="terminal"
         >
           {getAppIcon('terminal')}
         </DockIcon>
@@ -107,6 +140,7 @@ export default function Dock() {
           onClick={() => handleAppClick('file-manager')}
           className={getAppColor('file-manager')}
           title="Files"
+          dataAttribute="file-manager"
         >
           {getAppIcon('file-manager')}
         </DockIcon>
@@ -115,6 +149,7 @@ export default function Dock() {
           onClick={() => handleAppClick('preview')}
           className={getAppColor('preview')}
           title="Preview"
+          dataAttribute="preview"
         >
           {getAppIcon('preview')}
         </DockIcon>
@@ -131,6 +166,7 @@ export default function Dock() {
             onClick={() => handleMinimizedWindowClick(window.id)}
             className={`${getAppColor(window.type)} relative`}
             title={window.title}
+            dataAttribute={window.type}
           >
             {getAppIcon(window.type)}
             <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
@@ -156,9 +192,10 @@ interface DockIconProps {
   className: string;
   title: string;
   children: React.ReactNode;
+  dataAttribute?: string;
 }
 
-function DockIcon({ onClick, className, title, children }: DockIconProps) {
+function DockIcon({ onClick, className, title, children, dataAttribute }: DockIconProps) {
   return (
     <button
       onClick={onClick}
@@ -170,6 +207,7 @@ function DockIcon({ onClick, className, title, children }: DockIconProps) {
         ${className}
       `}
       title={title}
+      data-dock-icon={dataAttribute}
     >
       {children}
     </button>

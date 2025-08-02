@@ -9,8 +9,8 @@ AgentsPod is a cloud development environment platform that enables developers to
 ## Commands
 
 ### Development
-- `npm run dev` - Start the development server at http://localhost:3000
-- `npm run build` - Build the production application
+- `npm run dev` - Start the development server at http://localhost:3000 (USER runs this, not Claude)
+- `npm run build` - Build the production application (run after big changes, not for UI changes)
 - `npm start` - Start the production server
 - `npm run lint` - Run Next.js linting
 

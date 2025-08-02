@@ -4,7 +4,6 @@ import { useWindowStore } from '../stores/windowStore'
 import { useIsMobile } from '@/hooks/use-mobile'
 import Workspace from './Workspace'
 import { createMockWindowStore } from '../stores/windowStore.mock'
-import type { StoreApi, UseBoundStore } from 'zustand'
 
 // Type the mocked modules
 const mockedUseWindowStore = vi.mocked(useWindowStore as unknown as Mock)
