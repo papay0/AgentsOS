@@ -10,8 +10,6 @@ interface TerminalCommandPaletteProps {
   isConnected: boolean;
   /** Custom CSS classes */
   className?: string;
-  /** Whether to show by default (mobile: true, desktop: false) */
-  defaultVisible?: boolean;
 }
 
 /**
@@ -23,8 +21,7 @@ interface TerminalCommandPaletteProps {
 export default function TerminalCommandPalette({
   terminalRef,
   isConnected,
-  className = "",
-  defaultVisible = false
+  className = ""
 }: TerminalCommandPaletteProps) {
   const [customInput, setCustomInput] = useState('');
 

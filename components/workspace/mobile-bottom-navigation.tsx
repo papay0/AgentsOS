@@ -53,7 +53,6 @@ export function MobileBottomNavigation({
             <TerminalCommandPalette
               terminalRef={{ current: terminalRefs.current[activeTabId] }}
               isConnected={true}
-              defaultVisible={true}
               className=""
             />
           </div>

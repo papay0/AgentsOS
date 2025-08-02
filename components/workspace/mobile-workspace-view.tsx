@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { VSCodeEditor } from './vscode-editor';
-import { TTYDTerminal, TerminalCommandPalette } from '@/components/terminal';
+import { TTYDTerminal } from '@/components/terminal';
 import { MobileBottomNavigation } from './mobile-bottom-navigation';
 import { Globe } from 'lucide-react';
 import type { TerminalTab } from '@/types/workspace';
