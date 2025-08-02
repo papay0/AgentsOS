@@ -13,8 +13,8 @@ export default function Workspace() {
       {/* Menu Bar */}
       <MenuBar />
       
-      {/* Main workspace area */}
-      <div className="absolute inset-x-0 top-8 bottom-16 overflow-hidden">
+      {/* Main workspace area - Full height, windows go behind dock */}
+      <div className="absolute inset-x-0 top-8 bottom-0 overflow-hidden">
         {windows
           .filter((window) => !window.minimized)
           .map((window) => (
@@ -22,7 +22,7 @@ export default function Workspace() {
           ))}
       </div>
 
-      {/* Dock */}
+      {/* Dock - Floating over workspace */}
       <Dock />
     </div>
   );

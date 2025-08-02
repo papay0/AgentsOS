@@ -79,7 +79,7 @@ export default function Window({ window }: WindowProps) {
       left: window.position.x,
       top: window.position.y,
       width: window.maximized ? '100%' : window.size.width,
-      height: window.maximized ? '100%' : window.size.height,
+      height: window.maximized ? 'calc(100% - 100px)' : window.size.height, // Leave space for dock
       zIndex: window.zIndex,
       transform: window.maximized ? 'none' : undefined,
     };

@@ -28,7 +28,7 @@ export function useResize({
   minWidth = 200,
   minHeight = 150,
   maxWidth = window.innerWidth,
-  maxHeight = window.innerHeight - 100
+  maxHeight = window.innerHeight - 130 // Account for menu bar (32px) + dock area (100px)
 }: UseResizeOptions) {
   const [resizeState, setResizeState] = useState<ResizeState>({
     isResizing: false,
@@ -141,9 +141,9 @@ export function useResize({
       newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
       newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-      // Ensure window stays within workspace bounds
+      // Ensure window stays within workspace bounds (account for dock area)
       newX = Math.max(0, Math.min(window.innerWidth - newWidth, newX));
-      newY = Math.max(0, Math.min(window.innerHeight - newHeight, newY));
+      newY = Math.max(0, Math.min(window.innerHeight - 130 - newHeight, newY));
 
       // Apply changes directly to DOM for performance (bypass React)
       const element = windowRef.current;
