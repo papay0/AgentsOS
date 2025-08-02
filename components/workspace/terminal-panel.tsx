@@ -39,7 +39,7 @@ export function TerminalPanel({
   };
 
   return (
-    <div className="h-full bg-white overflow-hidden flex flex-col">
+    <div className="h-full overflow-hidden flex flex-col">
       <TerminalTabs
         tabs={tabs}
         activeTabId={activeTabId}
@@ -51,7 +51,7 @@ export function TerminalPanel({
         sandboxId={sandboxId}
       />
       
-      <div className="flex-1 bg-white overflow-hidden">
+      <div className="flex-1 overflow-hidden">
         {tabs.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">

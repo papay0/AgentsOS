@@ -10,7 +10,7 @@ export class WorkspaceServices {
     
     // Create startup scripts
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\necho "Starting Claude Code CLI..."\ncd ${projectDir}\nclaude\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
+      `echo '#!/bin/bash\ncd ${projectDir}\nclaude\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
       rootDir
     );
     
@@ -129,7 +129,7 @@ export class WorkspaceServices {
 
     // Recreate startup scripts
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\\necho "Starting Claude Code CLI..."\\ncd ${projectDir}\\nclaude\\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
+      `echo '#!/bin/bash\\ncd ${projectDir}\\nclaude\\n' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
       rootDir
     );
     

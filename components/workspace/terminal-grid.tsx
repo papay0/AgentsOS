@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { Terminal, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/resizable";
 import { TerminalPane } from './terminal-pane';
 import type { TerminalTab } from '@/types/workspace';
+import type { TTYDTerminalRef } from '@/components/terminal';
 
 interface TerminalGridProps {
   tab: TerminalTab;
@@ -19,6 +20,7 @@ interface TerminalGridProps {
 
 export function TerminalGrid({ tab, onRemoveTerminal, onAddTerminal }: TerminalGridProps) {
   const { terminals } = tab;
+  const terminalRefs = useRef<{ [key: string]: TTYDTerminalRef | null }>({});
   
   if (terminals.length === 0) {
     return (
@@ -40,46 +42,62 @@ export function TerminalGrid({ tab, onRemoveTerminal, onAddTerminal }: TerminalG
 
   if (terminals.length === 1) {
     return (
-      <TerminalPane 
-        terminal={terminals[0]} 
-        onRemove={onRemoveTerminal}
-      />
+      <div className="h-full">
+        <TerminalPane 
+          ref={(el) => {
+            terminalRefs.current[terminals[0].id] = el;
+          }}
+          terminal={terminals[0]} 
+          onRemove={onRemoveTerminal}
+        />
+      </div>
     );
   }
 
   return (
-    <ResizablePanelGroup direction="vertical" className="h-full">
-      <ResizablePanel defaultSize={50}>
-        <TerminalPane 
-          terminal={terminals[0]} 
-          onRemove={onRemoveTerminal}
-        />
-      </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel defaultSize={50}>
-        {terminals.length > 2 ? (
-          <ResizablePanelGroup direction="horizontal">
-            {terminals.slice(1).map((terminal, index) => (
-              <React.Fragment key={terminal.id}>
-                <ResizablePanel defaultSize={100 / (terminals.length - 1)}>
-                  <TerminalPane 
-                    terminal={terminal} 
-                    onRemove={onRemoveTerminal}
-                  />
-                </ResizablePanel>
-                {index < terminals.length - 2 && <ResizableHandle withHandle />}
-              </React.Fragment>
-            ))}
-          </ResizablePanelGroup>
-        ) : (
-          terminals[1] && (
-            <TerminalPane 
-              terminal={terminals[1]} 
-              onRemove={onRemoveTerminal}
-            />
-          )
-        )}
-      </ResizablePanel>
-    </ResizablePanelGroup>
+    <div className="h-full">
+      <ResizablePanelGroup direction="vertical" className="h-full">
+        <ResizablePanel defaultSize={50}>
+          <TerminalPane 
+            ref={(el) => {
+              terminalRefs.current[terminals[0].id] = el;
+            }}
+            terminal={terminals[0]} 
+            onRemove={onRemoveTerminal}
+          />
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={50}>
+          {terminals.length > 2 ? (
+            <ResizablePanelGroup direction="horizontal">
+              {terminals.slice(1).map((terminal, index) => (
+                <React.Fragment key={terminal.id}>
+                  <ResizablePanel defaultSize={100 / (terminals.length - 1)}>
+                    <TerminalPane 
+                      ref={(el) => {
+                        terminalRefs.current[terminal.id] = el;
+                      }}
+                      terminal={terminal} 
+                      onRemove={onRemoveTerminal}
+                    />
+                  </ResizablePanel>
+                  {index < terminals.length - 2 && <ResizableHandle withHandle />}
+                </React.Fragment>
+              ))}
+            </ResizablePanelGroup>
+          ) : (
+            terminals[1] && (
+              <TerminalPane 
+                ref={(el) => {
+                  terminalRefs.current[terminals[1].id] = el;
+                }}
+                terminal={terminals[1]} 
+                onRemove={onRemoveTerminal}
+              />
+            )
+          )}
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
   );
 }
