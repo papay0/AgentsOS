@@ -4,6 +4,7 @@ import React, { forwardRef, useRef, useImperativeHandle } from 'react';
 import { Terminal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TTYDTerminal, TerminalCommandPalette } from '@/components/terminal';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { TerminalPane as TerminalPaneType } from '@/types/workspace';
 import type { TTYDTerminalRef } from '@/components/terminal';
 
@@ -15,12 +16,13 @@ interface TerminalPaneProps {
 export const TerminalPane = forwardRef<TTYDTerminalRef, TerminalPaneProps>(
   ({ terminal, onRemove }, ref) => {
     const localTerminalRef = useRef<TTYDTerminalRef>(null);
+    const isMobile = useIsMobile();
     
     // Forward the ref to the parent
     useImperativeHandle(ref, () => localTerminalRef.current!, []);
     
     return (
-      <div className="h-full bg-white border border-gray-300 overflow-hidden flex flex-col">
+      <div className="h-full border border-gray-300 overflow-hidden flex flex-col">
         <div className="h-7 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Terminal className="h-3 w-3 text-gray-600" />
@@ -38,15 +40,17 @@ export const TerminalPane = forwardRef<TTYDTerminalRef, TerminalPaneProps>(
           </div>
         </div>
         
-        <div className="flex-1 bg-white overflow-hidden relative">
+        <div className="flex-1 overflow-hidden relative">
           <TTYDTerminal
             ref={localTerminalRef}
             wsUrl={terminal.url.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws'}
           />
-          <TerminalCommandPalette
-            terminalRef={localTerminalRef}
-            isConnected={true}
-          />
+          {isMobile && (
+            <TerminalCommandPalette
+              terminalRef={localTerminalRef}
+              isConnected={true}
+            />
+          )}
         </div>
       </div>
     );

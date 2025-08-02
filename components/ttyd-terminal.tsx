@@ -36,7 +36,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   wsUrl, 
   onConnectionChange, 
   onStatusChange,
-  className = "h-full"
+  className
 }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
@@ -244,8 +244,29 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     // Open terminal in DOM
     terminal.current.open(terminalRef.current);
     
-    // Small delay to ensure DOM is ready
+    // Force xterm elements to take full height
     setTimeout(() => {
+      if (terminalRef.current) {
+        const xtermScreen = terminalRef.current.querySelector('.xterm-screen');
+        const xtermViewport = terminalRef.current.querySelector('.xterm-viewport');
+        const xtermHelper = terminalRef.current.querySelector('.xterm-helper-textarea');
+        
+        if (xtermScreen) {
+          (xtermScreen as HTMLElement).style.height = '100%';
+        }
+        if (xtermViewport) {
+          (xtermViewport as HTMLElement).style.height = '100%';
+        }
+        
+        // Make the terminal container flex
+        const xtermContainer = terminalRef.current.querySelector('.terminal');
+        if (xtermContainer) {
+          (xtermContainer as HTMLElement).style.height = '100%';
+          (xtermContainer as HTMLElement).style.display = 'flex';
+          (xtermContainer as HTMLElement).style.flexDirection = 'column';
+        }
+      }
+      
       if (fitAddon.current) {
         fitAddon.current.fit();
       }
@@ -272,8 +293,11 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   return (
     <div 
       ref={terminalRef}
-      className={className}
-      style={{ minHeight: '400px' }}
+      className={`h-full ${className || ''}`}
+      style={{
+        display: 'flex',
+        flexDirection: 'column'
+      }}
     />
   );
 });
