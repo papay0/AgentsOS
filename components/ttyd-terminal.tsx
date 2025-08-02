@@ -36,7 +36,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   wsUrl, 
   onConnectionChange, 
   onStatusChange,
-  className = "h-96 p-2"
+  className = "h-full"
 }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);

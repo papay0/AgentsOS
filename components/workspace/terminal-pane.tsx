@@ -4,6 +4,7 @@ import React, { forwardRef, useRef, useImperativeHandle } from 'react';
 import { Terminal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TTYDTerminal, TerminalCommandPalette } from '@/components/terminal';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { TerminalPane as TerminalPaneType } from '@/types/workspace';
 import type { TTYDTerminalRef } from '@/components/terminal';
 
@@ -15,6 +16,7 @@ interface TerminalPaneProps {
 export const TerminalPane = forwardRef<TTYDTerminalRef, TerminalPaneProps>(
   ({ terminal, onRemove }, ref) => {
     const localTerminalRef = useRef<TTYDTerminalRef>(null);
+    const isMobile = useIsMobile();
     
     // Forward the ref to the parent
     useImperativeHandle(ref, () => localTerminalRef.current!, []);
@@ -38,7 +40,7 @@ export const TerminalPane = forwardRef<TTYDTerminalRef, TerminalPaneProps>(
           </div>
         </div>
         
-        <div className="flex-1 bg-white overflow-hidden group relative">
+        <div className="flex-1 bg-white overflow-hidden relative">
           <TTYDTerminal
             ref={localTerminalRef}
             wsUrl={terminal.url.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws'}
@@ -46,7 +48,7 @@ export const TerminalPane = forwardRef<TTYDTerminalRef, TerminalPaneProps>(
           <TerminalCommandPalette
             terminalRef={localTerminalRef}
             isConnected={true}
-            className="absolute bottom-0 left-0 right-0"
+            defaultVisible={isMobile}
           />
         </div>
       </div>

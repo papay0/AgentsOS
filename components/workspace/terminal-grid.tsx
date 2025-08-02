@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { Terminal, Plus, Keyboard } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Terminal, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   ResizableHandle,
@@ -9,7 +9,6 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { TerminalPane } from './terminal-pane';
-import { CommandPaletteWS } from './command-palette-ws';
 import type { TerminalTab } from '@/types/workspace';
 import type { TTYDTerminalRef } from '@/components/terminal';
 
@@ -21,8 +20,6 @@ interface TerminalGridProps {
 
 export function TerminalGrid({ tab, onRemoveTerminal, onAddTerminal }: TerminalGridProps) {
   const { terminals } = tab;
-  const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [activeTerminalId, setActiveTerminalId] = useState<string | null>(terminals[0]?.id || null);
   const terminalRefs = useRef<{ [key: string]: TTYDTerminalRef | null }>({});
   
   if (terminals.length === 0) {
@@ -45,8 +42,22 @@ export function TerminalGrid({ tab, onRemoveTerminal, onAddTerminal }: TerminalG
 
   if (terminals.length === 1) {
     return (
-      <div className="h-full flex flex-col">
-        <div className="flex-1" onClick={() => setActiveTerminalId(terminals[0].id)}>
+      <div className="h-full">
+        <TerminalPane 
+          ref={(el) => {
+            terminalRefs.current[terminals[0].id] = el;
+          }}
+          terminal={terminals[0]} 
+          onRemove={onRemoveTerminal}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full">
+      <ResizablePanelGroup direction="vertical" className="h-full">
+        <ResizablePanel defaultSize={50}>
           <TerminalPane 
             ref={(el) => {
               terminalRefs.current[terminals[0].id] = el;
@@ -54,101 +65,39 @@ export function TerminalGrid({ tab, onRemoveTerminal, onAddTerminal }: TerminalG
             terminal={terminals[0]} 
             onRemove={onRemoveTerminal}
           />
-        </div>
-        <div className="border-t border-gray-200">
-          <div className="flex items-center justify-between px-2 py-1 bg-gray-50">
-            <span className="text-xs text-gray-600">Active: {terminals.find(t => t.id === activeTerminalId)?.title || 'None'}</span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowCommandPalette(!showCommandPalette)}
-              className="h-6 px-2 text-xs"
-            >
-              <Keyboard className="h-3 w-3 mr-1" />
-              Commands
-            </Button>
-          </div>
-          {showCommandPalette && activeTerminalId && (
-            <CommandPaletteWS 
-              terminalUrl={terminals.find(t => t.id === activeTerminalId)?.url || ''} 
-            />
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1">
-        <ResizablePanelGroup direction="vertical" className="h-full">
-          <ResizablePanel defaultSize={50}>
-            <div onClick={() => setActiveTerminalId(terminals[0].id)}>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={50}>
+          {terminals.length > 2 ? (
+            <ResizablePanelGroup direction="horizontal">
+              {terminals.slice(1).map((terminal, index) => (
+                <React.Fragment key={terminal.id}>
+                  <ResizablePanel defaultSize={100 / (terminals.length - 1)}>
+                    <TerminalPane 
+                      ref={(el) => {
+                        terminalRefs.current[terminal.id] = el;
+                      }}
+                      terminal={terminal} 
+                      onRemove={onRemoveTerminal}
+                    />
+                  </ResizablePanel>
+                  {index < terminals.length - 2 && <ResizableHandle withHandle />}
+                </React.Fragment>
+              ))}
+            </ResizablePanelGroup>
+          ) : (
+            terminals[1] && (
               <TerminalPane 
                 ref={(el) => {
-                  terminalRefs.current[terminals[0].id] = el;
+                  terminalRefs.current[terminals[1].id] = el;
                 }}
-                terminal={terminals[0]} 
+                terminal={terminals[1]} 
                 onRemove={onRemoveTerminal}
               />
-            </div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50}>
-            {terminals.length > 2 ? (
-              <ResizablePanelGroup direction="horizontal">
-                {terminals.slice(1).map((terminal, index) => (
-                  <React.Fragment key={terminal.id}>
-                    <ResizablePanel defaultSize={100 / (terminals.length - 1)}>
-                      <div onClick={() => setActiveTerminalId(terminal.id)}>
-                        <TerminalPane 
-                          ref={(el) => {
-                            terminalRefs.current[terminal.id] = el;
-                          }}
-                          terminal={terminal} 
-                          onRemove={onRemoveTerminal}
-                        />
-                      </div>
-                    </ResizablePanel>
-                    {index < terminals.length - 2 && <ResizableHandle withHandle />}
-                  </React.Fragment>
-                ))}
-              </ResizablePanelGroup>
-            ) : (
-              terminals[1] && (
-                <div onClick={() => setActiveTerminalId(terminals[1].id)}>
-                  <TerminalPane 
-                    ref={(el) => {
-                      terminalRefs.current[terminals[1].id] = el;
-                    }}
-                    terminal={terminals[1]} 
-                    onRemove={onRemoveTerminal}
-                  />
-                </div>
-              )
-            )}
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </div>
-      <div className="border-t border-gray-200">
-        <div className="flex items-center justify-between px-2 py-1 bg-gray-50">
-          <span className="text-xs text-gray-600">Active: {terminals.find(t => t.id === activeTerminalId)?.title || 'None'}</span>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setShowCommandPalette(!showCommandPalette)}
-            className="h-6 px-2 text-xs"
-          >
-            <Keyboard className="h-3 w-3 mr-1" />
-            Commands
-          </Button>
-        </div>
-        {showCommandPalette && activeTerminalId && (
-          <CommandPaletteWS 
-            terminalUrl={terminals.find(t => t.id === activeTerminalId)?.url || ''} 
-          />
-        )}
-      </div>
+            )
+          )}
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }
