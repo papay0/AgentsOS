@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseDragOptions {
   elementRef: React.RefObject<HTMLElement | null>;
-  onDrag: (deltaX: number, deltaY: number) => void;
+  onDrag: (deltaX: number, deltaY: number, currentX: number, currentY: number) => void;
   onDragStart?: () => void;
-  onDragEnd?: () => void;
+  onDragEnd?: (currentX: number, currentY: number) => void;
 }
 
 export function useDrag({ elementRef, onDrag, onDragStart, onDragEnd }: UseDragOptions) {
@@ -38,7 +38,7 @@ export function useDrag({ elementRef, onDrag, onDragStart, onDragEnd }: UseDragO
       const deltaY = event.clientY - lastPosition.current.y;
       
       lastPosition.current = { x: event.clientX, y: event.clientY };
-      onDrag(deltaX, deltaY);
+      onDrag(deltaX, deltaY, event.clientX, event.clientY);
     });
   }, [isDragging, onDrag]);
 
@@ -46,7 +46,7 @@ export function useDrag({ elementRef, onDrag, onDragStart, onDragEnd }: UseDragO
     if (!isDragging) return;
     
     setIsDragging(false);
-    onDragEnd?.();
+    onDragEnd?.(event.clientX, event.clientY);
 
     // Release pointer capture
     if (elementRef.current) {

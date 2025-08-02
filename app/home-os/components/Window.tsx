@@ -5,7 +5,9 @@ import { Window as WindowType } from '../stores/windowStore';
 import { useWindowStore } from '../stores/windowStore';
 import { useDrag } from '../hooks/useDrag';
 import { useResize } from '../hooks/useResize';
+import { useSnapZones } from '../hooks/useSnapZones';
 import { X, Minus, Square } from 'lucide-react';
+import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT } from '../constants/layout';
 
 interface WindowProps {
   window: WindowType;
@@ -17,39 +19,54 @@ export default function Window({ window }: WindowProps) {
   
   const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, resizeWindow, updateWindow } = useWindowStore();
 
-  // Handle window dragging
-  const handleDrag = useCallback((deltaX: number, deltaY: number) => {
+  // Snap zones integration
+  const { handleDragMove, handleDragEnd } = useSnapZones({
+    windowId: window.id,
+  });
+
+  // Handle window dragging with snap zone detection
+  const handleDrag = useCallback((deltaX: number, deltaY: number, currentX: number, currentY: number) => {
     if (window.maximized) return; // Don't allow dragging maximized windows
+    
     const newX = Math.max(0, window.position.x + deltaX);
     const newY = Math.max(0, window.position.y + deltaY);
+    
+    // Update window position
     moveWindow(window.id, newX, newY);
-  }, [window.id, window.position, moveWindow, window.maximized]);
+    
+    // Check for snap zones during drag
+    handleDragMove(currentX, currentY);
+  }, [window.id, window.position, moveWindow, window.maximized, handleDragMove]);
 
   const { isDragging } = useDrag({
     elementRef: titleBarRef,
     onDrag: handleDrag,
     onDragStart: () => focusWindow(window.id),
+    onDragEnd: (currentX, currentY) => handleDragEnd(currentX, currentY),
   });
 
   // Handle window resizing
   const handleResize = useCallback((width: number, height: number, x?: number, y?: number) => {
-    // Update both size and position if provided
-    if (x !== undefined && y !== undefined) {
+    // Update size and position if any position values are provided
+    if (x !== undefined || y !== undefined) {
       updateWindow(window.id, {
         size: { width, height },
-        position: { x, y }
+        position: { 
+          x: x !== undefined ? x : window.position.x, 
+          y: y !== undefined ? y : window.position.y 
+        }
       });
     } else {
       resizeWindow(window.id, width, height);
     }
-  }, [window.id, updateWindow, resizeWindow]);
+  }, [window.id, updateWindow, resizeWindow, window.position]);
 
   const { isResizing, handleResizeStart } = useResize({
     windowRef: windowRef,
     onResize: handleResize,
     onResizeStart: () => focusWindow(window.id),
-    minWidth: 250,
-    minHeight: 200,
+    minWidth: MIN_WINDOW_WIDTH,
+    minHeight: MIN_WINDOW_HEIGHT,
   });
 
   const handleClose = () => removeWindow(window.id);
@@ -79,7 +96,7 @@ export default function Window({ window }: WindowProps) {
       left: window.position.x,
       top: window.position.y,
       width: window.maximized ? '100%' : window.size.width,
-      height: window.maximized ? 'calc(100% - 100px)' : window.size.height, // Leave space for dock
+      height: window.maximized ? `calc(100% - ${TOTAL_DOCK_AREA}px)` : window.size.height, // Leave space for dock + spacing
       zIndex: window.zIndex,
       transform: window.maximized ? 'none' : undefined,
     };
@@ -88,7 +105,7 @@ export default function Window({ window }: WindowProps) {
       return {
         ...baseStyles,
         left: 0,
-        top: 0,
+        top: 0, // 0 relative to workspace container (which is already offset by 32px)
       };
     }
 
@@ -104,7 +121,7 @@ export default function Window({ window }: WindowProps) {
         ${window.focused ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-300 dark:ring-gray-600'}
         ${isDragging ? 'cursor-grabbing' : 'cursor-default'}
         ${isResizing ? 'select-none' : ''}
-        transition-all duration-150 ease-out
+        transition-all duration-300 ease-out
         will-change-transform
       `}
       onClick={() => focusWindow(window.id)}

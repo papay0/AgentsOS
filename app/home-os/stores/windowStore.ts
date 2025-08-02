@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { WINDOW_Z_INDEX_BASE, WINDOW_Z_INDEX_MAX } from '../constants/layout';
 
 export interface Window {
   id: string;
@@ -35,19 +36,20 @@ interface WindowStore {
 export const useWindowStore = create<WindowStore>()(
   subscribeWithSelector((set) => ({
     windows: [],
-    nextZIndex: 1,
+    nextZIndex: WINDOW_Z_INDEX_BASE,
     activeWindowId: null,
 
     addWindow: (windowData) => set((state) => {
       const id = `window-${Date.now()}`;
+      const zIndex = Math.min(state.nextZIndex, WINDOW_Z_INDEX_MAX);
       const newWindow: Window = {
         ...windowData,
         id,
-        zIndex: state.nextZIndex,
+        zIndex,
       };
       return {
         windows: [...state.windows, newWindow],
-        nextZIndex: state.nextZIndex + 1,
+        nextZIndex: Math.min(state.nextZIndex + 1, WINDOW_Z_INDEX_MAX),
         activeWindowId: id,
       };
     }),
@@ -65,13 +67,14 @@ export const useWindowStore = create<WindowStore>()(
 
     focusWindow: (id) => set((state) => {
       const maxZ = Math.max(...state.windows.map((w) => w.zIndex));
+      const newZIndex = Math.min(maxZ + 1, WINDOW_Z_INDEX_MAX);
       return {
         windows: state.windows.map((w) => ({
           ...w,
           focused: w.id === id,
-          zIndex: w.id === id ? maxZ + 1 : w.zIndex,
+          zIndex: w.id === id ? newZIndex : w.zIndex,
         })),
-        nextZIndex: maxZ + 2,
+        nextZIndex: Math.min(newZIndex + 1, WINDOW_Z_INDEX_MAX),
         activeWindowId: id,
       };
     }),
@@ -115,7 +118,7 @@ export const useWindowStore = create<WindowStore>()(
           title: 'VSCode - Frontend',
           position: { x: 50, y: 50 },
           size: { width: 800, height: 600 },
-          zIndex: 1,
+          zIndex: WINDOW_Z_INDEX_BASE,
           minimized: false,
           maximized: false,
           focused: true,
@@ -127,7 +130,7 @@ export const useWindowStore = create<WindowStore>()(
           title: 'Claude - Full Stack',
           position: { x: 300, y: 150 },
           size: { width: 600, height: 400 },
-          zIndex: 2,
+          zIndex: WINDOW_Z_INDEX_BASE + 1,
           minimized: false,
           maximized: false,
           focused: false,
@@ -139,14 +142,14 @@ export const useWindowStore = create<WindowStore>()(
           title: 'Terminal',
           position: { x: 500, y: 250 },
           size: { width: 700, height: 350 },
-          zIndex: 3,
+          zIndex: WINDOW_Z_INDEX_BASE + 2,
           minimized: false,
           maximized: false,
           focused: false,
           content: '$ npm run dev\\n✓ Server running on http://localhost:3000'
         }
       ],
-      nextZIndex: 4,
+      nextZIndex: WINDOW_Z_INDEX_BASE + 3,
       activeWindowId: 'vscode-1',
     })),
   }))

@@ -2,6 +2,7 @@
 
 import { useWindowStore } from '../stores/windowStore';
 import { Plus, Code, Bot, FolderOpen, Terminal, Globe } from 'lucide-react';
+import { DOCK_Z_INDEX } from '../constants/layout';
 
 export default function Dock() {
   const { windows, addWindow, restoreWindow, focusWindow } = useWindowStore();
@@ -75,7 +76,7 @@ export default function Dock() {
   };
 
   return (
-    <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 z-[100]">
+    <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2" style={{ zIndex: DOCK_Z_INDEX }}>
       <div className="flex items-center space-x-2 bg-black/30 backdrop-blur-xl rounded-2xl px-4 py-3 border border-white/10 shadow-2xl">
         {/* Main app icons */}
         <DockIcon 

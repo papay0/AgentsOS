@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { MENU_BAR_HEIGHT, TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT } from '../constants/layout';
 
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
@@ -25,10 +26,10 @@ export function useResize({
   onResize, 
   onResizeStart, 
   onResizeEnd,
-  minWidth = 200,
-  minHeight = 150,
+  minWidth = MIN_WINDOW_WIDTH,
+  minHeight = MIN_WINDOW_HEIGHT,
   maxWidth = window.innerWidth,
-  maxHeight = window.innerHeight - 130 // Account for menu bar (32px) + dock area (100px)
+  maxHeight = window.innerHeight - MENU_BAR_HEIGHT - TOTAL_DOCK_AREA
 }: UseResizeOptions) {
   const [resizeState, setResizeState] = useState<ResizeState>({
     isResizing: false,
@@ -65,7 +66,7 @@ export function useResize({
     setResizeState({
       isResizing: true,
       direction,
-      startBounds: bounds,
+      startBounds: bounds, // Keep viewport coordinates for consistency
       startPointer: { x: event.clientX, y: event.clientY },
     });
 
@@ -141,17 +142,29 @@ export function useResize({
       newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
       newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-      // Ensure window stays within workspace bounds (account for dock area)
-      newX = Math.max(0, Math.min(window.innerWidth - newWidth, newX));
-      newY = Math.max(0, Math.min(window.innerHeight - 130 - newHeight, newY));
+      // Ensure window stays within workspace bounds
+      if (resizeState.direction?.includes('w')) {
+        newX = Math.max(0, Math.min(window.innerWidth - newWidth, newX));
+      }
+      if (resizeState.direction?.includes('n')) {
+        newY = Math.max(MENU_BAR_HEIGHT, Math.min(window.innerHeight - TOTAL_DOCK_AREA - newHeight, newY));
+      }
 
       // Apply changes directly to DOM for performance (bypass React)
       const element = windowRef.current;
       if (element) {
         element.style.width = `${newWidth}px`;
         element.style.height = `${newHeight}px`;
-        element.style.left = `${newX}px`;
-        element.style.top = `${newY}px`;
+        
+        // Only update position for resize directions that actually move the window
+        if (resizeState.direction?.includes('w')) {
+          element.style.left = `${newX}px`;
+        }
+        if (resizeState.direction?.includes('n')) {
+          // Convert viewport Y coordinate to workspace Y coordinate
+          element.style.top = `${newY - MENU_BAR_HEIGHT}px`;
+        }
+        
         element.style.transform = 'translate3d(0, 0, 0)'; // Force GPU layer
       }
     });
@@ -165,12 +178,18 @@ export function useResize({
     if (element) {
       const finalBounds = element.getBoundingClientRect();
       
+      // Only update position for resize directions that actually move the window
+      const shouldUpdateX = resizeState.direction?.includes('w');
+      const shouldUpdateY = resizeState.direction?.includes('n');
+      
+      
       // Update React state with final values
+      // Account for workspace container offset (menu bar height from top)
       onResize(
         finalBounds.width, 
         finalBounds.height,
-        finalBounds.left,
-        finalBounds.top
+        shouldUpdateX ? finalBounds.left : undefined,
+        shouldUpdateY ? (finalBounds.top - MENU_BAR_HEIGHT) : undefined
       );
     }
 
@@ -195,7 +214,7 @@ export function useResize({
     }
 
     onResizeEnd?.();
-  }, [resizeState.isResizing, windowRef, onResize, onResizeEnd]);
+  }, [resizeState.isResizing, resizeState.direction, windowRef, onResize, onResizeEnd]);
 
   // Global event listeners
   useEffect(() => {
