@@ -189,17 +189,6 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         }
       }, 200);
 
-      // After receiving the initial messages, try to get a shell prompt
-      setTimeout(() => {
-        if (websocket.current?.readyState === WebSocket.OPEN) {
-          // INPUT = '0' (0x30) + command bytes as binary
-          const commandBytes = new TextEncoder().encode('\r');
-          const payload = new Uint8Array(commandBytes.length + 1);
-          payload[0] = 0x30; // '0' as byte
-          payload.set(commandBytes, 1);
-          websocket.current!.send(payload);
-        }
-      }, 1000);
     };
 
     websocket.current.onmessage = (event) => {
