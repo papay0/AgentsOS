@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Iphone15Pro } from '@/components/ui/iphone-15-pro';
+import { Header } from '@/components/header';
 import { trackButtonClick, trackPageView } from '@/lib/analytics';
 import { addToWaitlist } from '@/lib/waitlist';
 import { isDevelopment } from '@/lib/env';
@@ -52,6 +53,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-slate-800">
+      <Header />
       {/* Debug toggle - only show in dev mode */}
       {isDevMode && (
         <div className="fixed top-4 right-4 z-50">
