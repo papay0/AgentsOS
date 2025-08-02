@@ -2,7 +2,55 @@
 
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Terminal, ITerminalAddon } from '@xterm/xterm';
+import { useTheme } from './theme-provider';
 import '@xterm/xterm/css/xterm.css';
+
+const terminalThemes = {
+  light: {
+    background: '#ffffff',
+    foreground: '#000000',
+    cursor: '#000000',
+    selectionBackground: '#add6ff',
+    black: '#000000',
+    red: '#cd3131',
+    green: '#00bc00',
+    yellow: '#949800',
+    blue: '#0451a5',
+    magenta: '#bc05bc',
+    cyan: '#0598bc',
+    white: '#555555',
+    brightBlack: '#666666',
+    brightRed: '#f14c4c',
+    brightGreen: '#23d18b',
+    brightYellow: '#f5f543',
+    brightBlue: '#3b8eea',
+    brightMagenta: '#d670d6',
+    brightCyan: '#29b8db',
+    brightWhite: '#e5e5e5',
+  },
+  dark: {
+    background: '#1e1e1e',
+    foreground: '#ffffff',
+    cursor: '#ffffff',
+    selectionBackground: '#264f78',
+    black: '#000000',
+    red: '#cd3131',
+    green: '#0dbc79',
+    yellow: '#e5e510',
+    blue: '#2472c8',
+    magenta: '#bc3fbc',
+    cyan: '#11a8cd',
+    white: '#e5e5e5',
+    brightBlack: '#666666',
+    brightRed: '#f14c4c',
+    brightGreen: '#23d18b',
+    brightYellow: '#f5f543',
+    brightBlue: '#3b8eea',
+    brightMagenta: '#d670d6',
+    brightCyan: '#29b8db',
+    brightWhite: '#ffffff',
+  }
+} as const;
 
 interface TTYDTerminalProps {
   /** WebSocket URL for the ttyd server */
@@ -41,6 +89,27 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   const fitAddon = useRef<ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null>(null);
   const websocket = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  
+  // Theme management
+  const { theme } = useTheme();
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
+
+  // Resolve theme (handle system theme)
+  useEffect(() => {
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const updateTheme = () => {
+        setResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
+      };
+      
+      updateTheme(); // Set initial value
+      mediaQuery.addEventListener('change', updateTheme);
+      
+      return () => mediaQuery.removeEventListener('change', updateTheme);
+    } else {
+      setResolvedTheme(theme as 'light' | 'dark');
+    }
+  }, [theme]);
 
   useImperativeHandle(ref, () => ({
     sendCommand: (command: string, addEnter = true) => {
@@ -219,14 +288,9 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   useEffect(() => {
     if (!terminalRef.current) return;
 
-    // Initialize terminal
+    // Initialize terminal with current theme
     terminal.current = new Terminal({
-      theme: {
-        background: '#1e1e1e',
-        foreground: '#ffffff',
-        cursor: '#ffffff',
-        selectionBackground: '#264f78',
-      },
+      theme: terminalThemes[resolvedTheme],
       fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
       fontSize: 14,
       lineHeight: 1.2,
@@ -293,6 +357,13 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       terminal.current?.dispose();
     };
   }, [wsUrl, connectWebSocket]);
+
+  // Update terminal theme when resolved theme changes
+  useEffect(() => {
+    if (terminal.current) {
+      terminal.current.options.theme = terminalThemes[resolvedTheme];
+    }
+  }, [resolvedTheme]);
 
   return (
     <div 

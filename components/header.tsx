@@ -3,18 +3,12 @@
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 import { Terminal } from 'lucide-react';
-import { usePathname } from 'next/navigation';
 import {
   SignedIn,
   UserButton,
 } from '@clerk/nextjs';
 
-export function Header() {
-  const pathname = usePathname();
-  
-  // Check if we're on a workspace page
-  const isWorkspacePage = pathname?.includes('/home/workspace/');
-  
+export function Header() {  
   return (
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
@@ -30,9 +24,7 @@ export function Header() {
           <SignedIn>
             <UserButton />
           </SignedIn>
-          
-          {/* Hide theme toggle on workspace pages since they use light mode */}
-          {!isWorkspacePage && <ThemeToggle />}
+          <ThemeToggle />
         </div>
       </div>
     </header>
