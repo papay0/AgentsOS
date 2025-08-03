@@ -338,10 +338,23 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         fitAddon.current.fit();
       }
     };
+    
+    // Handle window content resize (from AgentsOS windows)
+    const handleWindowContentResize = () => {
+      // Add a small delay to ensure the container has resized
+      setTimeout(() => {
+        if (fitAddon.current) {
+          fitAddon.current.fit();
+        }
+      }, 50);
+    };
+    
     window.addEventListener('resize', handleResize);
+    window.addEventListener('windowContentResize', handleWindowContentResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('windowContentResize', handleWindowContentResize);
       websocket.current?.close();
       terminal.current?.dispose();
     };

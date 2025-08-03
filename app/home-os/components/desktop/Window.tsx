@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useCallback, useState, memo } from 'react';
+import React, { useRef, useCallback, useState, memo, useEffect } from 'react';
 import { Window as WindowType } from '../../stores/windowStore';
 import { useWindowStore } from '../../stores/windowStore';
 import { useDrag } from '../../hooks/useDrag';
@@ -198,6 +198,7 @@ export default function Window({ window }: WindowProps) {
       style={getWindowStyles()}
       className={`
         bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700
+        flex flex-col
         ${window.focused 
           ? 'ring-2 ring-blue-500 shadow-2xl shadow-blue-500/20' 
           : 'ring-1 ring-gray-300 dark:ring-gray-600 shadow-xl'
@@ -263,7 +264,7 @@ export default function Window({ window }: WindowProps) {
       </div>
 
       {/* Window Content */}
-      <div className={`h-full pb-8 overflow-hidden ${isDragging ? 'opacity-90 pointer-events-none' : ''}`}>
+      <div className={`flex-1 overflow-hidden ${isDragging ? 'opacity-90 pointer-events-none' : ''}`}>
         <WindowContent window={window} />
       </div>
 
@@ -320,11 +321,31 @@ export default function Window({ window }: WindowProps) {
 }
 
 const WindowContent = memo(function WindowContent({ window }: { window: WindowType }) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const app = getApp(window.type);
+  
+  // Add resize observer to trigger terminal resize when window size changes
+  useEffect(() => {
+    if (!contentRef.current) return;
+    
+    const resizeObserver = new ResizeObserver(() => {
+      // Dispatch a custom resize event that the terminal can listen to
+      const resizeEvent = new CustomEvent('windowContentResize', {
+        detail: { windowId: window.id }
+      });
+      globalThis.dispatchEvent(resizeEvent);
+    });
+    
+    resizeObserver.observe(contentRef.current);
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [window.id]);
   
   if (!app) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+      <div ref={contentRef} className="w-full h-full flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
         <div className="text-center">
           <div className="text-4xl mb-4">❓</div>
           <div className="text-lg font-semibold">Unknown App</div>
@@ -337,7 +358,7 @@ const WindowContent = memo(function WindowContent({ window }: { window: WindowTy
   const DesktopContent = app.content.desktop;
   
   return (
-    <div className="w-full h-full">
+    <div ref={contentRef} className="w-full h-full flex flex-col">
       <DesktopContent repositoryUrl={window.repositoryUrl} />
     </div>
   );
