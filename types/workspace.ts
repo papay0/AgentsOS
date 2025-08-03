@@ -20,6 +20,18 @@ export interface TerminalTab {
 
 import { SandboxState } from '@daytonaio/sdk';
 
+export interface RepositoryWithUrls {
+  url: string;
+  name: string;
+  description?: string;
+  tech?: string;
+  urls: {
+    vscode: string;
+    terminal: string;
+    claude: string;
+  };
+}
+
 export interface CreateWorkspaceResponse {
   sandboxId: string;
   terminalUrl: string;
@@ -27,6 +39,7 @@ export interface CreateWorkspaceResponse {
   vscodeUrl: string;
   message: string;
   error?: string;
+  repositories?: RepositoryWithUrls[];
 }
 
 export interface WorkspaceStatusResponse {

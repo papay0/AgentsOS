@@ -39,10 +39,10 @@ export class WorkspaceOrchestrator {
         throw new Error('Failed to get sandbox root directory');
       }
 
-      // Ensure project directory exists
-      const projectDir = `${rootDir}/project`;
+      // Ensure projects directory exists
+      const projectDir = `${rootDir}/projects`;
       await sandbox.process.executeCommand(`mkdir -p ${projectDir}`, rootDir);
-      this.logger.info(`Ensured project directory exists: ${projectDir}`);
+      this.logger.info(`Ensured projects directory exists: ${projectDir}`);
 
       // Check if services are already running
       this.logger.workspace.checking('if services are already running');
@@ -99,9 +99,9 @@ export class WorkspaceOrchestrator {
   }
 
   async createProjectDirectory(sandbox: Sandbox, rootDir: string): Promise<string> {
-    const projectDir = `${rootDir}/project`;
+    const projectDir = `${rootDir}/projects`;
     await sandbox.process.executeCommand(`mkdir -p ${projectDir}`, rootDir);
-    this.logger.info(`Created project directory: ${projectDir}`);
+    this.logger.info(`Created projects directory: ${projectDir}`);
     return projectDir;
   }
 }

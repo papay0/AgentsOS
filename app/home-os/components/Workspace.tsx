@@ -8,9 +8,16 @@ import Dock from './desktop/Dock';
 import MenuBar from './desktop/MenuBar';
 import SnapZoneOverlay from './desktop/SnapZoneOverlay';
 import MobileWorkspace from './mobile/MobileWorkspace';
+import { Onboarding } from './desktop/Onboarding';
+import { MobileOnboarding } from './mobile/MobileOnboarding';
 
 export default function Workspace() {
   const windows = useWindowStore((state) => state.windows);
+  const onboardingCompleted = useWindowStore((state) => state.onboardingCompleted);
+  const isCheckingWorkspaces = useWindowStore((state) => state.isCheckingWorkspaces);
+  const completeOnboarding = useWindowStore((state) => state.completeOnboarding);
+  const initializeWindows = useWindowStore((state) => state.initializeWindows);
+  const checkExistingWorkspaces = useWindowStore((state) => state.checkExistingWorkspaces);
   const isMobile = useIsMobile();
   const [globalSnapState, setGlobalSnapState] = useState<{
     activeZone: { 
@@ -21,6 +28,11 @@ export default function Workspace() {
     isVisible: boolean;
   }>({ activeZone: null, isVisible: false });
 
+  // Check for existing workspaces on mount
+  useEffect(() => {
+    checkExistingWorkspaces();
+  }, [checkExistingWorkspaces]);
+
   // Listen for snap zone changes from any window
   useEffect(() => {
     const handleSnapZoneChange = (event: CustomEvent) => {
@@ -30,6 +42,32 @@ export default function Workspace() {
     window.addEventListener('snapZoneChange', handleSnapZoneChange as EventListener);
     return () => window.removeEventListener('snapZoneChange', handleSnapZoneChange as EventListener);
   }, []);
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = () => {
+    completeOnboarding();
+    initializeWindows();
+  };
+
+  // Show loading while checking for existing workspaces
+  if (isCheckingWorkspaces) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading AgentsOS...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show onboarding if not completed
+  if (!onboardingCompleted) {
+    if (isMobile) {
+      return <MobileOnboarding onComplete={handleOnboardingComplete} />;
+    }
+    return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
 
   // Render mobile workspace on mobile devices
   if (isMobile) {

@@ -6,13 +6,24 @@ import type { AppMetadata } from '@/app/home-os/apps/BaseApp'
 // Type for the window store mock
 export interface MockWindowStore {
   windows: Window[]
+  nextZIndex: number
+  activeWindowId: string | null
+  onboardingCompleted: boolean
+  isCheckingWorkspaces: boolean
   addWindow: ReturnType<typeof vi.fn>
+  removeWindow: ReturnType<typeof vi.fn>
   updateWindow: ReturnType<typeof vi.fn>
   focusWindow: ReturnType<typeof vi.fn>
   minimizeWindow: ReturnType<typeof vi.fn>
   maximizeWindow: ReturnType<typeof vi.fn>
   restoreWindow: ReturnType<typeof vi.fn>
+  moveWindow: ReturnType<typeof vi.fn>
+  resizeWindow: ReturnType<typeof vi.fn>
+  setWindowAnimating: ReturnType<typeof vi.fn>
   closeWindow: ReturnType<typeof vi.fn>
+  initializeWindows: ReturnType<typeof vi.fn>
+  completeOnboarding: ReturnType<typeof vi.fn>
+  checkExistingWorkspaces: ReturnType<typeof vi.fn>
 }
 
 // Type for creating test windows

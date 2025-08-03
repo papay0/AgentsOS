@@ -24,6 +24,8 @@ interface WindowStore {
   windows: Window[];
   nextZIndex: number;
   activeWindowId: string | null;
+  onboardingCompleted: boolean;
+  isCheckingWorkspaces: boolean;
   
   // Actions
   addWindow: (window: Omit<Window, 'id' | 'zIndex'>) => void;
@@ -37,6 +39,8 @@ interface WindowStore {
   resizeWindow: (id: string, width: number, height: number) => void;
   setWindowAnimating: (id: string, isAnimating: boolean) => void;
   initializeWindows: () => void;
+  completeOnboarding: () => void;
+  checkExistingWorkspaces: () => Promise<void>;
 }
 
 export const useWindowStore = create<WindowStore>()(
@@ -44,6 +48,8 @@ export const useWindowStore = create<WindowStore>()(
     windows: [],
     nextZIndex: WINDOW_Z_INDEX_BASE,
     activeWindowId: null,
+    onboardingCompleted: false,
+    isCheckingWorkspaces: false,
 
     addWindow: (windowData) => set((state) => {
       const id = `window-${Date.now()}`;
@@ -186,5 +192,45 @@ export const useWindowStore = create<WindowStore>()(
       nextZIndex: WINDOW_Z_INDEX_BASE + 3,
       activeWindowId: 'vscode-1',
     })),
+
+    completeOnboarding: () => set(() => ({
+      onboardingCompleted: true,
+    })),
+
+    checkExistingWorkspaces: async () => {
+      set({ isCheckingWorkspaces: true });
+      
+      try {
+        const response = await fetch('/api/list-workspaces');
+        
+        if (response.ok) {
+          const data = await response.json();
+          const hasWorkspaces = data.sandboxes && data.sandboxes.length > 0;
+          
+          set({ 
+            onboardingCompleted: hasWorkspaces,
+            isCheckingWorkspaces: false 
+          });
+          
+          // If user has existing workspaces, initialize them
+          if (hasWorkspaces) {
+            set((state) => ({ ...state }));
+          }
+        } else {
+          // If API call fails, assume first time user and show onboarding
+          set({ 
+            onboardingCompleted: false,
+            isCheckingWorkspaces: false 
+          });
+        }
+      } catch (error) {
+        console.error('Failed to check existing workspaces:', error);
+        // On error, assume first time user and show onboarding
+        set({ 
+          onboardingCompleted: false,
+          isCheckingWorkspaces: false 
+        });
+      }
+    },
   }))
 );

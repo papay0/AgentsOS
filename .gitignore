@@ -20,6 +20,9 @@ yarn.lock
 /.next/
 /out/
 
+# Firebase Service Account
+service-account-key.json
+
 # production
 /build
 

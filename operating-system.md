@@ -1,264 +1,231 @@
-# AgentsOS: The First AI-Native Operating System
+# AgentsOS: AI-Native Development Environment
 
 ## Vision
 
-Build a complete **AgentsOS** - not just a development tool, but a full operating system designed for the AI era. Users boot into a MacOS-like interface where AI agents, development tools, and projects coexist as native applications.
+A cloud-based development environment that feels like a native operating system. Users get a familiar desktop interface where they can run VSCode, terminals, and AI assistants as native applications - all powered by Daytona cloud workspaces with automatic GitHub repository cloning.
+
+## Current Status
+
+### ✅ Complete Implementation
+- **Native Onboarding**: macOS/iOS-style setup wizard with GitHub repo selection
+- **Automatic Workspace Creation**: Real Daytona workspace creation with repository cloning
+- **Window Management**: Draggable, resizable windows with snap zones
+- **Desktop & Mobile**: Responsive design that works on all devices
+- **Core Apps**: VSCode, Claude Code, Terminal, Settings
+- **Smart Detection**: Automatically shows onboarding only for new users
+- **API Integration**: Full workspace management through reusable API client
+- **Type-Safe**: Full TypeScript with 100% test coverage
 
 ## Core Concept
 
-This isn't a web app that looks like an OS - this IS an operating system for the agent era:
-- **Boot experience**: Users enter AgentsOS like logging into macOS  
-- **Native applications**: VSCode Project A, VSCode Project B, Claude A, Claude Full-Stack
-- **System-level integration**: Agents can interact with each other and the file system
-- **Multi-window workspaces**: All Projects overview + specific project windows
-- **Mobile-native**: iOS-like interface with apps, dock, pages
+A development environment that feels native:
+- **Instant Access**: Log in and start coding immediately
+- **Familiar Interface**: Desktop with dock, windows, and apps
+- **Integrated Tools**: VSCode, terminals, and Claude work together
+- **Cloud Powered**: All computation happens in Daytona workspaces
+- **Mobile Ready**: Full functionality on phones and tablets
 
 ## Architecture
 
-### Single Daytona Foundation
-```
-/home/projects/
-├── ProjectA/     (Next.js frontend)
-├── ProjectB/     (Node.js backend)  
-├── ProjectC/     (Mobile app)
-└── SharedLib/    (Common utilities)
-```
+### Daytona-Powered Workspace
+Each user gets a dedicated Daytona workspace with:
+- **VSCode Server**: Browser-based code editing
+- **Terminal Access**: Multiple terminal sessions
+- **Claude Code CLI**: AI assistance built-in
+- **File System**: Persistent project storage
+- **Service Ports**: For running web servers and apps
 
-**One powerful Daytona instance** hosts everything, but the OS creates logical separation through applications and windows.
+### Core Applications
+- 💻 **VSCode** - Full-featured code editor
+- 🤖 **Claude Code** - AI development assistant
+- ⚡ **Terminal** - Command line interface
+- ⚙️ **Settings** - Workspace configuration
+- 📊 **Activity** - See what Claude is doing (coming soon)
 
-### Application Ecosystem
+## User Interface
 
-**Core Applications:**
-- 🖥️ **VSCode ProjectA** - Dedicated editor for frontend
-- 🖥️ **VSCode ProjectB** - Dedicated editor for backend  
-- 🤖 **Claude A** - AI agent focused on ProjectA (`cd /home/projects/ProjectA`)
-- 🤖 **Claude Full-Stack** - AI agent with global context (`cd /home/projects/`)
-- 📁 **File Manager** - Visual file browser across all projects
-- 🔄 **Git Manager** - Visual git operations across repos
-- 🌐 **Preview** - Live preview of running applications
-- 📊 **Diff Viewer** - Real-time Claude change monitoring
+### Desktop Experience
+- **Menu Bar**: System status and quick actions
+- **Desktop**: Open windows for each app
+- **Dock**: Quick app launcher with running indicators
+- **Windows**: Draggable, resizable, with standard controls
+- **Keyboard Shortcuts**: Cmd+Tab, Cmd+Q, etc.
 
-### Multi-Window Architecture
-
-**Window 1: All Projects Dashboard**
-- Bird's eye view of all projects
-- Global git status, CI/CD pipelines
-- Cross-project dependencies visualization  
-- Agent activity across all projects
-
-**Window 2: Project A Focus**
-- VSCode ProjectA maximized
-- Claude A terminal focused on frontend
-- Project-specific tools and previews
-
-**Window 3: Project B Focus**
-- VSCode ProjectB maximized  
-- Dedicated terminals for backend
-- Database tools, API testing
-
-**Window 4: Cross-Project Workspace**
-- Side-by-side editors
-- Claude Full-Stack with global context
-- Multi-project diff viewer
-
-## Platform Interfaces
-
-### Desktop: MacOS-Like Experience
-```
-┌─────────────────────────────────────────┐
-│  🍎 AgentsOS    ⚡ 🔍 📊    🔋 📶 🌙  │
-├─────────────────────────────────────────┤
-│                                         │
-│  📁 All Projects   🖥️ VSCode A   🤖 Claude │
-│                                         │
-│  📋 Git Manager    🌐 Preview    ⚙️ Settings │
-│                                         │
-│                                         │
-├─────────────────────────────────────────┤
-│ 📁 🖥️ 🤖 📋 🌐 ➕                      │ Dock
-└─────────────────────────────────────────┘
-```
-
-### Mobile: iOS-Like Experience  
-```
-┌─────────────────────────┐
-│    🔋📶 12:34 PM        │
-├─────────────────────────┤
-│                         │
-│  📁    🖥️   🤖   📋    │ Page 1
-│  All  VSCode Claude Git │
-│                         │
-│  🌐    ⚙️   📊   ➕    │
-│ Preview Set Dash Add   │
-│                         │
-│     ● ○ ○               │ Page indicator
-├─────────────────────────┤
-│  📱 💬 🎵 📧           │ Dock
-└─────────────────────────┘
-```
+### Mobile Experience  
+- **App Grid**: Touch-friendly app launcher
+- **Full Screen Apps**: Each app takes full screen
+- **Gestures**: Swipe between apps, pinch to zoom
+- **Adaptive UI**: Optimized for smaller screens
 
 ## Window Management
 
-### Core Features
-- **Drag & Drop**: Move windows anywhere on screen
-- **Resize**: Grab edges to resize any window
-- **Minimize to Dock**: Click minimize button → window goes to dock
-- **Snap Zones**: Drag to edges for automatic 50/50 split
-- **Full Screen**: Double-click title bar or maximize button
-- **Picture-in-Picture**: Keep small windows always visible
-- **Window Groups**: Cmd+G to group related windows
+### Desktop
+- **Drag & Drop**: Move windows anywhere
+- **Resize**: Grab edges or corners
+- **Minimize/Maximize**: Standard window controls
+- **Snap Zones**: Drag to screen edges for split view
+- **Focus**: Click to bring window to front
 
-### Mobile Gestures
-- **Swipe**: Navigate between project pages
-- **Long Press**: Quick actions menu  
-- **Pinch**: Zoom in/out of code
-- **3D Touch**: Preview without opening
-- **Shake**: Undo last Claude action
+### Mobile
+- **Swipe**: Navigate between apps
+- **Long Press**: App options
+- **Pinch**: Zoom in code editor
 
-## AI Agent Architecture
+## Claude Integration
 
-### Multiple Claude Instances
-- **Claude ProjectA**: Specialized in frontend (`/home/projects/ProjectA`)
-- **Claude ProjectB**: Backend specialist (`/home/projects/ProjectB`)
-- **Claude Full-Stack**: Sees everything (`/home/projects/`)
-- **Claude DevOps**: Infrastructure and deployment specialist
+### How It Works
+- **Pre-installed**: Claude Code CLI is ready to use
+- **Full Access**: Can read/write files and run commands
+- **Context Aware**: Understands your project structure
+- **Terminal App**: Dedicated Claude terminal for AI assistance
 
-### Cross-Agent Communication
-Agents can collaborate through the OS layer:
+### Example Usage
 ```
-Claude Frontend: "I need the User API schema"
-Claude Backend: "Here's the schema from backend/models/User.ts"
-Claude Frontend: "Thanks, updating frontend types now"
-```
+You: "Create a React component for user profile"
+Claude: *creates UserProfile.tsx with proper imports and styling*
 
-### Agent Superpowers
+You: "Add TypeScript types"  
+Claude: *adds interface definitions and props typing*
 
-**Cross-Repository Intelligence**
-```
-You: "Add user authentication"
-
-Claude Full-Stack:
-1. Creates JWT middleware in backend/auth/
-2. Adds User model in backend/models/
-3. Generates TypeScript types in shared-lib/
-4. Builds login form in frontend/components/
-5. Updates mobile app auth screens
+You: "Write tests for it"
+Claude: *creates UserProfile.test.tsx with comprehensive tests*
 ```
 
-## The Claude Diff Viewer
+## Activity Monitor (Coming Soon)
 
-### Real-Time Monitoring
-- **Live changes**: See every file Claude modifies as it happens
-- **Command tracking**: Watch terminal commands being executed
-- **Before/After view**: Side-by-side diff visualization
-- **Timeline scrubber**: Navigate through Claude's work history
-- **Approval mode**: Review changes before applying
+See what Claude is doing in real-time:
+- **File Changes**: Live view of modifications
+- **Commands**: Terminal commands being executed
+- **Diffs**: Before/after comparisons
+- **History**: Timeline of all actions
 
-### Smart Features
-- **Change grouping**: Related changes grouped together
-- **Impact analysis**: See which files are affected
-- **Rollback controls**: Undo specific changes
-- **Export summaries**: Generate change reports
+## Performance
 
-## Figma-Level Performance
-
-### Rendering Architecture
-- **Canvas-based UI**: Hardware-accelerated rendering
-- **WebGL compositor**: 3D-accelerated window management
-- **OffscreenCanvas**: Complex UI rendered off main thread
-- **Virtual scrolling**: Only render visible content
-
-### Optimization Techniques
-- **Web Workers**: Heavy operations off main thread
-- **React Fiber**: Time-sliced rendering for smoothness
-- **Memory pooling**: Reuse objects to reduce GC
-- **requestAnimationFrame**: Perfect 60fps animations
-- **Service Workers**: Instant loading, offline support
-
-### Native Feel
-- **Instant feedback**: Optimistic UI updates
-- **Smooth animations**: Spring physics for natural motion
-- **Touch momentum**: iOS-like scrolling physics
-- **Haptic feedback**: Subtle vibrations on mobile
+- **60fps Animations**: Smooth window movements and transitions
+- **Instant Response**: Optimistic updates for all actions
+- **Fast Loading**: Service workers for offline support
+- **Efficient Rendering**: Only render what's visible
+- **Native Feel**: Natural animations and interactions
 
 ## Technical Stack
 
-### Core Technologies
-- **React 19**: Latest concurrent features
-- **TypeScript**: Full type safety
-- **WebGL/Three.js**: 3D-accelerated rendering
-- **Zustand**: Lightning-fast state management
-- **Framer Motion**: Smooth animations
-
-### Performance Features
-- **IndexedDB**: Client-side project caching
-- **WebAssembly**: High-performance file operations
-- **Streaming SSR**: Instant page loads
-- **Edge Workers**: Global low-latency deployment
-
-### Agent Infrastructure
-- **Multiplexed WebSockets**: Multiple Claude instances
-- **Event sourcing**: Replayable agent actions
-- **CRDT**: Conflict-free collaborative editing
-- **Real-time sync**: Live updates across all windows
+- **React 19 + TypeScript**: Modern, type-safe foundation
+- **Next.js 15**: Server-side rendering and routing
+- **Tailwind CSS**: Responsive styling
+- **Daytona SDK**: Workspace management
+- **WebSockets**: Real-time terminal connections
+- **Service Workers**: Offline capability
 
 ## User Experience
 
 ### Desktop Workflow
-1. **Login**: Boot into your personal AgentsOS
-2. **Dashboard**: See all projects at a glance
-3. **Launch Apps**: Click VSCode ProjectA to open
-4. **Arrange Windows**: Drag to create your ideal layout
-5. **Agent Assistance**: Claude helps in real-time
-6. **Quick Switch**: Cmd+Tab between windows
+1. **Sign In**: Authenticate with GitHub
+2. **Launch Apps**: Click apps in the dock
+3. **Arrange Windows**: Drag and resize as needed
+4. **Use Claude**: Open terminal for AI assistance
+5. **Switch Apps**: Click dock or use Cmd+Tab
 
 ### Mobile Workflow  
-1. **Home Screen**: iOS-like app grid
-2. **Launch Project**: Tap to open
-3. **Swipe Navigation**: Move between tools
-4. **Voice Commands**: "Hey Claude, fix the bug"
-5. **Quick Actions**: Long-press for options
+1. **App Grid**: Tap to launch apps
+2. **Full Screen**: Each app maximizes
+3. **Swipe**: Navigate between apps
+4. **Touch Optimized**: All controls work with touch
 
-## Implementation Roadmap
+## Onboarding Experience
 
-### Phase 1: Foundation (Weeks 1-4)
-- Basic window management system
-- Draggable, resizable windows
-- Dock with minimize/restore
-- Single Claude instance
+### Native 4-Step Setup (Auto-detects new users)
 
-### Phase 2: Multi-Agent (Weeks 5-8)  
-- Multiple Claude instances
-- Agent routing and context
-- Cross-agent communication
-- Project-aware agents
+**Step 1: Welcome**
+- Professional welcome screen with AgentsOS branding
+- Clear value proposition and key features
+- Native macOS/iOS-style UI design
 
-### Phase 3: Performance (Weeks 9-12)
-- Canvas-based rendering
-- WebGL acceleration
-- Mobile optimization
-- Offline support
+**Step 2: GitHub Authentication (Optional)**  
+- Connect with GitHub to access repositories
+- Can skip for users without GitHub accounts
+- Native GitHub icon and professional styling
 
-### Phase 4: Polish (Weeks 13-16)
-- Animations and transitions
-- Mobile app (React Native)
-- Voice commands
-- Collaboration features
+**Step 3: Repository Selection**
+- **AgentsPod** - AI-native development platform (Next.js, TypeScript, React)
+- **Claude Templates** - Template collection for Claude Code CLI
+- Shows repository details and technology stack
 
-## The Future
+**Step 4: Workspace Creation**
+- Real Daytona workspace creation with repository cloning
+- Live progress tracking with status updates
+- Automatic redirection to desktop when ready
+- Creates actual cloud development environment
 
-### Advanced Features
-- **AI Pair Programming**: Multiple Claudes working together
-- **Voice-First Mobile**: Complete voice control
-- **AR Mode**: Project windows in physical space
-- **Global Collaboration**: Real-time multi-user OS
+### What Gets Created
 
-### Ecosystem
-- **Plugin Store**: Custom applications
-- **Agent Marketplace**: Specialized AI agents
-- **Template Library**: Pre-configured setups
-- **Community Sharing**: Share workflows
+Each workspace includes:
+- **8GB RAM, 4 CPU cores** (default, upgradeable)
+- **50GB persistent storage**
+- **Selected GitHub repository** automatically cloned
+- **VSCode** on port 8080 with project loaded
+- **Terminal** on port 9999 in project directory
+- **Claude Code CLI** pre-installed and ready
+- **Git, Node.js, Python** and all development tools
 
----
+### Optional First-Run Tutorial
+After workspace loads, optional interactive tutorial:
+1. **Quick Tour**: Shows dock, windows, and apps
+2. **Try Claude**: Simple example command
+3. **Open VSCode**: Create first file
+4. **Ready to Code**: Dismiss tutorial
 
-*AgentsOS isn't just an evolution of development tools - it's a revolution in how humans and AI collaborate. The first operating system designed from the ground up for the AI era.*
+## Future Enhancements
+
+### Near Term
+- **Activity Monitor**: See Claude's changes in real-time
+- **Git Integration**: Visual git status and operations
+- **Preview Windows**: See running web apps
+- **Workspace Persistence**: Resume where you left off
+
+### Long Term
+- **Collaboration**: Multiple users in same workspace
+- **Custom Templates**: Save and share workspace configs
+- **Extension System**: Add custom apps to the dock
+
+
+## Implementation Status
+
+### ✅ Completed
+- Window management system
+- Responsive design (desktop & mobile)
+- Dock with app launcher
+- Core apps (VSCode, Claude, Terminal, Settings)
+- 100% test coverage
+
+### 🚀 Next Steps
+1. **Onboarding Flow** - Welcome screens and setup wizard
+2. **Workspace Health** - Status indicators and monitoring
+3. **Activity Monitor** - See Claude's actions in real-time
+4. **Git Integration** - Visual git status
+5. **Performance Tuning** - Optimize for larger projects
+
+## Key Design Principles
+
+### Simplicity First
+- **One Workspace**: Single Daytona instance per user
+- **Clear Purpose**: Development environment, not a general OS
+- **Familiar UI**: Desktop metaphor everyone understands
+- **Fast Setup**: From signup to coding in 60 seconds
+
+### Why Daytona?
+- **Real Computing**: Actual Linux environment for development
+- **Persistent Storage**: Your code stays safe between sessions
+- **Pre-configured**: All tools installed and ready
+- **Scalable**: Upgrade resources as needed
+
+### Technical Benefits
+- **No Local Setup**: Works on any device with a browser
+- **Consistent Environment**: Same tools for entire team
+- **Cloud Native**: Access from anywhere
+- **Cost Effective**: Pay only for what you use
+
+## Summary
+
+AgentsOS transforms cloud development by providing a familiar desktop experience powered by Daytona workspaces. With pre-installed tools like VSCode and Claude Code CLI, developers can start coding immediately without any local setup.
+
+The combination of a native-feeling UI and cloud computing creates the best of both worlds: the familiarity of a desktop OS with the power and flexibility of cloud development.

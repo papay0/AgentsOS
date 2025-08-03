@@ -4,7 +4,7 @@ import React, { use, useEffect, useState, useRef } from 'react';
 import { MobileWorkspaceView } from '@/components/workspace/mobile-workspace-view';
 import { DesktopWorkspaceView } from '@/components/workspace/desktop-workspace-view';
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { WorkspaceData, TerminalTab, TerminalPane, WorkspaceStatusResponse, WorkspaceRestartResponse } from '@/types/workspace';
+import type { WorkspaceData, TerminalTab, TerminalPane, WorkspaceStatusResponse, WorkspaceRestartResponse, RepositoryWithUrls } from '@/types/workspace';
 
 interface WorkspacePageProps {
   params: Promise<{
@@ -15,6 +15,8 @@ interface WorkspacePageProps {
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const resolvedParams = use(params);
   const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(null);
+  const [repositories, setRepositories] = useState<RepositoryWithUrls[]>([]);
+  const [selectedRepository, setSelectedRepository] = useState<RepositoryWithUrls | null>(null);
   const [workspaceStatus, setWorkspaceStatus] = useState<WorkspaceStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRestarting, setIsRestarting] = useState(false);
@@ -36,10 +38,20 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
         try {
           const urlsResponse = await fetch(`/api/workspace-urls/${resolvedParams.sandboxId}`);
           if (urlsResponse.ok) {
-            const urls = await urlsResponse.json();
+            const data = await urlsResponse.json();
+            
+            // Set repository data
+            if (data.repositories && data.repositories.length > 0) {
+              setRepositories(data.repositories);
+              setSelectedRepository(data.repositories[0]); // Default to first repository
+            }
+            
+            // Set workspace data for backward compatibility
             setWorkspaceData({
               sandboxId: resolvedParams.sandboxId,
-              ...urls,
+              terminalUrl: data.terminalUrl,
+              claudeTerminalUrl: data.claudeTerminalUrl,
+              vscodeUrl: data.vscodeUrl,
               message: 'Workspace loaded'
             });
           } else {
@@ -111,9 +123,10 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     checkWorkspaceStatus();
   }, [checkWorkspaceStatus]);
   
-  const baseTerminalUrl = workspaceData?.terminalUrl || `https://9999-${resolvedParams.sandboxId}.proxy.daytona.work/`;
-  const claudeTerminalUrl = workspaceData?.claudeTerminalUrl || `https://9998-${resolvedParams.sandboxId}.proxy.daytona.work/`;
-  const vscodeUrl = workspaceData?.vscodeUrl || `https://8080-${resolvedParams.sandboxId}.proxy.daytona.work/`;
+  // Use selected repository URLs or fall back to workspace data for backward compatibility
+  const baseTerminalUrl = selectedRepository?.urls?.terminal || workspaceData?.terminalUrl || `https://9999-${resolvedParams.sandboxId}.proxy.daytona.work/`;
+  const claudeTerminalUrl = selectedRepository?.urls?.claude || workspaceData?.claudeTerminalUrl || `https://9998-${resolvedParams.sandboxId}.proxy.daytona.work/`;
+  const vscodeUrl = selectedRepository?.urls?.vscode || workspaceData?.vscodeUrl || `https://8080-${resolvedParams.sandboxId}.proxy.daytona.work/`;
 
   const addNewTab = React.useCallback(() => {
     const tabNumber = tabs.length + 1;
@@ -132,10 +145,36 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     setActiveTabId(newTab.id);
   }, [tabs.length, claudeTerminalUrl, baseTerminalUrl]);
 
+  // Reset tabs when repository changes
   useEffect(() => {
-    if (baseTerminalUrl && tabs.length === 0 && !initializedRef.current) {
+    if (selectedRepository && baseTerminalUrl && claudeTerminalUrl) {
+      const claudeTab: TerminalTab = {
+        id: `tab-${Date.now()}`,
+        title: `Claude (${selectedRepository.name})`,
+        terminals: [{
+          id: `terminal-${Date.now()}`,
+          url: claudeTerminalUrl,
+          title: 'Terminal 1'
+        }]
+      };
+      const terminalTab: TerminalTab = {
+        id: `tab-${Date.now() + 1}`,
+        title: `Terminal (${selectedRepository.name})`,
+        terminals: [{
+          id: `terminal-${Date.now() + 1}`,
+          url: baseTerminalUrl,
+          title: 'Terminal 1'
+        }]
+      };
+      setTabs([claudeTab, terminalTab]);
+      setActiveTabId(claudeTab.id);
+    }
+  }, [selectedRepository?.name, baseTerminalUrl, claudeTerminalUrl]);
+
+  // Initialize tabs for backward compatibility (single workspace mode)
+  useEffect(() => {
+    if (baseTerminalUrl && tabs.length === 0 && !initializedRef.current && !selectedRepository) {
       initializedRef.current = true;
-      // Add Claude tab first
       const claudeTab: TerminalTab = {
         id: `tab-${Date.now()}`,
         title: 'Claude',
@@ -145,7 +184,6 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
           title: 'Terminal 1'
         }]
       };
-      // Add Terminal 2 tab
       const terminalTab: TerminalTab = {
         id: `tab-${Date.now() + 1}`,
         title: 'Terminal 2',
@@ -158,7 +196,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       setTabs([claudeTab, terminalTab]);
       setActiveTabId(claudeTab.id);
     }
-  }, [baseTerminalUrl, claudeTerminalUrl, tabs.length]);
+  }, [baseTerminalUrl, claudeTerminalUrl, tabs.length, selectedRepository]);
 
   const addTerminalToCurrentTab = React.useCallback(() => {
     if (!activeTabId) return;
@@ -203,6 +241,9 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     onAddTerminal: addTerminalToCurrentTab,
     onRemoveTerminal: removeTerminal,
     sandboxId: resolvedParams.sandboxId,
+    repositories,
+    selectedRepository,
+    onRepositoryChange: setSelectedRepository,
   };
 
   const mobileWorkspaceViewProps = {
@@ -212,6 +253,9 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
     onTabChange: setActiveTabId,
     onAddTab: addNewTab,
     sandboxId: resolvedParams.sandboxId,
+    repositories,
+    selectedRepository,
+    onRepositoryChange: setSelectedRepository,
   };
 
   // Show loading state
