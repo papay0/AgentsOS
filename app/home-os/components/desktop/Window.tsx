@@ -338,7 +338,7 @@ const WindowContent = memo(function WindowContent({ window }: { window: WindowTy
   
   return (
     <div className="w-full h-full">
-      <DesktopContent />
+      <DesktopContent repositoryUrl={window.repositoryUrl} />
     </div>
   );
 });

@@ -76,12 +76,20 @@ export class UserServiceAdmin {
     try {
       const userRef = adminDb.collection('users').doc(uid);
       
-      // Update user's embedded workspace
-      await userRef.update({
-        'agentsOS.workspace': workspace,
-        'agentsOS.lastAccessedAt': Timestamp.now(),
+      // Create or update user's embedded workspace
+      await userRef.set({
+        agentsOS: {
+          workspace: workspace,
+          lastAccessedAt: Timestamp.now(),
+          onboardingCompleted: true,
+          preferences: {
+            theme: 'system',
+            notifications: true
+          }
+        },
         updatedAt: Timestamp.now(),
-      });
+        createdAt: Timestamp.now(),
+      }, { merge: true });
     } catch (error) {
       console.error('Error creating/updating workspace:', error);
       throw new Error('Failed to create/update workspace');
@@ -128,18 +136,22 @@ export class UserServiceAdmin {
       const userRef = adminDb.collection('users').doc(uid);
       const now = Timestamp.now();
       
-      const baseUpdate = {
-        'agentsOS.workspace.status': status,
-        'agentsOS.workspace.lastAccessedAt': now,
-        'agentsOS.lastAccessedAt': now,
-        updatedAt: now,
+      const workspaceUpdate: Partial<UserWorkspace> = {
+        status: status,
+        lastAccessedAt: now,
       };
       
-      const updateData = urls 
-        ? { ...baseUpdate, 'agentsOS.workspace.urls': urls }
-        : baseUpdate;
+      if (urls) {
+        workspaceUpdate.urls = urls;
+      }
       
-      await userRef.update(updateData);
+      await userRef.set({
+        agentsOS: {
+          workspace: workspaceUpdate,
+          lastAccessedAt: now,
+        },
+        updatedAt: now,
+      }, { merge: true });
     } catch (error) {
       console.error('Error updating workspace status:', error);
       throw new Error('Failed to update workspace status');

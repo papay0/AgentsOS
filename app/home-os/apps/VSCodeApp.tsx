@@ -1,28 +1,42 @@
 import { createApp } from './BaseApp';
 import MobileAppTemplate from './MobileAppTemplate';
+import { VSCodeEditor } from '@/components/workspace/vscode-editor';
 
-const VSCodeDesktopContent = () => (
-  <div className="w-full h-full bg-gray-900 text-green-400 font-mono text-sm p-4">
-    <div className="text-blue-400 mb-2">{`// Welcome to VSCode`}</div>
-    <div className="text-purple-400">import</div>
-    <div className="ml-4 text-yellow-400">React</div>
-    <div className="text-purple-400">from</div>
-    <div className="ml-4 text-green-300">&apos;react&apos;;</div>
-    <br />
-    <div className="text-blue-400">const</div>
-    <div className="ml-4 text-yellow-400">AgentsOS</div>
-    <div className="text-purple-400">=</div>
-    <div className="ml-4">() =&gt; &#123;</div>
-    <div className="ml-8 text-blue-400">return</div>
-    <div className="ml-12 text-green-300">&lt;div&gt;Welcome to AgentsOS!&lt;/div&gt;</div>
-    <div className="ml-4">&#125;</div>
-    <br />
-    <div className="text-gray-500">{`// Start coding...`}</div>
-    <div className="animate-pulse bg-green-400 w-2 h-4 inline-block"></div>
-  </div>
-);
+interface VSCodeDesktopContentProps {
+  repositoryUrl?: string;
+}
 
-const VSCodeMobileContent = () => (
+const VSCodeDesktopContent = (props?: { repositoryUrl?: string }) => {
+  const { repositoryUrl } = props || {};
+  // If we have a repository URL, use the real VSCode editor
+  if (repositoryUrl) {
+    return <VSCodeEditor url={repositoryUrl} className="w-full h-full" />;
+  }
+
+  // Fallback to demo content
+  return (
+    <div className="w-full h-full bg-gray-900 text-green-400 font-mono text-sm p-4">
+      <div className="text-blue-400 mb-2">{`// Welcome to VSCode`}</div>
+      <div className="text-purple-400">import</div>
+      <div className="ml-4 text-yellow-400">React</div>
+      <div className="text-purple-400">from</div>
+      <div className="ml-4 text-green-300">&apos;react&apos;;</div>
+      <br />
+      <div className="text-blue-400">const</div>
+      <div className="ml-4 text-yellow-400">AgentsOS</div>
+      <div className="text-purple-400">=</div>
+      <div className="ml-4">() =&gt; &#123;</div>
+      <div className="ml-8 text-blue-400">return</div>
+      <div className="ml-12 text-green-300">&lt;div&gt;Welcome to AgentsOS!&lt;/div&gt;</div>
+      <div className="ml-4">&#125;</div>
+      <br />
+      <div className="text-gray-500">{`// Start coding...`}</div>
+      <div className="animate-pulse bg-green-400 w-2 h-4 inline-block"></div>
+    </div>
+  );
+};
+
+const VSCodeMobileContent = (props?: { repositoryUrl?: string }) => (
   <MobileAppTemplate
     title="VSCode Mobile"
     subtitle="Code Editor"

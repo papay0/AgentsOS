@@ -99,6 +99,7 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
       setCreationProgress(100)
       await new Promise(resolve => setTimeout(resolve, 500))
       
+      setIsCreating(false)
       onComplete()
     } catch (error) {
       console.error('Failed to create workspace:', error)

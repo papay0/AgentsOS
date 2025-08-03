@@ -31,8 +31,8 @@ export interface AppWindow {
 }
 
 export interface AppContent {
-  desktop: () => ReactNode;
-  mobile: () => ReactNode;
+  desktop: (props?: { repositoryUrl?: string }) => ReactNode;
+  mobile: (props?: { repositoryUrl?: string }) => ReactNode;
 }
 
 export interface AppActions {

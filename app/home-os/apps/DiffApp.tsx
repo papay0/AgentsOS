@@ -1,6 +1,6 @@
 import { createApp } from './BaseApp';
 
-const DiffDesktopContent = () => (
+const DiffDesktopContent = (props?: { repositoryUrl?: string }) => (
   <div className="w-full h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 flex items-center justify-center">
     <div className="text-center max-w-md">
       <div className="text-8xl mb-6">📊</div>
@@ -40,7 +40,7 @@ const DiffDesktopContent = () => (
   </div>
 );
 
-const DiffMobileContent = () => (
+const DiffMobileContent = (props?: { repositoryUrl?: string }) => (
   <div className="w-full h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 flex items-center justify-center p-4">
     <div className="text-center">
       <div className="text-6xl mb-4">📊</div>

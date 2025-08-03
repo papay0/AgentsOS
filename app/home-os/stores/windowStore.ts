@@ -18,6 +18,25 @@ export interface Window {
     position: { x: number; y: number };
     size: { width: number; height: number };
   };
+  // Repository-specific data
+  repositoryName?: string;
+  repositoryUrl?: string; // vscode URL, terminal URL, or claude URL
+}
+
+interface Repository {
+  url: string;
+  name: string;
+  description?: string;
+  tech?: string;
+  urls?: {
+    vscode: string;
+    terminal: string;
+    claude: string;
+  };
+}
+
+interface WorkspaceData {
+  repositories: Repository[];
 }
 
 interface WindowStore {
@@ -26,6 +45,7 @@ interface WindowStore {
   activeWindowId: string | null;
   onboardingCompleted: boolean;
   isCheckingWorkspaces: boolean;
+  workspaceData: WorkspaceData | null;
   
   // Actions
   addWindow: (window: Omit<Window, 'id' | 'zIndex'>) => void;
@@ -38,9 +58,10 @@ interface WindowStore {
   moveWindow: (id: string, x: number, y: number) => void;
   resizeWindow: (id: string, width: number, height: number) => void;
   setWindowAnimating: (id: string, isAnimating: boolean) => void;
-  initializeWindows: () => void;
+  initializeWindows: (workspaceData?: WorkspaceData) => void;
   completeOnboarding: () => void;
   checkExistingWorkspaces: () => Promise<void>;
+  setWorkspaceData: (workspaceData: WorkspaceData | null) => void;
 }
 
 export const useWindowStore = create<WindowStore>()(
@@ -50,6 +71,7 @@ export const useWindowStore = create<WindowStore>()(
     activeWindowId: null,
     onboardingCompleted: false,
     isCheckingWorkspaces: false,
+    workspaceData: null,
 
     addWindow: (windowData) => set((state) => {
       const id = `window-${Date.now()}`;
@@ -150,48 +172,111 @@ export const useWindowStore = create<WindowStore>()(
       ),
     })),
 
-    initializeWindows: () => set(() => ({
-      windows: [
-        {
-          id: 'vscode-1',
-          type: 'vscode',
-          title: 'VSCode - Frontend',
-          position: { x: 50, y: 50 },
-          size: { width: 800, height: 600 },
-          zIndex: WINDOW_Z_INDEX_BASE,
-          minimized: false,
-          maximized: false,
-          focused: true,
-          content: '// Welcome to AgentsOS!\\nconst hello = "world";'
-        },
-        {
-          id: 'claude-1',
-          type: 'claude',
-          title: 'Claude - Full Stack',
-          position: { x: 300, y: 150 },
-          size: { width: 600, height: 400 },
-          zIndex: WINDOW_Z_INDEX_BASE + 1,
-          minimized: false,
-          maximized: false,
-          focused: false,
-          content: 'Claude is ready to help!'
-        },
-        {
-          id: 'terminal-1',
-          type: 'terminal',
-          title: 'Terminal',
-          position: { x: 500, y: 250 },
-          size: { width: 700, height: 350 },
-          zIndex: WINDOW_Z_INDEX_BASE + 2,
-          minimized: false,
-          maximized: false,
-          focused: false,
-          content: '$ npm run dev\\n✓ Server running on http://localhost:3000'
-        }
-      ],
-      nextZIndex: WINDOW_Z_INDEX_BASE + 3,
-      activeWindowId: 'vscode-1',
-    })),
+    initializeWindows: (workspaceData?: WorkspaceData) => set((state) => {
+      let newWindows: Window[] = [];
+      let zIndex = WINDOW_Z_INDEX_BASE;
+      
+      if (workspaceData?.repositories && workspaceData.repositories.length > 0) {
+        // Create 3 windows per repository: VSCode, Claude terminal, regular terminal
+        workspaceData.repositories.forEach((repo, repoIndex) => {
+          const baseX = 50 + (repoIndex * 100); // Offset X for each repository
+          const baseY = 50 + (repoIndex * 80);  // Offset Y for each repository
+          
+          // VSCode window
+          newWindows.push({
+            id: `vscode-${repo.name}-${Date.now()}`,
+            type: 'vscode',
+            title: `VSCode - ${repo.name}`,
+            position: { x: baseX, y: baseY },
+            size: { width: 1000, height: 700 },
+            zIndex: zIndex++,
+            minimized: false,
+            maximized: false,
+            focused: repoIndex === 0, // Focus first repo's VSCode
+            repositoryName: repo.name,
+            repositoryUrl: repo.urls?.vscode || ''
+          });
+          
+          // Claude terminal window
+          newWindows.push({
+            id: `claude-${repo.name}-${Date.now()}`,
+            type: 'claude',
+            title: `Claude - ${repo.name}`,
+            position: { x: baseX + 300, y: baseY + 100 },
+            size: { width: 600, height: 400 },
+            zIndex: zIndex++,
+            minimized: false,
+            maximized: false,
+            focused: false,
+            repositoryName: repo.name,
+            repositoryUrl: repo.urls?.claude || ''
+          });
+          
+          // Regular terminal window
+          newWindows.push({
+            id: `terminal-${repo.name}-${Date.now()}`,
+            type: 'terminal',
+            title: `Terminal - ${repo.name}`,
+            position: { x: baseX + 150, y: baseY + 200 },
+            size: { width: 700, height: 350 },
+            zIndex: zIndex++,
+            minimized: false,
+            maximized: false,
+            focused: false,
+            repositoryName: repo.name,
+            repositoryUrl: repo.urls?.terminal || ''
+          });
+        });
+      } else {
+        // Fallback to default windows if no repository data
+        newWindows = [
+          {
+            id: 'vscode-1',
+            type: 'vscode',
+            title: 'VSCode - Frontend',
+            position: { x: 50, y: 50 },
+            size: { width: 800, height: 600 },
+            zIndex: WINDOW_Z_INDEX_BASE,
+            minimized: false,
+            maximized: false,
+            focused: true,
+            content: '// Welcome to AgentsOS!\\nconst hello = "world";'
+          },
+          {
+            id: 'claude-1',
+            type: 'claude',
+            title: 'Claude - Full Stack',
+            position: { x: 300, y: 150 },
+            size: { width: 600, height: 400 },
+            zIndex: WINDOW_Z_INDEX_BASE + 1,
+            minimized: false,
+            maximized: false,
+            focused: false,
+            content: 'Claude is ready to help!'
+          },
+          {
+            id: 'terminal-1',
+            type: 'terminal',
+            title: 'Terminal',
+            position: { x: 500, y: 250 },
+            size: { width: 700, height: 350 },
+            zIndex: WINDOW_Z_INDEX_BASE + 2,
+            minimized: false,
+            maximized: false,
+            focused: false,
+            content: '$ npm run dev\\n✓ Server running on http://localhost:3000'
+          }
+        ];
+        zIndex = WINDOW_Z_INDEX_BASE + 3;
+      }
+      
+      return {
+        windows: newWindows,
+        nextZIndex: zIndex,
+        activeWindowId: newWindows.find(w => w.focused)?.id || newWindows[0]?.id || null,
+        workspaceData,
+      };
+    }),
 
     completeOnboarding: () => set(() => ({
       onboardingCompleted: true,
@@ -232,5 +317,9 @@ export const useWindowStore = create<WindowStore>()(
         });
       }
     },
+
+    setWorkspaceData: (workspaceData) => set(() => ({
+      workspaceData,
+    })),
   }))
 );
