@@ -1,6 +1,6 @@
 'use client';
 
-import { useWindowStore } from '../../stores/windowStore';
+import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useWindowAnimation } from '../../hooks/useWindowAnimation';
 import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
@@ -8,7 +8,16 @@ import { getAllApps, getApp } from '../../apps';
 import AppIcon from '../ui/AppIcon';
 
 export default function Dock() {
-  const { windows, addWindow, restoreWindow, focusWindow, setWindowAnimating } = useWindowStore();
+  const { 
+    getActiveWorkspace, 
+    addWindow, 
+    restoreWindow, 
+    focusWindow, 
+    setWindowAnimating 
+  } = useWorkspaceStore();
+  
+  const activeWorkspace = getActiveWorkspace();
+  const windows = activeWorkspace?.windows || [];
   const minimizedWindows = windows.filter(w => w.minimized);
 
   // Window animation hook for restore animations
@@ -19,6 +28,9 @@ export default function Dock() {
   });
 
   const handleAppClick = (type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal') => {
+    // Only work with the active workspace
+    if (!activeWorkspace) return;
+    
     // Check if there's already a window of this type
     const existingWindow = windows.find(w => w.type === type && !w.minimized);
     
@@ -52,14 +64,30 @@ export default function Dock() {
       ? { x: 100 + Math.random() * 200, y: 100 + Math.random() * 150 }
       : app.window.position;
 
+    // Get repository URLs for this workspace
+    const repositoryUrl = (() => {
+      switch (type) {
+        case 'vscode':
+          return activeWorkspace.repository.urls?.vscode || '';
+        case 'claude':
+          return activeWorkspace.repository.urls?.claude || '';
+        case 'terminal':
+          return activeWorkspace.repository.urls?.terminal || '';
+        default:
+          return '';
+      }
+    })();
+
     addWindow({
       type,
-      title: app.metadata.name,
+      title: `${app.metadata.name} - ${activeWorkspace.name}`,
       position,
       size: app.window.defaultSize,
       minimized: false,
       maximized: false,
       focused: true,
+      repositoryName: activeWorkspace.name,
+      repositoryUrl,
     });
   };
 
@@ -111,6 +139,11 @@ export default function Dock() {
     return `bg-${baseColor} hover:bg-${baseColor.replace('-500', '-600')}`;
   };
 
+  // Don't render dock if no active workspace
+  if (!activeWorkspace) {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2" style={{ zIndex: DOCK_Z_INDEX }}>
       <div className="flex items-center space-x-2 bg-black/30 backdrop-blur-xl rounded-2xl px-4 py-3 border border-white/10 shadow-2xl">
@@ -120,7 +153,7 @@ export default function Dock() {
             key={app.metadata.id}
             onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal')}
             className={`${getAppColor(app.metadata.id)} ${app.metadata.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={app.metadata.name}
+            title={`${app.metadata.name} - ${activeWorkspace.name}`}
             dataAttribute={app.metadata.id}
           >
             {getAppIcon(app.metadata.id)}

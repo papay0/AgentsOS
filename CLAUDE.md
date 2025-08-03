@@ -13,6 +13,7 @@ AgentsPod is a cloud development environment platform that enables developers to
 - `npm run build` - Build the production application (run after big changes, not for UI changes)
 - `npm start` - Start the production server
 - `npm run lint` - Run Next.js linting
+- `npm run build:skip-tests` - Build without running all the tests
 
 ### Testing Guidelines
 - Only run tests when completely done with a feature to avoid wasting time

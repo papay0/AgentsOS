@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { WorkspaceSwitcher } from '../ui/workspace-switcher';
 
 // Custom theme toggle for the menubar with proper colors
 function MenuBarThemeToggle() {
@@ -89,9 +90,11 @@ export default function MenuBar() {
         </div>
       </div>
 
-      {/* Center - Active window info (optional) */}
-      <div className="flex-1 text-center">
-        {/* Could show active window title here */}
+      {/* Center - Workspace switcher */}
+      <div className="flex-1 flex justify-center">
+        <div className="bg-white/10 backdrop-blur-sm rounded-md border border-white/20">
+          <WorkspaceSwitcher />
+        </div>
       </div>
 
       {/* Right side - System status */}

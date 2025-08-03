@@ -1,6 +1,6 @@
 'use client';
 
-import { useWindowStore } from '../stores/windowStore';
+import { useWorkspaceStore } from '../stores/workspaceStore';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAgentsOSUser } from '@/hooks/use-agentsos-user';
@@ -13,16 +13,17 @@ import { Onboarding } from './desktop/Onboarding';
 import { MobileOnboarding } from './mobile/MobileOnboarding';
 
 export default function Workspace() {
-  const windows = useWindowStore((state) => state.windows);
-  const onboardingCompleted = useWindowStore((state) => state.onboardingCompleted);
-  const isCheckingWorkspaces = useWindowStore((state) => state.isCheckingWorkspaces);
-  const completeOnboarding = useWindowStore((state) => state.completeOnboarding);
-  const initializeWindows = useWindowStore((state) => state.initializeWindows);
-  const checkExistingWorkspaces = useWindowStore((state) => state.checkExistingWorkspaces);
-  const setWorkspaceData = useWindowStore((state) => state.setWorkspaceData);
+  const { 
+    workspaces, 
+    activeWorkspaceId, 
+    isLoading: isWorkspaceLoading, 
+    initializeWorkspaces 
+  } = useWorkspaceStore();
+  
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   
   // AgentsOS user data
-  const { workspace, isReady, hasCompletedOnboarding, isLoading, completeOnboarding: completeAgentsOSOnboarding } = useAgentsOSUser();
+  const { workspace, isReady, hasCompletedOnboarding, isLoading: isUserLoading, completeOnboarding: completeAgentsOSOnboarding } = useAgentsOSUser();
   const isMobile = useIsMobile();
   const [globalSnapState, setGlobalSnapState] = useState<{
     activeZone: { 
@@ -33,23 +34,16 @@ export default function Workspace() {
     isVisible: boolean;
   }>({ activeZone: null, isVisible: false });
 
-  // Check for existing workspaces on mount and update workspace data
+  // Initialize workspaces when AgentsOS user data changes
   useEffect(() => {
-    checkExistingWorkspaces();
-  }, [checkExistingWorkspaces]);
-
-  // Update workspace data when AgentsOS user data changes
-  useEffect(() => {
-    if (workspace?.repositories) {
-      const workspaceData = { repositories: workspace.repositories };
-      setWorkspaceData(workspaceData);
-      
-      // Auto-initialize windows if onboarding is completed and no windows exist
-      if (hasCompletedOnboarding && windows.length === 0) {
-        initializeWindows(workspaceData);
+    if (workspace?.repositories && hasCompletedOnboarding) {
+      // Check if we need to initialize workspaces
+      if (workspaces.length === 0) {
+        initializeWorkspaces(workspace.repositories);
+        setOnboardingCompleted(true);
       }
     }
-  }, [workspace, setWorkspaceData, hasCompletedOnboarding, windows.length, initializeWindows]);
+  }, [workspace, hasCompletedOnboarding, workspaces.length, initializeWorkspaces]);
 
   // Listen for snap zone changes from any window
   useEffect(() => {
@@ -67,21 +61,21 @@ export default function Workspace() {
       // Complete AgentsOS onboarding first
       await completeAgentsOSOnboarding();
       
-      // Then complete window store onboarding
-      completeOnboarding();
+      // Initialize workspaces if repository data is available
+      if (workspace?.repositories) {
+        initializeWorkspaces(workspace.repositories);
+      }
       
-      // Initialize windows with workspace data if available
-      const workspaceData = workspace?.repositories ? { repositories: workspace.repositories } : undefined;
-      initializeWindows(workspaceData);
+      setOnboardingCompleted(true);
     } catch (error) {
       console.error('Error completing onboarding:', error);
-      // Still complete window store onboarding to show the UI
-      completeOnboarding();
+      // Still complete onboarding to show the UI
+      setOnboardingCompleted(true);
     }
   };
 
-  // Show loading while checking for existing workspaces or AgentsOS data is loading
-  if (isCheckingWorkspaces || isLoading || !isReady) {
+  // Show loading while AgentsOS data is loading or workspaces are being initialized
+  if (isWorkspaceLoading || isUserLoading || !isReady) {
     return (
       <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -120,14 +114,28 @@ export default function Workspace() {
       
       {/* Main workspace area - Full height, windows go behind dock */}
       <div className="absolute inset-x-0 top-8 bottom-0 overflow-hidden">
-        {windows
-          .filter((window) => !window.minimized)
-          .map((window) => (
-            <Window key={window.id} window={window} />
-          ))}
+        {/* Render all workspaces but only show the active one */}
+        {workspaces.map((workspace) => (
+          <div
+            key={workspace.id}
+            className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
+              workspace.id === activeWorkspaceId 
+                ? 'translate-x-0' 
+                : activeWorkspaceId && workspace.id < activeWorkspaceId 
+                  ? '-translate-x-full' 
+                  : 'translate-x-full'
+            }`}
+          >
+            {workspace.windows
+              .filter((window) => !window.minimized)
+              .map((window) => (
+                <Window key={window.id} window={window} />
+              ))}
+          </div>
+        ))}
       </div>
 
-      {/* Dock - Floating over workspace */}
+      {/* Dock - Floating over workspace (workspace-scoped) */}
       <Dock />
       
       {/* Global snap zone overlay */}
