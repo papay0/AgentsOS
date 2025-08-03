@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { WorkspaceSwitcher } from '../ui/workspace-switcher';
+import { WorkspaceHealth } from '../ui/workspace-health';
 
 // Custom theme toggle for the menubar with proper colors
 function MenuBarThemeToggle() {
@@ -90,10 +91,13 @@ export default function MenuBar() {
         </div>
       </div>
 
-      {/* Center - Workspace switcher */}
-      <div className="flex-1 flex justify-center">
+      {/* Center - Workspace switcher and health */}
+      <div className="flex-1 flex justify-center items-center gap-2">
         <div className="bg-white/10 backdrop-blur-sm rounded-md border border-white/20">
           <WorkspaceSwitcher />
+        </div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-md border border-white/20">
+          <WorkspaceHealth />
         </div>
       </div>
 

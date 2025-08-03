@@ -4,7 +4,7 @@ import { useTheme } from '@/components/theme-provider';
 import { createApp } from './BaseApp';
 import Image from 'next/image';
 
-const SettingsDesktopContent = (props?: { repositoryUrl?: string }) => {
+const SettingsDesktopContent = () => {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
 
@@ -159,7 +159,7 @@ const SettingsDesktopContent = (props?: { repositoryUrl?: string }) => {
   );
 };
 
-const SettingsMobileContent = (props?: { repositoryUrl?: string }) => {
+const SettingsMobileContent = () => {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
 

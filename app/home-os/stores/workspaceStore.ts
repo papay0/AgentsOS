@@ -142,10 +142,15 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       const workspace = get().workspaces.find(w => w.id === workspaceId);
       if (!workspace) return;
 
+      console.log(`Switching to workspace: ${workspace.name}`);
+      console.log('Workspace repository URLs:', workspace.repository.urls);
+      console.log('Workspace windows:', workspace.windows.map(w => ({ title: w.title, url: w.repositoryUrl })));
+
       set({ activeWorkspaceId: workspaceId });
 
       // Initialize workspace windows if not already done
       if (!workspace.isInitialized) {
+        console.log(`Initializing windows for workspace: ${workspace.name}`);
         get().initializeWorkspaceWindows(workspaceId);
       }
     },
@@ -364,11 +369,18 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     },
 
     updateWorkspaceUrls: (repositories: Repository[]) => {
+      console.log('updateWorkspaceUrls called with repositories:', repositories);
+      
       set((state) => ({
         workspaces: state.workspaces.map(workspace => {
           // Find the matching repository with updated URLs
           const updatedRepo = repositories.find(repo => repo.name === workspace.repository.name);
-          if (!updatedRepo) return workspace;
+          if (!updatedRepo) {
+            console.log(`No matching repository found for workspace: ${workspace.name}`);
+            return workspace;
+          }
+
+          console.log(`Updating URLs for workspace: ${workspace.name}`, updatedRepo.urls);
 
           // Update the workspace's repository URLs
           const updatedWorkspace = {
@@ -378,7 +390,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
 
           // Update all windows in this workspace with new URLs
           const updatedWindows = workspace.windows.map(window => {
-            if (!window.repositoryUrl) return window;
+            const oldUrl = window.repositoryUrl;
 
             // Update URL based on window type
             let newUrl = '';
@@ -393,9 +405,10 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
                 newUrl = updatedRepo.urls?.terminal || '';
                 break;
               default:
-                newUrl = window.repositoryUrl;
+                newUrl = window.repositoryUrl || '';
             }
 
+            console.log(`Window ${window.title}: ${oldUrl} -> ${newUrl}`);
             return { ...window, repositoryUrl: newUrl };
           });
 

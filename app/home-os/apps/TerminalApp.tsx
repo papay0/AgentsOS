@@ -3,10 +3,6 @@ import MobileAppTemplate from './MobileAppTemplate';
 import { Terminal } from 'lucide-react';
 import TTYDTerminal from '@/components/ttyd-terminal';
 
-interface TerminalDesktopContentProps {
-  repositoryUrl?: string;
-}
-
 const TerminalDesktopContent = (props?: { repositoryUrl?: string }) => {
   const { repositoryUrl } = props || {};
   // If we have a repository URL, use the real terminal
@@ -16,24 +12,18 @@ const TerminalDesktopContent = (props?: { repositoryUrl?: string }) => {
     return <TTYDTerminal key={repositoryUrl} wsUrl={wsUrl} className="w-full h-full" />;
   }
 
-  // Fallback to demo content
+  // Show error when no URL available
   return (
-    <div className="w-full h-full bg-black text-green-400 font-mono text-sm p-4">
-      <div className="text-green-400">$ npm run dev</div>
-      <div className="text-blue-400">✓ Local: http://localhost:3000</div>
-      <div className="text-green-400">✓ Ready in 2.1s</div>
-      <br />
-      <div className="text-green-400">$ git status</div>
-      <div className="text-white">On branch main</div>
-      <div className="text-white">Your branch is up to date with &apos;origin/main&apos;.</div>
-      <br />
-      <div className="text-green-400">$ _</div>
-      <div className="animate-pulse bg-green-400 w-2 h-4 inline-block ml-1"></div>
+    <div className="w-full h-full bg-black text-red-400 font-mono text-sm p-4 flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-red-400 mb-2">⚠️ Terminal Not Available</div>
+        <div className="text-gray-400 text-xs">No terminal URL configured for this workspace</div>
+      </div>
     </div>
   );
 };
 
-const TerminalMobileContent = (props?: { repositoryUrl?: string }) => (
+const TerminalMobileContent = () => (
   <MobileAppTemplate
     title="Terminal"
     subtitle="Command Line Interface"

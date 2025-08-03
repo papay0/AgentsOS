@@ -6,10 +6,11 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { workspaceApi } from '@/lib/api/workspace-api'
 import { useAgentsOSUser } from '@/hooks/use-agentsos-user'
+import type { CreateWorkspaceResponse } from '@/types/workspace'
 import Image from 'next/image'
 
 export interface OnboardingProps {
-  onComplete: () => void
+  onComplete: (workspaceData?: CreateWorkspaceResponse) => void
   onSkip?: () => void
 }
 
@@ -78,7 +79,7 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
       
       // Create workspace with repositories
       setCreationProgress(25)
-      await workspaceApi.createWorkspace({
+      const workspaceResponse = await workspaceApi.createWorkspace({
         repositories: selectedRepos.map(repo => ({
           url: repo.url,
           name: repo.name,
@@ -90,17 +91,10 @@ export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
           : selectedRepos[0]?.name || 'AgentsOS Workspace'
       })
       
-      setCreationProgress(50)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      setCreationProgress(75)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
       setCreationProgress(100)
-      await new Promise(resolve => setTimeout(resolve, 500))
       
-      setIsCreating(false)
-      onComplete()
+      // Onboarding's job: Create workspace AND save to Firebase
+      onComplete(workspaceResponse)
     } catch (error) {
       console.error('Failed to create workspace:', error)
       setIsCreating(false)

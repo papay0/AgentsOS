@@ -57,20 +57,20 @@ export class WorkspaceServices {
     this.logger.info(`Setting up services for ${repositories.length} repositories...`);
     
     const repositoriesWithUrls: RepositoryWithUrls[] = [];
-    const servicePromises: Promise<void>[] = [];
     
     for (let i = 0; i < repositories.length; i++) {
       const repo = repositories[i];
       const ports = this.allocatePorts(i);
-      const repoPath = `${rootDir}/projects/${repo.name}`;
+      const repoPath = `${rootDir}/projects/${repo.name.replace(/[^a-zA-Z0-9-_]/g, '-')}`;
       
       // Create startup scripts for this repository
       await this.createRepositoryScripts(sandbox, rootDir, repoPath, repo.name);
       
-      // Start services for this repository
-      servicePromises.push(
-        this.startRepositoryServices(sandbox, rootDir, repoPath, repo.name, ports)
-      );
+      // Start services for this repository (and wait for them to start)
+      await this.startRepositoryServices(sandbox, rootDir, repoPath, repo.name, ports);
+      
+      // Wait a bit for services to initialize
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Get preview URLs for this repository
       const urls = await this.getRepositoryUrls(sandbox, ports);
@@ -79,13 +79,12 @@ export class WorkspaceServices {
         ...repo,
         urls
       });
+      
+      this.logger.success(`Services started for ${repo.name} - VSCode: ${ports.vscode}, Terminal: ${ports.terminal}, Claude: ${ports.claude}`);
     }
     
-    // Wait for all services to start
-    await Promise.all(servicePromises);
-    
-    // Wait for services to initialize
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    // Wait for all services to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // Verify all services
     await this.verifyRepositoryServices(sandbox, rootDir, repositoriesWithUrls);
@@ -229,7 +228,8 @@ export class WorkspaceServices {
         15000
       );
       
-      if (healthCheck.result.includes('200')) {
+      // Accept 200, 302, and 301 as healthy responses
+      if (healthCheck.result.includes('200') || healthCheck.result.includes('302') || healthCheck.result.includes('301')) {
         this.logger.success('All services are healthy');
         return;
       }

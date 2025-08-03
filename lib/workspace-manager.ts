@@ -50,7 +50,7 @@ export class WorkspaceManager {
           10000
         );
 
-        const servicesHealthy = healthCheck.result.includes('200');
+        const servicesHealthy = healthCheck.result.includes('200') || healthCheck.result.includes('302') || healthCheck.result.includes('301');
         this.logger.debug(`Services healthy: ${servicesHealthy}`);
 
         return {

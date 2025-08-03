@@ -172,7 +172,7 @@ export const useWindowStore = create<WindowStore>()(
       ),
     })),
 
-    initializeWindows: (workspaceData?: WorkspaceData) => set((state) => {
+    initializeWindows: (workspaceData?: WorkspaceData) => set(() => {
       let newWindows: Window[] = [];
       let zIndex = WINDOW_Z_INDEX_BASE;
       
@@ -299,7 +299,7 @@ export const useWindowStore = create<WindowStore>()(
           
           // If user has existing workspaces, initialize them
           if (hasWorkspaces) {
-            set((state) => ({ ...state }));
+            set(() => ({}));
           }
         } else {
           // If API call fails, assume first time user and show onboarding

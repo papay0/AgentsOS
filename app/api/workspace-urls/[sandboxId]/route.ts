@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
-import { DaytonaClient } from '@/lib/daytona';
 
 export async function GET(
   request: Request,

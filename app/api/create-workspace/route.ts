@@ -81,7 +81,16 @@ export async function POST(request: Request): Promise<NextResponse<CreateWorkspa
 
     await userService.createOrUpdateWorkspace(userId, workspaceData);
 
-    return NextResponse.json(workspace);
+    // Return the complete workspace data with all repositories for AgentsOS
+    return NextResponse.json({
+      sandboxId: workspace.sandboxId,
+      message: workspace.message,
+      repositories: repositoriesWithUrls,
+      // Legacy compatibility fields
+      terminalUrl: workspace.terminalUrl,
+      claudeTerminalUrl: workspace.claudeTerminalUrl,
+      vscodeUrl: workspace.vscodeUrl
+    });
 
   } catch (error) {
     console.error('Error creating workspace:', error);

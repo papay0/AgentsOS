@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { DaytonaClient } from '@/lib/daytona';
+import { UserServiceAdmin } from '@/lib/user-service-admin';
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(
   request: Request,
@@ -7,6 +9,15 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     const { sandboxId } = await params;
+    
+    // Check authentication
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
     
     // Validate environment
     const apiKey = process.env.DAYTONA_API_KEY;
@@ -17,24 +28,31 @@ export async function POST(
       );
     }
 
-    // Start workspace and services
-    const daytonaClient = new DaytonaClient(apiKey);
-    const result = await daytonaClient.startWorkspaceAndServices(sandboxId);
-
+    // Get user workspace data for AgentsOS multi-repository architecture
+    const userService = UserServiceAdmin.getInstance();
+    const userWorkspace = await userService.getUserWorkspace(userId);
+    
+    console.log(`Restarting AgentsOS workspace with ${userWorkspace?.repositories?.length || 0} repositories`);
+    
+    // Use the fix-services approach which handles AgentsOS multi-repository architecture
+    const response = await fetch(`${request.url.replace('/workspace-restart/', '/fix-services/')}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': request.headers.get('Authorization') || '',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const result = await response.json();
+    
     if (result.success) {
       return NextResponse.json({
         success: true,
-        message: result.message,
-        urls: result.urls
+        message: `Restarted AgentsOS services for ${result.repositories?.length || 0} repositories`,
+        repositories: result.repositories
       });
     } else {
-      return NextResponse.json(
-        { 
-          success: false,
-          message: result.message 
-        },
-        { status: 500 }
-      );
+      return NextResponse.json(result, { status: 500 });
     }
 
   } catch (error) {
