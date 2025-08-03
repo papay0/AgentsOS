@@ -2,8 +2,9 @@
 
 import { useWindowStore } from '../../stores/windowStore';
 import { useWindowAnimation } from '../../hooks/useWindowAnimation';
-import { Plus, Code, Bot, FolderOpen, Terminal, Globe } from 'lucide-react';
+import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
+import { getAllApps, getApp } from '../../apps';
 
 export default function Dock() {
   const { windows, addWindow, restoreWindow, focusWindow, setWindowAnimating } = useWindowStore();
@@ -16,7 +17,7 @@ export default function Dock() {
     }
   });
 
-  const handleAppClick = (type: 'vscode' | 'claude' | 'terminal' | 'file-manager' | 'preview') => {
+  const handleAppClick = (type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal') => {
     // Check if there's already a window of this type
     const existingWindow = windows.find(w => w.type === type && !w.minimized);
     
@@ -33,23 +34,28 @@ export default function Dock() {
       return;
     }
 
-    // Create a new window
-    const titles = {
-      vscode: 'VSCode - New Project',
-      claude: 'Claude - Assistant',
-      terminal: 'Terminal',
-      'file-manager': 'File Manager',
-      preview: 'Preview'
-    };
+    // Get app from registry
+    const app = getApp(type);
+    if (!app) return;
+
+    // Don't create windows for coming soon apps
+    if (app.metadata.comingSoon) {
+      // TODO: Show coming soon toast
+      return;
+    }
+
+    // Calculate position based on app config
+    const position = app.window.position === 'center' 
+      ? { x: (window.innerWidth - app.window.defaultSize.width) / 2, y: (window.innerHeight - app.window.defaultSize.height) / 2 }
+      : app.window.position === 'cascade'
+      ? { x: 100 + Math.random() * 200, y: 100 + Math.random() * 150 }
+      : app.window.position;
 
     addWindow({
       type,
-      title: titles[type],
-      position: { 
-        x: 100 + Math.random() * 200, 
-        y: 100 + Math.random() * 150 
-      },
-      size: { width: 800, height: 600 },
+      title: app.metadata.name,
+      position,
+      size: app.window.defaultSize,
       minimized: false,
       maximized: false,
       focused: true,
@@ -88,75 +94,39 @@ export default function Dock() {
   };
 
   const getAppIcon = (type: string) => {
-    switch (type) {
-      case 'vscode': return <Code className="w-6 h-6" />;
-      case 'claude': return <Bot className="w-6 h-6" />;
-      case 'terminal': return <Terminal className="w-6 h-6" />;
-      case 'file-manager': return <FolderOpen className="w-6 h-6" />;
-      case 'preview': return <Globe className="w-6 h-6" />;
-      default: return <Code className="w-6 h-6" />;
-    }
+    const app = getApp(type);
+    if (!app) return <Code className="w-6 h-6" />;
+    
+    // For now, use emoji since URL images are more complex
+    // TODO: Implement proper image loading for URLs
+    return <span className="text-2xl">{app.metadata.icon.emoji}</span>;
   };
 
   const getAppColor = (type: string) => {
-    switch (type) {
-      case 'vscode': return 'bg-blue-500 hover:bg-blue-600';
-      case 'claude': return 'bg-purple-500 hover:bg-purple-600';
-      case 'terminal': return 'bg-green-500 hover:bg-green-600';
-      case 'file-manager': return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'preview': return 'bg-indigo-500 hover:bg-indigo-600';
-      default: return 'bg-gray-500 hover:bg-gray-600';
-    }
+    const app = getApp(type);
+    if (!app) return 'bg-gray-500 hover:bg-gray-600';
+    
+    // Extract the base color from the app's primary color
+    const primaryColor = app.metadata.colors.primary;
+    const baseColor = primaryColor.replace('bg-', '');
+    return `bg-${baseColor} hover:bg-${baseColor.replace('-500', '-600')}`;
   };
 
   return (
     <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2" style={{ zIndex: DOCK_Z_INDEX }}>
       <div className="flex items-center space-x-2 bg-black/30 backdrop-blur-xl rounded-2xl px-4 py-3 border border-white/10 shadow-2xl">
         {/* Main app icons */}
-        <DockIcon 
-          onClick={() => handleAppClick('vscode')}
-          className={getAppColor('vscode')}
-          title="VSCode"
-          dataAttribute="vscode"
-        >
-          {getAppIcon('vscode')}
-        </DockIcon>
-
-        <DockIcon 
-          onClick={() => handleAppClick('claude')}
-          className={getAppColor('claude')}
-          title="Claude"
-          dataAttribute="claude"
-        >
-          {getAppIcon('claude')}
-        </DockIcon>
-
-        <DockIcon 
-          onClick={() => handleAppClick('terminal')}
-          className={getAppColor('terminal')}
-          title="Terminal"
-          dataAttribute="terminal"
-        >
-          {getAppIcon('terminal')}
-        </DockIcon>
-
-        <DockIcon 
-          onClick={() => handleAppClick('file-manager')}
-          className={getAppColor('file-manager')}
-          title="Files"
-          dataAttribute="file-manager"
-        >
-          {getAppIcon('file-manager')}
-        </DockIcon>
-
-        <DockIcon 
-          onClick={() => handleAppClick('preview')}
-          className={getAppColor('preview')}
-          title="Preview"
-          dataAttribute="preview"
-        >
-          {getAppIcon('preview')}
-        </DockIcon>
+        {getAllApps().map((app) => (
+          <DockIcon 
+            key={app.metadata.id}
+            onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal')}
+            className={`${getAppColor(app.metadata.id)} ${app.metadata.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={app.metadata.name}
+            dataAttribute={app.metadata.id}
+          >
+            {getAppIcon(app.metadata.id)}
+          </DockIcon>
+        ))}
 
         {/* Separator */}
         {minimizedWindows.length > 0 && (
@@ -177,15 +147,6 @@ export default function Dock() {
           </DockIcon>
         ))}
 
-        {/* Add new window */}
-        <div className="w-px h-8 bg-white/20 mx-2" />
-        <DockIcon 
-          onClick={() => {/* TODO: Show app picker */}}
-          className="bg-gray-600 hover:bg-gray-700"
-          title="Add App"
-        >
-          <Plus className="w-6 h-6" />
-        </DockIcon>
       </div>
     </div>
   );

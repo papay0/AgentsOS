@@ -17,7 +17,7 @@ export interface MockWindowStore {
 // Type for creating test windows
 export interface TestWindowOptions {
   id?: string
-  type?: 'vscode' | 'claude' | 'terminal' | 'file-manager' | 'preview'
+  type?: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal'
   title?: string
   position?: { x: number; y: number }
   size?: { width: number; height: number }

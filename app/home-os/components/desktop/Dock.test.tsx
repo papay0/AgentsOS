@@ -40,11 +40,10 @@ describe('Dock Component', () => {
       render(<Dock />)
       
       expect(screen.getByTitle('VSCode')).toBeInTheDocument()
-      expect(screen.getByTitle('Claude')).toBeInTheDocument()
+      expect(screen.getByTitle('Claude Code')).toBeInTheDocument()
+      expect(screen.getByTitle('Code Diff')).toBeInTheDocument()
+      expect(screen.getByTitle('Settings')).toBeInTheDocument()
       expect(screen.getByTitle('Terminal')).toBeInTheDocument()
-      expect(screen.getByTitle('Files')).toBeInTheDocument()
-      expect(screen.getByTitle('Preview')).toBeInTheDocument()
-      expect(screen.getByTitle('Add App')).toBeInTheDocument()
     })
 
     it('has correct dock positioning', () => {
@@ -74,12 +73,15 @@ describe('Dock Component', () => {
       
       expect(mockAddWindow).toHaveBeenCalledWith({
         type: 'vscode',
-        title: 'VSCode - New Project',
+        title: 'VSCode',
         position: expect.objectContaining({
           x: expect.any(Number),
           y: expect.any(Number)
         }),
-        size: { width: 800, height: 600 },
+        size: expect.objectContaining({
+          width: expect.any(Number),
+          height: expect.any(Number)
+        }),
         minimized: false,
         maximized: false,
         focused: true,
@@ -137,7 +139,7 @@ describe('Dock Component', () => {
 
       render(<Dock />)
       
-      const claudeIcon = screen.getByTitle('Claude')
+      const claudeIcon = screen.getByTitle('Claude Code')
       fireEvent.click(claudeIcon)
       
       expect(mockRestoreWindow).toHaveBeenCalledWith('claude-1')
@@ -151,16 +153,16 @@ describe('Dock Component', () => {
       render(<Dock />)
       
       const vscodeIcon = screen.getByTitle('VSCode')
-      const claudeIcon = screen.getByTitle('Claude')
+      const claudeIcon = screen.getByTitle('Claude Code')
+      const diffIcon = screen.getByTitle('Code Diff')
+      const settingsIcon = screen.getByTitle('Settings')
       const terminalIcon = screen.getByTitle('Terminal')
-      const filesIcon = screen.getByTitle('Files')
-      const previewIcon = screen.getByTitle('Preview')
       
       expect(vscodeIcon).toHaveClass('bg-blue-500', 'hover:bg-blue-600')
       expect(claudeIcon).toHaveClass('bg-purple-500', 'hover:bg-purple-600')
+      expect(diffIcon).toHaveClass('bg-orange-500', 'hover:bg-orange-600')
+      expect(settingsIcon).toHaveClass('bg-gray-500', 'hover:bg-gray-600')
       expect(terminalIcon).toHaveClass('bg-green-500', 'hover:bg-green-600')
-      expect(filesIcon).toHaveClass('bg-yellow-500', 'hover:bg-yellow-600')
-      expect(previewIcon).toHaveClass('bg-indigo-500', 'hover:bg-indigo-600')
     })
 
     it('has hover and active states', () => {
@@ -273,10 +275,9 @@ describe('Dock Component', () => {
       
       const appTypes: Array<{type: string, title: string}> = [
         { type: 'vscode', title: 'VSCode' },
-        { type: 'claude', title: 'Claude' },
-        { type: 'terminal', title: 'Terminal' },
-        { type: 'file-manager', title: 'Files' },
-        { type: 'preview', title: 'Preview' }
+        { type: 'claude', title: 'Claude Code' },
+        { type: 'settings', title: 'Settings' },
+        { type: 'terminal', title: 'Terminal' }
       ]
       
       appTypes.forEach(({ type, title }) => {
@@ -284,12 +285,15 @@ describe('Dock Component', () => {
         
         expect(mockAddWindow).toHaveBeenCalledWith({
           type,
-          title: expect.stringContaining(title === 'Files' ? 'File Manager' : title),
+          title,
           position: expect.objectContaining({
             x: expect.any(Number),
             y: expect.any(Number)
           }),
-          size: { width: 800, height: 600 },
+          size: expect.objectContaining({
+            width: expect.any(Number),
+            height: expect.any(Number)
+          }),
           minimized: false,
           maximized: false,
           focused: true,
@@ -305,18 +309,17 @@ describe('Dock Component', () => {
       render(<Dock />)
       
       const buttons = screen.getAllByRole('button')
-      expect(buttons.length).toBeGreaterThanOrEqual(6) // 5 apps + add button
+      expect(buttons.length).toBeGreaterThanOrEqual(5) // 5 apps
     })
 
     it('has descriptive titles for all icons', () => {
       render(<Dock />)
       
       expect(screen.getByTitle('VSCode')).toBeInTheDocument()
-      expect(screen.getByTitle('Claude')).toBeInTheDocument()
+      expect(screen.getByTitle('Claude Code')).toBeInTheDocument()
+      expect(screen.getByTitle('Code Diff')).toBeInTheDocument()
+      expect(screen.getByTitle('Settings')).toBeInTheDocument()
       expect(screen.getByTitle('Terminal')).toBeInTheDocument()
-      expect(screen.getByTitle('Files')).toBeInTheDocument()
-      expect(screen.getByTitle('Preview')).toBeInTheDocument()
-      expect(screen.getByTitle('Add App')).toBeInTheDocument()
     })
   })
 

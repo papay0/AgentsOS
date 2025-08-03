@@ -9,6 +9,7 @@ import { useSnapZones } from '../../hooks/useSnapZones';
 import { useWindowAnimation } from '../../hooks/useWindowAnimation';
 import { X, Minus, Square } from 'lucide-react';
 import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT } from '../../constants/layout';
+import { getApp } from '../../apps';
 
 interface WindowProps {
   window: WindowType;
@@ -52,21 +53,18 @@ export default function Window({ window }: WindowProps) {
     const finalX = Math.max(0, window.position.x + dragOffset.x);
     const finalY = Math.max(0, window.position.y + dragOffset.y);
     
-    // Suppress transitions immediately and for longer to prevent any visual glitch
+    // Suppress transitions during the position change
     setSuppressTransitions(true);
     
-    // Update the store position first, while still in optimized dragging mode
+    // Reset optimized dragging and offset FIRST to prevent double-offsetting
+    setIsOptimizedDragging(false);
+    setDragOffset({ x: 0, y: 0 });
+    
+    // Then update the store position - this will cause a re-render with correct positioning
     moveWindow(window.id, finalX, finalY);
     
-    // Use requestAnimationFrame to ensure the store update is applied
-    requestAnimationFrame(() => {
-      // Now stop optimized dragging and reset offset
-      setIsOptimizedDragging(false);
-      setDragOffset({ x: 0, y: 0 });
-      
-      // Keep transitions disabled for longer to ensure smooth transition
-      setTimeout(() => setSuppressTransitions(false), 100);
-    });
+    // Re-enable transitions after a short delay
+    setTimeout(() => setSuppressTransitions(false), 50);
     
     // Handle snap zones
     handleDragEnd(currentX, currentY);
@@ -137,14 +135,8 @@ export default function Window({ window }: WindowProps) {
   };
 
   const getWindowIcon = () => {
-    switch (window.type) {
-      case 'vscode': return '🖥️';
-      case 'claude': return '🤖';
-      case 'terminal': return '⚡';
-      case 'file-manager': return '📁';
-      case 'preview': return '🌐';
-      default: return '📱';
-    }
+    const app = getApp(window.type);
+    return app?.metadata.icon.emoji || '📱';
   };
 
   const getWindowStyles = () => {
@@ -313,77 +305,25 @@ export default function Window({ window }: WindowProps) {
 }
 
 const WindowContent = memo(function WindowContent({ window }: { window: WindowType }) {
-  const getContentBackground = () => {
-    switch (window.type) {
-      case 'vscode': return 'bg-gray-900 text-green-400';
-      case 'claude': return 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200';
-      case 'terminal': return 'bg-black text-green-400';
-      default: return 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200';
-    }
-  };
+  const app = getApp(window.type);
+  
+  if (!app) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+        <div className="text-center">
+          <div className="text-4xl mb-4">❓</div>
+          <div className="text-lg font-semibold">Unknown App</div>
+          <div className="text-gray-500 mt-2">App type &quot;{window.type}&quot; not found</div>
+        </div>
+      </div>
+    );
+  }
 
+  const DesktopContent = app.content.desktop;
+  
   return (
-    <div className={`w-full h-full p-4 font-mono text-sm ${getContentBackground()}`}>
-      {window.type === 'vscode' && (
-        <div>
-          <div className="text-blue-400 mb-2">{`// ${window.title}`}</div>
-          <div className="text-purple-400">import</div>
-          <div className="ml-4 text-yellow-400">React</div>
-          <div className="text-purple-400">from</div>
-          <div className="ml-4 text-green-300">&apos;react&apos;;</div>
-          <br />
-          <div className="text-blue-400">const</div>
-          <div className="ml-4 text-yellow-400">AgentsOS</div>
-          <div className="text-purple-400">=</div>
-          <div className="ml-4">() =&gt; &#123;</div>
-          <div className="ml-8 text-blue-400">return</div>
-          <div className="ml-12 text-green-300">&lt;div&gt;Welcome to AgentsOS!&lt;/div&gt;</div>
-          <div className="ml-4">&#125;</div>
-        </div>
-      )}
-      
-      {window.type === 'claude' && (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-              C
-            </div>
-            <div>
-              <div className="font-semibold">Claude</div>
-              <div className="text-sm text-gray-500">AI Assistant</div>
-            </div>
-          </div>
-          <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded">
-            👋 Hello! I&apos;m Claude, your AI assistant. I can help you with coding, writing, analysis, and more. 
-            What would you like to work on today?
-          </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Ready to help</span>
-          </div>
-        </div>
-      )}
-      
-      {window.type === 'terminal' && (
-        <div>
-          <div className="text-green-400">$ npm run dev</div>
-          <div className="text-blue-400">✓ Local: http://localhost:3000</div>
-          <div className="text-green-400">✓ Ready in 2.1s</div>
-          <br />
-          <div className="text-green-400">$ _</div>
-          <div className="animate-pulse bg-green-400 w-2 h-4 inline-block ml-1"></div>
-        </div>
-      )}
-      
-      {!['vscode', 'claude', 'terminal'].includes(window.type) && (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="text-4xl mb-4">{window.type === 'file-manager' ? '📁' : '🌐'}</div>
-            <div className="text-lg font-semibold">{window.title}</div>
-            <div className="text-gray-500 mt-2">Content loading...</div>
-          </div>
-        </div>
-      )}
+    <div className="w-full h-full">
+      <DesktopContent />
     </div>
   );
 });

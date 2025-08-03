@@ -4,25 +4,31 @@ import { useState, useEffect } from 'react';
 import MobileDock from './MobileDock';
 import MobileHome from './MobileHome';
 import MobileApp from './MobileApp';
+import { getAllApps } from '../../apps';
 
 export interface MobileApp {
   id: string;
   name: string;
   icon: string;
   color: string;
-  type: 'vscode' | 'claude' | 'terminal' | 'file-manager' | 'preview' | 'settings' | 'safari' | 'messages';
+  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal';
+  comingSoon?: boolean;
 }
 
-const defaultApps: MobileApp[] = [
-  { id: 'vscode', name: 'VSCode', icon: '💻', color: 'bg-blue-500', type: 'vscode' },
-  { id: 'claude', name: 'Claude', icon: '🤖', color: 'bg-purple-500', type: 'claude' },
-  { id: 'terminal', name: 'Terminal', icon: '⚡', color: 'bg-green-500', type: 'terminal' },
-  { id: 'files', name: 'Files', icon: '📁', color: 'bg-yellow-500', type: 'file-manager' },
-  { id: 'safari', name: 'Safari', icon: '🌐', color: 'bg-blue-400', type: 'safari' },
-  { id: 'messages', name: 'Messages', icon: '💬', color: 'bg-green-400', type: 'messages' },
-  { id: 'settings', name: 'Settings', icon: '⚙️', color: 'bg-gray-500', type: 'settings' },
-  { id: 'preview', name: 'Preview', icon: '🖼️', color: 'bg-indigo-500', type: 'preview' },
-];
+const getMobileAppColor = (primaryColor: string): string => {
+  // Extract the base color from the app's primary color
+  const baseColor = primaryColor.replace('bg-', '');
+  return `bg-${baseColor}`;
+};
+
+const defaultApps: MobileApp[] = getAllApps().map(app => ({
+  id: app.metadata.id,
+  name: app.metadata.name,
+  icon: app.metadata.icon.emoji,
+  color: getMobileAppColor(app.metadata.colors.primary),
+  type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
+  comingSoon: app.metadata.comingSoon
+}));
 
 export default function MobileWorkspace() {
   const [currentPage, setCurrentPage] = useState(0);
@@ -56,6 +62,11 @@ export default function MobileWorkspace() {
 
 
   const handleAppOpen = (app: MobileApp) => {
+    // Don't open coming soon apps
+    if (app.comingSoon) {
+      // TODO: Show coming soon toast
+      return;
+    }
     setOpenApp(app);
   };
 
@@ -87,7 +98,7 @@ export default function MobileWorkspace() {
       />
       
       <MobileDock 
-        apps={defaultApps.slice(0, 4)} // First 4 apps in dock
+        apps={defaultApps.filter(app => !app.comingSoon).slice(0, 4)} // First 4 available apps in dock
         onAppOpen={handleAppOpen}
         onHomePress={handleHomePress}
       />

@@ -10,13 +10,20 @@ interface MobileDockProps {
 
 export default function MobileDock({ apps, onAppOpen }: MobileDockProps) {
   const DockIcon = ({ app }: { app: MobileApp }) => (
-    <button
-      onClick={() => onAppOpen(app)}
-      onTouchStart={() => onAppOpen(app)}
-      className={`w-14 h-14 ${app.color} rounded-xl flex items-center justify-center text-2xl shadow-lg active:scale-95 transition-transform duration-100 touch-manipulation`}
-    >
-      {app.icon}
-    </button>
+    <div className="relative">
+      <button
+        onClick={() => onAppOpen(app)}
+        onTouchStart={() => onAppOpen(app)}
+        className={`w-14 h-14 ${app.color} rounded-xl flex items-center justify-center text-2xl shadow-lg active:scale-95 transition-transform duration-100 touch-manipulation ${
+          app.comingSoon ? 'opacity-50' : ''
+        }`}
+      >
+        {app.icon}
+      </button>
+      {app.comingSoon && (
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border border-white" />
+      )}
+    </div>
   );
 
   return (
