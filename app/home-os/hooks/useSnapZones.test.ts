@@ -4,9 +4,27 @@ import { useSnapZones } from './useSnapZones'
 
 // Mock the window store
 const mockUpdateWindow = vi.fn()
+const mockWindows = [
+  {
+    id: 'test-window',
+    type: 'vscode',
+    title: 'Test Window',
+    position: { x: 100, y: 100 },
+    size: { width: 400, height: 300 },
+    zIndex: 1,
+    minimized: false,
+    maximized: false,
+    focused: true,
+  }
+]
+
 vi.mock('../stores/windowStore', () => ({
-  useWindowStore: () => ({
+  useWindowStore: Object.assign(() => ({
     updateWindow: mockUpdateWindow,
+  }), {
+    getState: () => ({
+      windows: mockWindows,
+    }),
   }),
 }))
 
@@ -356,6 +374,10 @@ describe('useSnapZones Hook', () => {
         position: { x: 0, y: 0 },
         size: { width: 1024, height: expect.any(Number) },
         maximized: true,
+        previousState: {
+          position: { x: 100, y: 100 },
+          size: { width: 400, height: 300 }
+        }
       })
     })
 

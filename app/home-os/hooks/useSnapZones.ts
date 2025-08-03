@@ -154,6 +154,9 @@ export function useSnapZones({ windowId, onSnapStart, onSnapEnd }: UseSnapZonesO
     
     const { preview } = zone;
     
+    // Get current window state before updating
+    const currentWindow = useWindowStore.getState().windows.find(w => w.id === windowId);
+    
     // Update window with smooth animation
     // Convert viewport coordinates to workspace coordinates
     updateWindow(windowId, {
@@ -163,6 +166,11 @@ export function useSnapZones({ windowId, onSnapStart, onSnapEnd }: UseSnapZonesO
       },
       size: { width: preview.width, height: preview.height },
       maximized: zone.id === 'top',
+      // Save previous state when maximizing via snap
+      previousState: zone.id === 'top' && currentWindow ? {
+        position: { ...currentWindow.position },
+        size: { ...currentWindow.size }
+      } : undefined,
     });
     
     // Reset state after animation

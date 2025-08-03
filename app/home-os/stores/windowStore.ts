@@ -14,6 +14,10 @@ export interface Window {
   focused: boolean;
   content?: string; // For dummy content
   isAnimating?: boolean; // For window animations
+  previousState?: { // Store previous state for restore
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+  };
 }
 
 interface WindowStore {
@@ -90,14 +94,36 @@ export const useWindowStore = create<WindowStore>()(
 
     maximizeWindow: (id) => set((state) => ({
       windows: state.windows.map((w) => 
-        w.id === id ? { ...w, maximized: true } : w
+        w.id === id ? { 
+          ...w, 
+          maximized: true,
+          previousState: {
+            position: { ...w.position },
+            size: { ...w.size }
+          }
+        } : w
       ),
     })),
 
     restoreWindow: (id) => set((state) => ({
-      windows: state.windows.map((w) => 
-        w.id === id ? { ...w, minimized: false, maximized: false } : w
-      ),
+      windows: state.windows.map((w) => {
+        if (w.id !== id) return w;
+        
+        // If we have previous state, restore it
+        if (w.previousState) {
+          return {
+            ...w,
+            minimized: false,
+            maximized: false,
+            position: { ...w.previousState.position },
+            size: { ...w.previousState.size },
+            previousState: undefined
+          };
+        }
+        
+        // Otherwise just unset the flags
+        return { ...w, minimized: false, maximized: false };
+      }),
     })),
 
     moveWindow: (id, x, y) => set((state) => ({

@@ -31,7 +31,22 @@ export default function Window({ window }: WindowProps) {
 
   // Handle window dragging with optimized transform updates
   const handleDrag = useCallback((deltaX: number, deltaY: number, currentX: number, currentY: number) => {
-    if (window.maximized) return;
+    // If window is maximized, restore it to normal size and start dragging
+    if (window.maximized) {
+      // Restore window to a reasonable size centered under cursor
+      const restoredWidth = 800;
+      const restoredHeight = 600;
+      const newX = Math.max(0, currentX - restoredWidth / 2);
+      const newY = Math.max(0, currentY - 40); // 40px offset for title bar
+      
+      restoreWindow(window.id);
+      moveWindow(window.id, newX, newY);
+      resizeWindow(window.id, restoredWidth, restoredHeight);
+      
+      // Start dragging from this position
+      setDragOffset({ x: 0, y: 0 });
+      return;
+    }
     
     // Update transform offset for smooth dragging
     setDragOffset(prev => ({
@@ -41,7 +56,7 @@ export default function Window({ window }: WindowProps) {
     
     // Check for snap zones during drag
     handleDragMove(currentX, currentY);
-  }, [window.maximized, handleDragMove]);
+  }, [window.maximized, handleDragMove, restoreWindow, moveWindow, resizeWindow, window.id]);
 
   const handleDragStart = useCallback(() => {
     focusWindow(window.id);
