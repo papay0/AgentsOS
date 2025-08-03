@@ -44,7 +44,7 @@ export const createMockWindow = (overrides: TestWindowOptions = {}): Window => (
 export const createMockMobileApp = (overrides: TestMobileAppOptions = {}): MobileApp => ({
   id: overrides.id ?? 'test-app-1',
   name: overrides.name ?? 'Test App',
-  icon: overrides.icon ?? '🧪',
+  icon: overrides.icon ?? { emoji: '🧪', fallback: '🧪' },
   color: overrides.color ?? 'bg-blue-500',
   type: overrides.type ?? 'vscode',
 })

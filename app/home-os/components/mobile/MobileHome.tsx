@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { MobileApp } from './MobileWorkspace';
+import AppIcon from '../ui/AppIcon';
 
 interface MobileHomeProps {
   apps: MobileApp[];
@@ -55,14 +56,14 @@ export default function MobileHome({ apps, currentPage, onPageChange, onAppOpen 
 
   const translateX = isDragging ? (currentX - startX) / 3 : 0;
 
-  const AppIcon = ({ app }: { app: MobileApp }) => (
+  const AppButton = ({ app }: { app: MobileApp }) => (
     <button
       onClick={() => onAppOpen(app)}
       onTouchStart={() => onAppOpen(app)}
       className="flex flex-col items-center space-y-1 p-2 rounded-xl active:scale-95 transition-transform duration-100 touch-manipulation"
     >
-      <div className={`w-14 h-14 ${app.color} rounded-xl flex items-center justify-center text-2xl shadow-lg active:shadow-md transition-shadow`}>
-        {app.icon}
+      <div className={`w-14 h-14 ${app.color} rounded-xl flex items-center justify-center shadow-lg active:shadow-md transition-shadow`}>
+        <AppIcon icon={app.icon} size="lg" className="text-white" />
       </div>
       <span className="text-white dark:text-gray-200 text-xs font-medium drop-shadow-sm max-w-[60px] truncate">
         {app.name}
@@ -107,7 +108,7 @@ export default function MobileHome({ apps, currentPage, onPageChange, onAppOpen 
                 {homeApps
                   .slice(pageIndex * APPS_PER_PAGE, (pageIndex + 1) * APPS_PER_PAGE)
                   .map((app) => (
-                    <AppIcon key={app.id} app={app} />
+                    <AppButton key={app.id} app={app} />
                   ))}
               </div>
             </div>

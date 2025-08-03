@@ -9,10 +9,10 @@ describe('MobileDock Component', () => {
   const mockOnHomePress = vi.fn()
 
   const sampleApps: MobileApp[] = [
-    { id: 'vscode', name: 'VSCode', icon: '💻', color: 'bg-blue-500', type: 'vscode' },
-    { id: 'claude', name: 'Claude', icon: '🤖', color: 'bg-purple-500', type: 'claude' },
-    { id: 'terminal', name: 'Terminal', icon: '⚡', color: 'bg-green-500', type: 'terminal' },
-    { id: 'files', name: 'Files', icon: '📁', color: 'bg-yellow-500', type: 'file-manager' }
+    { id: 'vscode', name: 'VSCode', icon: { emoji: '💻', fallback: '💻' }, color: 'bg-blue-500', type: 'vscode' },
+    { id: 'claude', name: 'Claude', icon: { emoji: '🤖', fallback: '🤖' }, color: 'bg-purple-500', type: 'claude' },
+    { id: 'terminal', name: 'Terminal', icon: { emoji: '⚡', fallback: '⚡' }, color: 'bg-green-500', type: 'terminal' },
+    { id: 'settings', name: 'Settings', icon: { emoji: '⚙️', fallback: '⚙️' }, color: 'bg-gray-500', type: 'settings' }
   ]
 
   beforeEach(() => {
@@ -23,11 +23,11 @@ describe('MobileDock Component', () => {
     it('renders dock with all provided apps', () => {
       render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} onHomePress={mockOnHomePress} />)
       
-      // Check that all app icons are rendered
+      // Check that all app icons are rendered (either as emoji or as app icons)
       expect(screen.getByText('💻')).toBeInTheDocument()
       expect(screen.getByText('🤖')).toBeInTheDocument()
       expect(screen.getByText('⚡')).toBeInTheDocument()
-      expect(screen.getByText('📁')).toBeInTheDocument()
+      expect(screen.getByText('⚙️')).toBeInTheDocument()
     })
 
     it('applies correct dock styling and positioning', () => {
@@ -94,7 +94,7 @@ describe('MobileDock Component', () => {
       
       const vscodeButton = screen.getByText('💻').closest('button')!
       expect(vscodeButton).toHaveClass('w-14', 'h-14', 'bg-blue-500', 'rounded-xl')
-      expect(vscodeButton).toHaveClass('flex', 'items-center', 'justify-center', 'text-2xl')
+      expect(vscodeButton).toHaveClass('flex', 'items-center', 'justify-center')
       expect(vscodeButton).toHaveClass('shadow-lg', 'active:scale-95', 'transition-transform', 'duration-100')
       expect(vscodeButton).toHaveClass('touch-manipulation')
     })
@@ -105,7 +105,7 @@ describe('MobileDock Component', () => {
       expect(screen.getByText('💻').closest('button')).toHaveClass('bg-blue-500')
       expect(screen.getByText('🤖').closest('button')).toHaveClass('bg-purple-500')
       expect(screen.getByText('⚡').closest('button')).toHaveClass('bg-green-500')
-      expect(screen.getByText('📁').closest('button')).toHaveClass('bg-yellow-500')
+      expect(screen.getByText('⚙️').closest('button')).toHaveClass('bg-gray-500')
     })
 
     it('spaces icons correctly in dock', () => {
@@ -204,7 +204,7 @@ describe('MobileDock Component', () => {
         screen.getByText('💻').closest('button')!,
         screen.getByText('🤖').closest('button')!,
         screen.getByText('⚡').closest('button')!,
-        screen.getByText('📁').closest('button')!
+        screen.getByText('⚙️').closest('button')!
       ]
       
       apps.forEach(app => fireEvent.click(app))

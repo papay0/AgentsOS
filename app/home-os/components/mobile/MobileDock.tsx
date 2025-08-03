@@ -1,6 +1,7 @@
 'use client';
 
 import { MobileApp } from './MobileWorkspace';
+import AppIcon from '../ui/AppIcon';
 
 interface MobileDockProps {
   apps: MobileApp[];
@@ -14,11 +15,11 @@ export default function MobileDock({ apps, onAppOpen }: MobileDockProps) {
       <button
         onClick={() => onAppOpen(app)}
         onTouchStart={() => onAppOpen(app)}
-        className={`w-14 h-14 ${app.color} rounded-xl flex items-center justify-center text-2xl shadow-lg active:scale-95 transition-transform duration-100 touch-manipulation ${
+        className={`w-14 h-14 ${app.color} rounded-xl flex items-center justify-center shadow-lg active:scale-95 transition-transform duration-100 touch-manipulation ${
           app.comingSoon ? 'opacity-50' : ''
         }`}
       >
-        {app.icon}
+        <AppIcon icon={app.icon} size="lg" className="text-white" />
       </button>
       {app.comingSoon && (
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border border-white" />

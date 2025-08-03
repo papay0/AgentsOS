@@ -1,5 +1,6 @@
 import { createApp } from './BaseApp';
 import MobileAppTemplate from './MobileAppTemplate';
+import { Terminal } from 'lucide-react';
 
 const TerminalDesktopContent = () => (
   <div className="w-full h-full bg-black text-green-400 font-mono text-sm p-4">
@@ -43,7 +44,7 @@ export const TerminalApp = createApp({
     author: 'AgentsPod',
     category: 'development',
     icon: {
-      emoji: '⚡',
+      icon: <Terminal className="w-full h-full" />,
       fallback: '⚡'
     },
     colors: {

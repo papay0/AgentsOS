@@ -5,6 +5,7 @@ import { useWindowAnimation } from '../../hooks/useWindowAnimation';
 import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
 import { getAllApps, getApp } from '../../apps';
+import AppIcon from '../ui/AppIcon';
 
 export default function Dock() {
   const { windows, addWindow, restoreWindow, focusWindow, setWindowAnimating } = useWindowStore();
@@ -97,9 +98,7 @@ export default function Dock() {
     const app = getApp(type);
     if (!app) return <Code className="w-6 h-6" />;
     
-    // For now, use emoji since URL images are more complex
-    // TODO: Implement proper image loading for URLs
-    return <span className="text-2xl">{app.metadata.icon.emoji}</span>;
+    return <AppIcon icon={app.metadata.icon} size="md" />;
   };
 
   const getAppColor = (type: string) => {

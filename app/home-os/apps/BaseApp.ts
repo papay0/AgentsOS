@@ -8,8 +8,9 @@ export interface AppMetadata {
   author: string;
   category: 'development' | 'productivity' | 'system' | 'utility';
   icon: {
-    emoji: string;
+    emoji?: string;
     url?: string;
+    icon?: ReactNode;
     fallback: string;
   };
   colors: {
@@ -63,8 +64,8 @@ export function createApp(config: BaseApp): BaseApp {
   if (!config.metadata.name) {
     throw new Error('App must have a name');
   }
-  if (!config.metadata.icon.emoji && !config.metadata.icon.url) {
-    throw new Error('App must have an icon (emoji or url)');
+  if (!config.metadata.icon.emoji && !config.metadata.icon.url && !config.metadata.icon.icon) {
+    throw new Error('App must have an icon (emoji, url, or icon component)');
   }
   if (!config.content.desktop || !config.content.mobile) {
     throw new Error('App must provide both desktop and mobile content');

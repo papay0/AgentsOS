@@ -11,18 +11,18 @@ describe('MobileHome Component', () => {
   // Create a larger set of apps to test pagination
   const sampleApps: MobileApp[] = [
     // First 4 apps (dock apps, excluded from home)
-    { id: 'vscode', name: 'VSCode', icon: '💻', color: 'bg-blue-500', type: 'vscode' },
-    { id: 'claude', name: 'Claude', icon: '🤖', color: 'bg-purple-500', type: 'claude' },
-    { id: 'terminal', name: 'Terminal', icon: '⚡', color: 'bg-green-500', type: 'terminal' },
-    { id: 'files', name: 'Files', icon: '📁', color: 'bg-yellow-500', type: 'file-manager' },
+    { id: 'vscode', name: 'VSCode', icon: { emoji: '💻', fallback: '💻' }, color: 'bg-blue-500', type: 'vscode' },
+    { id: 'claude', name: 'Claude', icon: { emoji: '🤖', fallback: '🤖' }, color: 'bg-purple-500', type: 'claude' },
+    { id: 'terminal', name: 'Terminal', icon: { emoji: '⚡', fallback: '⚡' }, color: 'bg-green-500', type: 'terminal' },
+    { id: 'settings', name: 'Settings', icon: { emoji: '⚙️', fallback: '⚙️' }, color: 'bg-yellow-500', type: 'settings' },
     // Home screen apps (these will be shown)
-    { id: 'safari', name: 'Safari', icon: '🌐', color: 'bg-blue-400', type: 'safari' },
-    { id: 'messages', name: 'Messages', icon: '💬', color: 'bg-green-400', type: 'messages' },
-    { id: 'settings', name: 'Settings', icon: '⚙️', color: 'bg-gray-500', type: 'settings' },
-    { id: 'preview', name: 'Preview', icon: '🖼️', color: 'bg-indigo-500', type: 'preview' },
+    { id: 'safari', name: 'Safari', icon: { emoji: '🌐', fallback: '🌐' }, color: 'bg-blue-400', type: 'settings' },
+    { id: 'messages', name: 'Messages', icon: { emoji: '💬', fallback: '💬' }, color: 'bg-green-400', type: 'settings' },
+    { id: 'settings2', name: 'Settings', icon: { emoji: '⚙️', fallback: '⚙️' }, color: 'bg-gray-500', type: 'settings' },
+    { id: 'preview', name: 'Preview', icon: { emoji: '🖼️', fallback: '🖼️' }, color: 'bg-indigo-500', type: 'settings' },
     // Additional apps for pagination testing
-    { id: 'app9', name: 'App9', icon: '📝', color: 'bg-red-500', type: 'preview' },
-    { id: 'app10', name: 'App10', icon: '📊', color: 'bg-pink-500', type: 'preview' },
+    { id: 'app9', name: 'App9', icon: { emoji: '📝', fallback: '📝' }, color: 'bg-red-500', type: 'settings' },
+    { id: 'app10', name: 'App10', icon: { emoji: '📊', fallback: '📊' }, color: 'bg-pink-500', type: 'settings' },
   ]
 
   beforeEach(() => {
@@ -131,7 +131,7 @@ describe('MobileHome Component', () => {
       const iconContainer = safariButton.querySelector('.w-14.h-14')
       expect(iconContainer).toBeInTheDocument()
       expect(iconContainer).toHaveClass('bg-blue-400', 'rounded-xl', 'flex', 'items-center', 'justify-center')
-      expect(iconContainer).toHaveClass('text-2xl', 'shadow-lg', 'active:shadow-md', 'transition-shadow')
+      expect(iconContainer).toHaveClass('shadow-lg', 'active:shadow-md', 'transition-shadow')
     })
 
     it('displays app names with correct styling', () => {

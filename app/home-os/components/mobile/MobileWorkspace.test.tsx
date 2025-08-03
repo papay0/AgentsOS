@@ -23,11 +23,16 @@ describe('MobileWorkspace Component', () => {
       // Check for Terminal app which appears in the home screen (5th app)
       expect(screen.getByText('Terminal')).toBeInTheDocument()
       
-      // Check for dock apps by their emoji icons (first 4 apps are in dock without text)
-      expect(screen.getByText('💻')).toBeInTheDocument() // VSCode
-      expect(screen.getByText('🤖')).toBeInTheDocument() // Claude Code
-      expect(screen.getByText('⚙️')).toBeInTheDocument() // Settings
-      expect(screen.getAllByText('⚡')).toHaveLength(2) // Terminal (in home screen and dock)
+      // Check for dock apps - Settings still shows emoji, VSCode and Claude show images now
+      expect(screen.getByText('⚙️')).toBeInTheDocument() // Settings emoji
+      
+      // Check that VSCode and Claude images are loaded (they'll have alt text)
+      const images = screen.getAllByAltText('App icon')
+      expect(images.length).toBeGreaterThanOrEqual(2) // VSCode and Claude images
+      
+      // Check Terminal SVG is rendered
+      const terminalSvgs = document.querySelectorAll('svg.lucide-terminal')
+      expect(terminalSvgs.length).toBeGreaterThanOrEqual(1) // Terminal SVG
     })
 
     it('renders dock with app icons', () => {
@@ -110,7 +115,9 @@ describe('MobileWorkspace Component', () => {
       
       await waitFor(() => {
         expect(screen.getByText('Terminal')).toBeInTheDocument() // Back to home screen
-        expect(screen.getByText('💻')).toBeInTheDocument() // VSCode in dock
+        // VSCode shows as image now, not emoji - check for the dock presence instead
+        const dockApps = screen.getAllByRole('button')
+        expect(dockApps.length).toBeGreaterThan(0) // Dock should be visible with apps
       })
     })
 
@@ -150,9 +157,14 @@ describe('MobileWorkspace Component', () => {
     it('renders VSCode app content', async () => {
       render(<MobileWorkspace />)
       
-      // Find VSCode button in dock by its emoji (should be first in dock)
-      const dockButtons = screen.getAllByRole('button').filter(btn => btn.textContent?.includes('💻'))
-      const vscodeButton = dockButtons[0]
+      // Find VSCode button in dock by looking for image with specific src
+      const dockImages = screen.getAllByAltText('App icon')
+      const vscodeImage = dockImages.find(img => 
+        img.getAttribute('src')?.includes('code.visualstudio.com')
+      )
+      expect(vscodeImage).toBeTruthy()
+      
+      const vscodeButton = vscodeImage!.closest('button')!
       fireEvent.click(vscodeButton)
       
       await waitFor(() => {
@@ -194,7 +206,8 @@ describe('MobileWorkspace Component', () => {
       
       await waitFor(() => {
         expect(screen.getByText('Terminal')).toBeInTheDocument() // Back to home screen
-        expect(screen.getByText('💻')).toBeInTheDocument() // VSCode in dock
+        // VSCode shows as image now, check for dock presence with images and settings emoji
+        expect(screen.getByText('⚙️')).toBeInTheDocument() // Settings emoji in dock
       })
     })
 

@@ -193,4 +193,62 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 - **Configuration**: Uses your own Firebase project setup
 - **Analytics Events**: workspace_created, workspace_started, workspace_stopped, page_view, button_click, feature_used
 
+## App Icon System
+
+AgentsPod includes a flexible, type-safe app icon system that supports multiple icon types with graceful fallbacks.
+
+### Icon Types Supported
+1. **React Components** (highest priority) - Use Lucide React icons or custom components
+2. **URL Images** (second priority) - External image URLs with Next.js optimization
+3. **Emoji** (third priority) - Unicode emoji icons
+4. **Fallback** (always required) - Last resort display
+
+### Icon Definition Structure
+```typescript
+icon: {
+  icon?: ReactNode,        // React component (e.g., <Terminal className="w-full h-full" />)
+  url?: string,           // Image URL (e.g., "https://code.visualstudio.com/...")
+  emoji?: string,         // Emoji (e.g., "💻")
+  fallback: string        // Required fallback (usually same as emoji)
+}
+```
+
+### Current App Icons
+- **VSCode**: URL image from code.visualstudio.com
+- **Claude Code**: URL image from Anthropic VS Code extension
+- **Terminal**: Lucide React `<Terminal>` component (matches header logo)
+- **Settings**: Emoji fallback (⚙️)
+- **Code Diff**: Emoji fallback (🔄) - coming soon
+
+### Usage Examples
+```typescript
+// React component icon (Terminal app)
+icon: {
+  icon: <Terminal className="w-full h-full" />,
+  fallback: '⚡'
+}
+
+// URL image icon (VSCode app)
+icon: {
+  emoji: '💻',
+  url: 'https://code.visualstudio.com/assets/images/code-stable-white.png',
+  fallback: '💻'
+}
+
+// Emoji only icon (Settings app)
+icon: {
+  emoji: '⚙️',
+  fallback: '⚙️'
+}
+```
+
+### AppIcon Component
+The `AppIcon` component (`/components/ui/AppIcon.tsx`) handles automatic fallback logic:
+1. Tries React component first (if provided)
+2. Falls back to URL image (if provided and loads successfully)
+3. Falls back to emoji (if provided)
+4. Uses fallback as last resort
+
+Supports three sizes: `sm` (20px), `md` (24px), `lg` (32px) with responsive classes.
+
 The application is designed to be simple, fast, and reliable for creating development environments with minimal configuration.

@@ -5,11 +5,12 @@ import MobileDock from './MobileDock';
 import MobileHome from './MobileHome';
 import MobileApp from './MobileApp';
 import { getAllApps } from '../../apps';
+import { AppMetadata } from '../../apps/BaseApp';
 
 export interface MobileApp {
   id: string;
   name: string;
-  icon: string;
+  icon: AppMetadata['icon'];
   color: string;
   type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal';
   comingSoon?: boolean;
@@ -24,7 +25,7 @@ const getMobileAppColor = (primaryColor: string): string => {
 const defaultApps: MobileApp[] = getAllApps().map(app => ({
   id: app.metadata.id,
   name: app.metadata.name,
-  icon: app.metadata.icon.emoji,
+  icon: app.metadata.icon,
   color: getMobileAppColor(app.metadata.colors.primary),
   type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
   comingSoon: app.metadata.comingSoon

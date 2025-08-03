@@ -5,6 +5,7 @@ import { type MobileApp } from './MobileWorkspace';
 import { ArrowLeft } from 'lucide-react';
 import { getApp } from '../../apps';
 import MobileSettings from './MobileSettings';
+import AppIcon from '../ui/AppIcon';
 
 interface MobileAppProps {
   app: MobileApp;
@@ -27,7 +28,9 @@ export default function MobileApp({ app, onClose, theme, onThemeChange }: Mobile
       return (
         <div className="h-full flex items-center justify-center bg-gradient-to-br from-purple-400 to-pink-400">
           <div className="text-center text-white">
-            <div className="text-6xl mb-4">{app.icon}</div>
+            <div className="mb-4 w-16 h-16 mx-auto">
+              <AppIcon icon={app.icon} size="lg" className="text-white" />
+            </div>
             <div className="text-2xl font-bold mb-2">{app.name}</div>
             <div className="text-white/80">App not found</div>
           </div>
