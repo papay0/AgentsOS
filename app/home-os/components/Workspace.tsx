@@ -224,7 +224,6 @@ export default function Workspace() {
             }`}
           >
             {workspace.windows
-              .filter((window) => !window.minimized)
               .map((window) => {
                 // Debug logging for window URLs
                 if (workspace.id === activeWorkspaceId) {
