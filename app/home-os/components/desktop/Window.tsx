@@ -2,7 +2,7 @@
 
 import React, { useRef, useCallback, useState, memo, useEffect } from 'react';
 import { Window as WindowType } from '../../stores/windowStore';
-import { useWindowStore } from '../../stores/windowStore';
+import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useDrag } from '../../hooks/useDrag';
 import { useResize } from '../../hooks/useResize';
 import { useSnapZones } from '../../hooks/useSnapZones';
@@ -22,7 +22,7 @@ export default function Window({ window }: WindowProps) {
   const [isOptimizedDragging, setIsOptimizedDragging] = useState(false);
   const [suppressTransitions, setSuppressTransitions] = useState(false);
   
-  const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, resizeWindow, updateWindow, setWindowAnimating } = useWindowStore();
+  const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, resizeWindow, updateWindow, setWindowAnimating } = useWorkspaceStore();
 
   // Snap zones integration
   const { handleDragMove, handleDragEnd } = useSnapZones({

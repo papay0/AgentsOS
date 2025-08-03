@@ -11,13 +11,16 @@ import SnapZoneOverlay from './desktop/SnapZoneOverlay';
 import MobileWorkspace from './mobile/MobileWorkspace';
 import { Onboarding } from './desktop/Onboarding';
 import { MobileOnboarding } from './mobile/MobileOnboarding';
+import { WorkspaceStatusPanel } from './workspace-status';
 
 export default function Workspace() {
   const { 
     workspaces, 
     activeWorkspaceId, 
     isLoading: isWorkspaceLoading, 
-    initializeWorkspaces 
+    sandboxId,
+    initializeWorkspaces,
+    setSandboxId 
   } = useWorkspaceStore();
   
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
@@ -37,13 +40,18 @@ export default function Workspace() {
   // Initialize workspaces when AgentsOS user data changes
   useEffect(() => {
     if (workspace?.repositories && hasCompletedOnboarding) {
+      // Set sandbox ID for status checking
+      if (workspace.sandboxId) {
+        setSandboxId(workspace.sandboxId);
+      }
+      
       // Check if we need to initialize workspaces
       if (workspaces.length === 0) {
         initializeWorkspaces(workspace.repositories);
         setOnboardingCompleted(true);
       }
     }
-  }, [workspace, hasCompletedOnboarding, workspaces.length, initializeWorkspaces]);
+  }, [workspace, hasCompletedOnboarding, workspaces.length, initializeWorkspaces, setSandboxId]);
 
   // Listen for snap zone changes from any window
   useEffect(() => {
@@ -103,6 +111,12 @@ export default function Workspace() {
     );
   }
 
+  // Get the current workspace name for status panel
+  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+  const workspaceName = activeWorkspace?.name 
+    ? `${activeWorkspace.name} Workspace` 
+    : 'AgentsOS Workspace';
+
   // Render desktop workspace on desktop devices
   return (
     <div 
@@ -111,6 +125,12 @@ export default function Workspace() {
     >
       {/* Menu Bar */}
       <MenuBar />
+      
+      {/* Workspace Status Panel - Shows when workspace needs attention */}
+      <WorkspaceStatusPanel 
+        sandboxId={sandboxId}
+        workspaceName={workspaceName}
+      />
       
       {/* Main workspace area - Full height, windows go behind dock */}
       <div className="absolute inset-x-0 top-8 bottom-0 overflow-hidden">

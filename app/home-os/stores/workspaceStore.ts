@@ -29,6 +29,7 @@ export interface WorkspaceStore {
   workspaces: Workspace[];
   activeWorkspaceId: string | null;
   isLoading: boolean;
+  sandboxId: string | null; // Current sandbox ID for status checking
   
   // Workspace management
   createWorkspace: (repository: Repository) => string;
@@ -36,6 +37,7 @@ export interface WorkspaceStore {
   removeWorkspace: (workspaceId: string) => void;
   getActiveWorkspace: () => Workspace | null;
   getWorkspace: (workspaceId: string) => Workspace | null;
+  setSandboxId: (sandboxId: string | null) => void;
   
   // Window management for active workspace
   addWindow: (window: Omit<Window, 'id' | 'zIndex'>) => void;
@@ -52,6 +54,7 @@ export interface WorkspaceStore {
   // Workspace initialization
   initializeWorkspaces: (repositories: Repository[]) => void;
   initializeWorkspaceWindows: (workspaceId: string) => void;
+  updateWorkspaceUrls: (repositories: Repository[]) => void;
   
   // Reset
   reset: () => void;
@@ -113,6 +116,7 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     workspaces: [],
     activeWorkspaceId: null,
     isLoading: false,
+    sandboxId: null,
 
     createWorkspace: (repository: Repository) => {
       const workspaceId = `workspace-${repository.name.toLowerCase()}-${Date.now()}`;
@@ -359,11 +363,57 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
       }));
     },
 
+    updateWorkspaceUrls: (repositories: Repository[]) => {
+      set((state) => ({
+        workspaces: state.workspaces.map(workspace => {
+          // Find the matching repository with updated URLs
+          const updatedRepo = repositories.find(repo => repo.name === workspace.repository.name);
+          if (!updatedRepo) return workspace;
+
+          // Update the workspace's repository URLs
+          const updatedWorkspace = {
+            ...workspace,
+            repository: { ...workspace.repository, urls: updatedRepo.urls }
+          };
+
+          // Update all windows in this workspace with new URLs
+          const updatedWindows = workspace.windows.map(window => {
+            if (!window.repositoryUrl) return window;
+
+            // Update URL based on window type
+            let newUrl = '';
+            switch (window.type) {
+              case 'vscode':
+                newUrl = updatedRepo.urls?.vscode || '';
+                break;
+              case 'claude':
+                newUrl = updatedRepo.urls?.claude || '';
+                break;
+              case 'terminal':
+                newUrl = updatedRepo.urls?.terminal || '';
+                break;
+              default:
+                newUrl = window.repositoryUrl;
+            }
+
+            return { ...window, repositoryUrl: newUrl };
+          });
+
+          return { ...updatedWorkspace, windows: updatedWindows };
+        })
+      }));
+    },
+
+    setSandboxId: (sandboxId: string | null) => {
+      set({ sandboxId });
+    },
+
     reset: () => {
       set({
         workspaces: [],
         activeWorkspaceId: null,
         isLoading: false,
+        sandboxId: null,
       });
     },
   }))

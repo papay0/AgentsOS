@@ -12,7 +12,7 @@ const ClaudeDesktopContent = (props?: { repositoryUrl?: string }) => {
   if (repositoryUrl) {
     // Convert HTTP URL to WebSocket URL for ttyd
     const wsUrl = repositoryUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws';
-    return <TTYDTerminal wsUrl={wsUrl} className="w-full h-full" />;
+    return <TTYDTerminal key={repositoryUrl} wsUrl={wsUrl} className="w-full h-full" />;
   }
 
   // Fallback to demo content

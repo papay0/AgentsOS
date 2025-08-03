@@ -10,7 +10,7 @@ const VSCodeDesktopContent = (props?: { repositoryUrl?: string }) => {
   const { repositoryUrl } = props || {};
   // If we have a repository URL, use the real VSCode editor
   if (repositoryUrl) {
-    return <VSCodeEditor url={repositoryUrl} className="w-full h-full" />;
+    return <VSCodeEditor key={repositoryUrl} url={repositoryUrl} className="w-full h-full" />;
   }
 
   // Fallback to demo content
