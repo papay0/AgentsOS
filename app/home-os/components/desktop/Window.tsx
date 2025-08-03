@@ -5,9 +5,9 @@ import { Window as WindowType } from '../../stores/windowStore';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useDrag } from '../../hooks/useDrag';
 import { useResize } from '../../hooks/useResize';
-import { useSnapZones } from '../../hooks/useSnapZones';
+import { useSnapZones, SnapZone } from '../../hooks/useSnapZones';
 import { X, Minus, Square } from 'lucide-react';
-import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT } from '../../constants/layout';
+import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT, MENU_BAR_HEIGHT } from '../../constants/layout';
 import { getApp } from '../../apps';
 
 function usePrevious<T>(value: T): T | undefined {
@@ -44,16 +44,40 @@ export default function Window({ window }: WindowProps) {
     }
   }, [window.type]);
 
-  const { handleDragMove, handleDragEnd } = useSnapZones({ windowId: window.id });
+  const { handleDragMove, handleDragEnd } = useSnapZones({});
+
+  const performSnap = useCallback((zone: SnapZone) => {
+    updateWindow(window.id, {
+      position: { x: zone.preview.x, y: zone.preview.y - MENU_BAR_HEIGHT },
+      size: { width: zone.preview.width, height: zone.preview.height },
+      maximized: zone.id === 'top',
+      previousState: zone.id === 'top' ? { position: window.position, size: window.size } : undefined,
+    });
+  }, [window.id, updateWindow, window.position, window.size]);
 
   const handleDrag = useCallback((deltaX: number, deltaY: number, currentX: number, currentY: number) => {
     if (window.maximized) {
-      restoreWindow(window.id);
+      const restoredWidth = window.previousState?.size.width || 800;
+      const restoredHeight = window.previousState?.size.height || 600;
+      
+      // Calculate the new position centered under the cursor
+      // The drag offset should be based on the new, un-maximized size
+      const newX = currentX - (restoredWidth / 2);
+      const newY = currentY - 20; // 20px for title bar height
+
+      updateWindow(window.id, {
+        maximized: false,
+        position: { x: newX, y: newY },
+        size: { width: restoredWidth, height: restoredHeight },
+      });
+      
+      // Set the drag offset to start dragging from the cursor's position relative to the new window
+      setDragOffset({ x: 0, y: 0 });
       return;
     }
     setDragOffset(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
     handleDragMove(currentX, currentY);
-  }, [window.maximized, handleDragMove, restoreWindow]);
+  }, [window.maximized, window.previousState, handleDragMove, updateWindow]);
 
   const handleDragStart = useCallback(() => {
     focusWindow(window.id);
@@ -61,16 +85,22 @@ export default function Window({ window }: WindowProps) {
   }, [window.id, focusWindow]);
 
   const handleDragEndOptimized = useCallback((currentX: number, currentY: number) => {
-    const finalX = Math.max(0, window.position.x + dragOffset.x);
-    const finalY = Math.max(0, window.position.y + dragOffset.y);
-    
-    setSuppressTransitions(true);
+    const snapZone = handleDragEnd(currentX, currentY);
+
     setIsOptimizedDragging(false);
     setDragOffset({ x: 0, y: 0 });
-    moveWindow(window.id, finalX, finalY);
-    setTimeout(() => setSuppressTransitions(false), 50);
-    handleDragEnd(currentX, currentY);
-  }, [window.id, window.position, dragOffset, moveWindow, handleDragEnd]);
+
+    if (snapZone) {
+      performSnap(snapZone);
+    } else {
+      const finalX = Math.max(0, window.position.x + dragOffset.x);
+      const finalY = Math.max(0, window.position.y + dragOffset.y);
+      
+      setSuppressTransitions(true);
+      moveWindow(window.id, finalX, finalY);
+      setTimeout(() => setSuppressTransitions(false), 50);
+    }
+  }, [window.id, window.position, dragOffset, moveWindow, handleDragEnd, performSnap]);
 
   const { isDragging } = useDrag({
     elementRef: titleBarRef,
