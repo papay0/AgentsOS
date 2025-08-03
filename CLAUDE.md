@@ -161,6 +161,19 @@ This is a Next.js 15.4.4 application using App Router with React 19.1.0 and Type
 - Run `npm run test:run` after implementing features to ensure all tests pass
 - Maintain 100% test coverage for critical components
 
+### React 19 + Vitest Compatibility
+- **Issue**: React 19 with Vitest can cause "React.act is not a function" errors in CI environments
+- **Root Cause**: React 19 moved `act` from `react-dom/test-utils` to `react` package, but `react-dom/test-utils` still tries to export `React.act`
+- **Solution**: 
+  1. Use latest React 19 compatible testing library versions:
+     - `@testing-library/react@16.3.0` (includes native React 19 support)
+     - `@testing-library/dom@10.4.0` 
+     - `@testing-library/jest-dom@6.6.4`
+  2. Add React.act compatibility fix in `/src/test/setup.ts` to ensure `React.act` is available when `react-dom/test-utils` expects it
+- **Key Fix**: Ensures `React.act` is available by importing it from the correct location in React 19
+- **Status**: Fixed for both local development and Vercel deployment
+- **Coverage**: 270/270 tests passing with 100% success rate
+
 ### Environment Variables
 ```bash
 # Required for workspace creation

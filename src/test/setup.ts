@@ -1,5 +1,13 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
+import React from 'react'
+
+// React 19 compatibility fixes
+// Set up the React 19 act environment
+if (typeof globalThis !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true
+}
 
 // Mock Next.js hooks and router
 const mockPush = vi.fn()
@@ -20,8 +28,7 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/test',
 }))
 
-// Import React for proper mocking
-import React from 'react'
+// React is already imported above
 
 // Mock Clerk
 vi.mock('@clerk/nextjs', () => ({

@@ -1,6 +1,9 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 
+// React.act compatibility is handled in setup.ts
+// This file focuses on test utilities
+
 // Mock ClerkProvider for testing
 const MockClerkProvider = ({ children }: { children: React.ReactNode }) => {
   return <div data-testid="mock-clerk-provider">{children}</div>
