@@ -1,4 +1,5 @@
 import { createApp } from './BaseApp';
+import MobileAppTemplate from './MobileAppTemplate';
 
 const ClaudeDesktopContent = () => (
   <div className="w-full h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-4 space-y-4">
@@ -46,13 +47,18 @@ const ClaudeDesktopContent = () => (
 );
 
 const ClaudeMobileContent = () => (
-  <div className="w-full h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-4">
-    <div className="text-center mb-6">
-      <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-3">
-        C
+  <MobileAppTemplate
+    title="Claude Code"
+    subtitle="AI Development Assistant"
+    bottomContent={
+      <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+        <span>Online</span>
       </div>
-      <div className="font-semibold text-xl">Claude Code</div>
-      <div className="text-sm text-gray-500">AI Development Assistant</div>
+    }
+  >
+    <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-6">
+      C
     </div>
     
     <div className="space-y-4">
@@ -80,15 +86,8 @@ const ClaudeMobileContent = () => (
           <div className="text-xs">Refactor</div>
         </button>
       </div>
-      
-      <div className="text-center">
-        <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span>Online</span>
-        </div>
-      </div>
     </div>
-  </div>
+  </MobileAppTemplate>
 );
 
 export const ClaudeApp = createApp({

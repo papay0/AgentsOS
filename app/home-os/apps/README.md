@@ -17,6 +17,7 @@ The app system follows an App Store-like pattern where each app is:
 ```typescript
 // MyApp.tsx
 import { createApp } from './BaseApp';
+import MobileAppTemplate from './MobileAppTemplate';
 
 const MyAppDesktopContent = () => (
   <div className="w-full h-full p-4">
@@ -25,9 +26,16 @@ const MyAppDesktopContent = () => (
 );
 
 const MyAppMobileContent = () => (
-  <div className="w-full h-full p-4">
+  <MobileAppTemplate
+    title="My App"
+    subtitle="App Description"
+    bottomContent={<div>Status: Ready</div>}
+  >
     {/* Your mobile app content */}
-  </div>
+    <div className="space-y-4">
+      <p>Mobile app content goes here</p>
+    </div>
+  </MobileAppTemplate>
 );
 
 export const MyApp = createApp({
@@ -116,14 +124,49 @@ Apps are automatically validated at startup (development mode). Common validatio
 | Terminal | `terminal` | development | ✅ Active |
 | Code Diff | `diff` | development | 🚧 Coming Soon |
 
+## Mobile App Template
+
+Use the `MobileAppTemplate` component for consistent mobile app layouts:
+
+```typescript
+import MobileAppTemplate from './MobileAppTemplate';
+
+const MyMobileContent = () => (
+  <MobileAppTemplate
+    title="App Name"                    // Required: App title
+    subtitle="App Description"         // Optional: App subtitle  
+    backgroundColor="bg-white dark:bg-gray-800"  // Optional: Custom background
+    bottomContent={                     // Optional: Bottom status/action area
+      <div className="flex items-center space-x-2">
+        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+        <span>Online</span>
+      </div>
+    }
+  >
+    {/* Your app content - automatically gets proper flexbox layout */}
+    <div className="space-y-4">
+      <p>Your content here</p>
+    </div>
+  </MobileAppTemplate>
+);
+```
+
+**Features:**
+- ✅ Automatic full-height layout (`h-full flex flex-col`)
+- ✅ Proper header/content/footer structure
+- ✅ Dark mode support
+- ✅ Expandable content area (`flex-1`)
+- ✅ Optional bottom section for status/actions
+
 ## Best Practices
 
-1. **Responsive Design**: Ensure your components work at minimum window sizes
-2. **Theme Support**: Use Tailwind's dark mode classes for proper theming
-3. **Performance**: Use React.memo for complex components
-4. **Accessibility**: Include proper ARIA labels and keyboard support
-5. **Error Handling**: Gracefully handle loading states and errors
-6. **Consistent UX**: Follow established patterns from existing apps
+1. **Mobile Layout**: Always use `MobileAppTemplate` for consistent mobile experiences
+2. **Responsive Design**: Ensure your components work at minimum window sizes
+3. **Theme Support**: Use Tailwind's dark mode classes for proper theming
+4. **Performance**: Use React.memo for complex components
+5. **Accessibility**: Include proper ARIA labels and keyboard support
+6. **Error Handling**: Gracefully handle loading states and errors
+7. **Consistent UX**: Follow established patterns from existing apps
 
 ## App Store Features
 

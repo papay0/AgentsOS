@@ -1,4 +1,5 @@
 import { createApp } from './BaseApp';
+import MobileAppTemplate from './MobileAppTemplate';
 
 const VSCodeDesktopContent = () => (
   <div className="w-full h-full bg-gray-900 text-green-400 font-mono text-sm p-4">
@@ -22,21 +23,21 @@ const VSCodeDesktopContent = () => (
 );
 
 const VSCodeMobileContent = () => (
-  <div className="w-full h-full bg-gray-900 text-green-400 font-mono text-xs p-3">
-    <div className="text-center mb-4">
-      <div className="text-blue-400 text-lg">VSCode Mobile</div>
-      <div className="text-gray-500 text-sm">Code Editor</div>
-    </div>
-    <div className="space-y-2">
+  <MobileAppTemplate
+    title="VSCode Mobile"
+    subtitle="Code Editor"
+    backgroundColor="bg-gray-900"
+    bottomContent={
+      <div className="animate-pulse bg-green-400 w-2 h-3 inline-block"></div>
+    }
+  >
+    <div className="space-y-2 font-mono text-xs">
       <div className="text-yellow-400">{`// Mobile code editor`}</div>
       <div className="text-purple-400">const app = () =&gt; &#123;</div>
       <div className="ml-4 text-green-300">return &lt;div&gt;Hello World&lt;/div&gt;</div>
       <div className="text-purple-400">&#125;</div>
     </div>
-    <div className="mt-4 text-center">
-      <div className="animate-pulse bg-green-400 w-2 h-3 inline-block"></div>
-    </div>
-  </div>
+  </MobileAppTemplate>
 );
 
 export const VSCodeApp = createApp({

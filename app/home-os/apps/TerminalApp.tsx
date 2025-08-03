@@ -1,4 +1,5 @@
 import { createApp } from './BaseApp';
+import MobileAppTemplate from './MobileAppTemplate';
 
 const TerminalDesktopContent = () => (
   <div className="w-full h-full bg-black text-green-400 font-mono text-sm p-4">
@@ -16,21 +17,21 @@ const TerminalDesktopContent = () => (
 );
 
 const TerminalMobileContent = () => (
-  <div className="w-full h-full bg-black text-green-400 font-mono text-xs p-3">
-    <div className="text-center mb-4">
-      <div className="text-green-400 text-lg">Terminal</div>
-      <div className="text-gray-500 text-sm">Command Line Interface</div>
-    </div>
-    <div className="space-y-1">
+  <MobileAppTemplate
+    title="Terminal"
+    subtitle="Command Line Interface"
+    backgroundColor="bg-black"
+    bottomContent={
+      <div className="animate-pulse bg-green-400 w-2 h-3 inline-block"></div>
+    }
+  >
+    <div className="space-y-1 font-mono text-xs text-green-400">
       <div className="text-green-400">$ npm run dev</div>
       <div className="text-blue-400">✓ Local: http://localhost:3000</div>
       <div className="text-green-400">✓ Ready in 2.1s</div>
       <div className="text-green-400">$ _</div>
     </div>
-    <div className="mt-4 text-center">
-      <div className="animate-pulse bg-green-400 w-2 h-3 inline-block"></div>
-    </div>
-  </div>
+  </MobileAppTemplate>
 );
 
 export const TerminalApp = createApp({

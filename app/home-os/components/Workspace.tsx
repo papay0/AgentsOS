@@ -34,7 +34,7 @@ export default function Workspace() {
   // Render mobile workspace on mobile devices
   if (isMobile) {
     return (
-      <div data-testid="mobile-workspace">
+      <div data-testid="mobile-workspace" className="h-full w-full">
         <MobileWorkspace />
       </div>
     );
