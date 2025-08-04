@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, type Mock, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@/src/test/utils'
+import { render, screen, fireEvent } from '@/src/test/utils'
 import { useWorkspaceStore } from '../../stores/workspaceStore'
 import { createMockWindow } from '@/src/test/utils'
 
@@ -82,7 +82,6 @@ describe('Window Component', () => {
   const mockSetWindowAnimating = vi.fn()
   const mockRestoreWindow = vi.fn()
   const mockMoveWindow = vi.fn()
-  const mockResizeWindow = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()

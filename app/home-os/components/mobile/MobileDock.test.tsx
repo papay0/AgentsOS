@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent } from '@/src/test/utils'
-import { createTouchEvent } from '@/src/test/utils'
 
 // Unmock the MobileDock component to test the real implementation
 vi.unmock('@/app/home-os/components/mobile/MobileDock')

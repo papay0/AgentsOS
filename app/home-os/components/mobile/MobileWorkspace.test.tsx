@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@/src/test/utils'
-import { createTouchEvent } from '@/src/test/utils'
+import { render, screen, fireEvent } from '@/src/test/utils'
 
 // Unmock the MobileWorkspace component to test the real implementation
 vi.unmock('@/app/home-os/components/mobile/MobileWorkspace')

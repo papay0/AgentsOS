@@ -533,8 +533,7 @@ vi.mock('@/components/ttyd-terminal', () => ({
 
 // Mock MobileTerminalPalette component
 vi.mock('@/components/mobile-terminal-palette', () => ({
-  default: ({ terminalRef, isConnected, className }: {
-    terminalRef: React.RefObject<{ sendCommand: (cmd: string, addEnter?: boolean) => void; sendKey: (key: string) => void; isConnected: () => boolean } | null>;
+  default: ({ isConnected, className }: {
     isConnected: boolean;
     className?: string;
   }) => React.createElement('div', { 
@@ -546,8 +545,7 @@ vi.mock('@/components/mobile-terminal-palette', () => ({
 
 // Mock terminal command palette
 vi.mock('@/components/terminal-command-palette', () => ({
-  default: ({ terminalRef, isConnected, className }: {
-    terminalRef: React.RefObject<{ sendCommand: (cmd: string, addEnter?: boolean) => void; sendKey: (key: string) => void; isConnected: () => boolean } | null>;
+  default: ({ isConnected, className }: {
     isConnected: boolean;
     className?: string;
   }) => React.createElement('div', { 
@@ -559,9 +557,8 @@ vi.mock('@/components/terminal-command-palette', () => ({
 
 // Mock AppIcon component to render emoji directly
 vi.mock('@/app/home-os/components/ui/AppIcon', () => ({
-  default: ({ icon, size, className }: {
+  default: ({ icon, className }: {
     icon: { icon?: React.ReactNode; url?: string; emoji?: string; fallback: string };
-    size?: 'sm' | 'md' | 'lg';
     className?: string;
   }) => {
     // Render the emoji or fallback directly for easier testing

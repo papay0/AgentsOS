@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MobileDock from './MobileDock';
 import MobileApp from './MobileApp';
 import { MobileRepositoryPages } from './MobileRepositoryPages';
@@ -49,6 +49,10 @@ export default function MobileWorkspace() {
   const { workspaces, activeWorkspaceId, sandboxId } = useWorkspaceStore();
   const [animationOriginRect, setAnimationOriginRect] = useState<DOMRect | null>(null);
   const [animationState, setAnimationState] = useState<'idle' | 'opening' | 'open' | 'closing'>('idle');
+  
+  // Refs to store timeout IDs for cleanup
+  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize theme from localStorage
   useEffect(() => {
@@ -75,6 +79,17 @@ export default function MobileWorkspace() {
     }
   }, [theme]);
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (openTimeoutRef.current) {
+        clearTimeout(openTimeoutRef.current);
+      }
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleAppOpen = (app: MobileApp, element: HTMLElement) => {
     // Don't open coming soon apps
@@ -95,7 +110,7 @@ export default function MobileWorkspace() {
     setAnimationState('opening');
     
     // Transition to open state
-    setTimeout(() => {
+    openTimeoutRef.current = setTimeout(() => {
       setAnimationState('open');
     }, 50);
   };
@@ -105,7 +120,7 @@ export default function MobileWorkspace() {
     setAnimationState('closing');
     
     // Complete close after animation
-    setTimeout(() => {
+    closeTimeoutRef.current = setTimeout(() => {
       setActiveAppId(null);
       setAnimationState('idle');
     }, 300);
