@@ -12,7 +12,10 @@ if (!admin.apps.length) {
       databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseio.com`
     });
     
-    console.log('🔥 Firebase Admin initialized successfully with service account key');
+    // Only log during development or actual runtime (not during build)
+    if (process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV) {
+      console.log('🔥 Firebase Admin initialized successfully');
+    }
   } catch (error) {
     console.error('❌ Firebase Admin initialization failed:', error);
   }
