@@ -92,6 +92,12 @@ export function WorkspaceStatusPanel({
       // If restart was successful, refresh workspace URLs
       if (result?.success) {
         await refreshWorkspaceUrls();
+        
+        // Wait a bit for services to be ready, then reload the page
+        // This ensures all iframes reconnect to the restarted services
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       }
     } catch (err) {
       // Error is already handled in the hook

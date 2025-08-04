@@ -19,6 +19,16 @@ export async function POST(
     // Get sandbox
     const daytona = new Daytona({ apiKey });
     const sandbox = await daytona.get(sandboxId);
+    
+    // Start the sandbox if it's not started
+    if (sandbox.state !== 'started') {
+      console.log(`Sandbox is ${sandbox.state}, starting it...`);
+      await sandbox.start();
+      
+      // Wait for container to be ready
+      await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+    
     const rootDir = await sandbox.getUserRootDir();
     
     console.log('Starting services for all repositories...');

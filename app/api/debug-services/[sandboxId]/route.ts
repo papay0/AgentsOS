@@ -20,6 +20,18 @@ export async function GET(
     // Get sandbox
     const daytona = new Daytona({ apiKey });
     const sandbox = await daytona.get(sandboxId);
+    
+    // If sandbox is not started, return early with status info
+    if (sandbox.state !== 'started') {
+      return NextResponse.json({
+        sandboxId,
+        sandboxState: sandbox.state,
+        services: [],
+        processes: [],
+        message: `Sandbox is ${sandbox.state}. Services are not accessible when sandbox is not running.`
+      });
+    }
+    
     const rootDir = await sandbox.getUserRootDir();
     
     // Check all possible service ports

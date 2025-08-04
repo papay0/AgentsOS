@@ -70,7 +70,10 @@ export function useWorkspaceStatus({
         throw new Error(result.message || 'Workspace restart failed');
       }
 
-      // After successful restart, check status again
+      // After successful restart, wait a bit for services to fully start
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Check status again
       await checkStatus();
       
       return result;
