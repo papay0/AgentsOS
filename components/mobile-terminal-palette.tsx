@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import type { TTYDTerminalRef } from './ttyd-terminal';
 
 interface MobileTerminalPaletteProps {
@@ -29,17 +29,9 @@ export default function MobileTerminalPalette({
   isConnected,
   className = ""
 }: MobileTerminalPaletteProps) {
-  const [pasteText, setPasteText] = useState('');
-
   const sendKey = (key: string) => {
     if (terminalRef.current && isConnected) {
       terminalRef.current.sendKey(key);
-    }
-  };
-
-  const sendCommand = (command: string, addEnter = false) => {
-    if (terminalRef.current && isConnected) {
-      terminalRef.current.sendCommand(command, addEnter);
     }
   };
 
@@ -50,7 +42,7 @@ export default function MobileTerminalPalette({
       if (text && terminalRef.current && isConnected) {
         terminalRef.current.sendCommand(text, false);
       }
-    } catch (err) {
+    } catch {
       // Fallback: show prompt for manual paste
       const text = prompt('Paste text here:');
       if (text && terminalRef.current && isConnected) {
