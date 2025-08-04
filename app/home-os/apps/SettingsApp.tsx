@@ -282,7 +282,7 @@ const SettingsMobileContent = () => {
   );
 };
 
-export const SettingsApp = createApp({
+export const SettingsApp = createApp<'settings'>({
   metadata: {
     id: 'settings',
     name: 'Settings',

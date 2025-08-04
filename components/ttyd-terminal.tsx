@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Terminal, ITerminalAddon } from '@xterm/xterm';
-import { useTheme } from './theme-provider';
 import '@xterm/xterm/css/xterm.css';
 
 const terminalThemes = {
@@ -90,26 +89,36 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   const websocket = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   
-  // Theme management
-  const { theme } = useTheme();
+  // Get current theme from document (set by ThemeProvider)
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
-  // Resolve theme (handle system theme)
+  // Watch for theme changes from ThemeProvider
   useEffect(() => {
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const updateTheme = () => {
-        setResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
-      };
-      
-      updateTheme(); // Set initial value
-      mediaQuery.addEventListener('change', updateTheme);
-      
-      return () => mediaQuery.removeEventListener('change', updateTheme);
-    } else {
-      setResolvedTheme(theme as 'light' | 'dark');
-    }
-  }, [theme]);
+    const updateResolvedTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'dark' : 'light';
+      setResolvedTheme(newTheme);
+    };
+
+    // Set initial theme
+    updateResolvedTheme();
+
+    // Listen for class changes on document element
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          updateResolvedTheme();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useImperativeHandle(ref, () => ({
     sendCommand: (command: string, addEnter = true) => {
@@ -302,23 +311,26 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     // Open terminal in DOM
     terminal.current.open(terminalRef.current);
     
-    // Force xterm elements to take full height
-    setTimeout(() => {
+    // Force xterm elements to take full height and fit properly
+    const fitTerminal = () => {
       if (terminalRef.current) {
         const xtermScreen = terminalRef.current.querySelector('.xterm-screen');
         const xtermViewport = terminalRef.current.querySelector('.xterm-viewport');
         
         if (xtermScreen) {
           (xtermScreen as HTMLElement).style.height = '100%';
+          (xtermScreen as HTMLElement).style.width = '100%';
         }
         if (xtermViewport) {
           (xtermViewport as HTMLElement).style.height = '100%';
+          (xtermViewport as HTMLElement).style.width = '100%';
         }
         
-        // Make the terminal container flex
+        // Make the terminal container flex and full size
         const xtermContainer = terminalRef.current.querySelector('.terminal');
         if (xtermContainer) {
           (xtermContainer as HTMLElement).style.height = '100%';
+          (xtermContainer as HTMLElement).style.width = '100%';
           (xtermContainer as HTMLElement).style.display = 'flex';
           (xtermContainer as HTMLElement).style.flexDirection = 'column';
         }
@@ -327,7 +339,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       if (fitAddon.current) {
         fitAddon.current.fit();
       }
-    }, 100);
+    };
+    
+    // Initial fits with delays for mobile animation
+    setTimeout(fitTerminal, 100);
+    setTimeout(fitTerminal, 350);
+    setTimeout(fitTerminal, 600);
 
     // Connect to WebSocket
     connectWebSocket();
@@ -338,14 +355,27 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         fitAddon.current.fit();
       }
     };
+    
+    // Handle window content resize (from AgentsOS windows)
+    const handleWindowContentResize = () => {
+      // Add a small delay to ensure the container has resized
+      setTimeout(() => {
+        if (fitAddon.current) {
+          fitAddon.current.fit();
+        }
+      }, 50);
+    };
+    
     window.addEventListener('resize', handleResize);
+    window.addEventListener('windowContentResize', handleWindowContentResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('windowContentResize', handleWindowContentResize);
       websocket.current?.close();
       terminal.current?.dispose();
     };
-  }, [wsUrl, connectWebSocket, resolvedTheme]);
+  }, [wsUrl, connectWebSocket]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update terminal theme when resolved theme changes
   useEffect(() => {
@@ -357,10 +387,14 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   return (
     <div 
       ref={terminalRef}
-      className={`h-full ${className || ''}`}
+      className={className || ''}
       style={{
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        position: 'relative'
       }}
     />
   );

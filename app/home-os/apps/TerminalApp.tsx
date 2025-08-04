@@ -1,41 +1,9 @@
 import { createApp } from './BaseApp';
-import MobileAppTemplate from './MobileAppTemplate';
 import { Terminal } from 'lucide-react';
+import { TerminalDesktop } from './terminal/desktop';
+import { TerminalMobile } from './terminal/mobile';
 
-const TerminalDesktopContent = () => (
-  <div className="w-full h-full bg-black text-green-400 font-mono text-sm p-4">
-    <div className="text-green-400">$ npm run dev</div>
-    <div className="text-blue-400">✓ Local: http://localhost:3000</div>
-    <div className="text-green-400">✓ Ready in 2.1s</div>
-    <br />
-    <div className="text-green-400">$ git status</div>
-    <div className="text-white">On branch main</div>
-    <div className="text-white">Your branch is up to date with &apos;origin/main&apos;.</div>
-    <br />
-    <div className="text-green-400">$ _</div>
-    <div className="animate-pulse bg-green-400 w-2 h-4 inline-block ml-1"></div>
-  </div>
-);
-
-const TerminalMobileContent = () => (
-  <MobileAppTemplate
-    title="Terminal"
-    subtitle="Command Line Interface"
-    backgroundColor="bg-black"
-    bottomContent={
-      <div className="animate-pulse bg-green-400 w-2 h-3 inline-block"></div>
-    }
-  >
-    <div className="space-y-1 font-mono text-xs text-green-400">
-      <div className="text-green-400">$ npm run dev</div>
-      <div className="text-blue-400">✓ Local: http://localhost:3000</div>
-      <div className="text-green-400">✓ Ready in 2.1s</div>
-      <div className="text-green-400">$ _</div>
-    </div>
-  </MobileAppTemplate>
-);
-
-export const TerminalApp = createApp({
+export const TerminalApp = createApp<'terminal'>({
   metadata: {
     id: 'terminal',
     name: 'Terminal',
@@ -60,8 +28,8 @@ export const TerminalApp = createApp({
     position: 'cascade'
   },
   content: {
-    desktop: TerminalDesktopContent,
-    mobile: TerminalMobileContent
+    desktop: TerminalDesktop,
+    mobile: TerminalMobile
   },
   actions: {
     onOpen: () => console.log('Terminal opened'),

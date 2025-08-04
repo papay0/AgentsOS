@@ -5,7 +5,16 @@ import { WorkspaceManager } from './workspace-manager';
 import { WorkspaceCreator } from './workspace-creator';
 import { WorkspaceOrchestrator } from './workspace-orchestrator';
 
+interface Repository {
+  url: string;
+  name: string;
+  description?: string;
+  tech?: string;
+}
+
 interface WorkspaceSetupOptions {
+  repositories?: Repository[];
+  workspaceName?: string;
   resources?: {
     cpu: number;
     memory: number;

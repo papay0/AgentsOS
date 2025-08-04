@@ -13,6 +13,7 @@ AgentsPod is a cloud development environment platform that enables developers to
 - `npm run build` - Build the production application (run after big changes, not for UI changes)
 - `npm start` - Start the production server
 - `npm run lint` - Run Next.js linting
+- `npm run build:skip-tests` - Build without running all the tests
 
 ### Testing Guidelines
 - Only run tests when completely done with a feature to avoid wasting time
@@ -183,7 +184,7 @@ DAYTONA_API_KEY=your_daytona_api_key_here
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 CLERK_SECRET_KEY=your_clerk_secret_key
 
-# Firebase configuration
+# Firebase configuration (client-side)
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
@@ -191,6 +192,9 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+# Firebase Admin (server-side) - place service-account-key.json in project root
+# Download from Firebase Console → Project Settings → Service Accounts → Generate new private key
 ```
 
 ### Authentication System

@@ -5,7 +5,7 @@ import AppIcon from '../ui/AppIcon';
 
 interface MobileDockProps {
   apps: MobileApp[];
-  onAppOpen: (app: MobileApp) => void;
+  onAppOpen: (app: MobileApp, element: HTMLElement) => void;
   onHomePress?: () => void; // Optional since not currently used
 }
 
@@ -13,8 +13,8 @@ export default function MobileDock({ apps, onAppOpen }: MobileDockProps) {
   const DockIcon = ({ app }: { app: MobileApp }) => (
     <div className="relative">
       <button
-        onClick={() => onAppOpen(app)}
-        onTouchStart={() => onAppOpen(app)}
+        onClick={(e) => onAppOpen(app, e.currentTarget)}
+        onTouchStart={(e) => onAppOpen(app, e.currentTarget)}
         className={`w-14 h-14 ${app.color} rounded-xl flex items-center justify-center shadow-lg active:scale-95 transition-transform duration-100 touch-manipulation ${
           app.comingSoon ? 'opacity-50' : ''
         }`}

@@ -5,7 +5,7 @@ import { VSCodeEditor } from './vscode-editor';
 import { TTYDTerminal } from '@/components/terminal';
 import { MobileBottomNavigation } from './mobile-bottom-navigation';
 import { Globe } from 'lucide-react';
-import type { TerminalTab } from '@/types/workspace';
+import type { TerminalTab, RepositoryWithUrls } from '@/types/workspace';
 import type { TTYDTerminalRef } from '@/components/terminal';
 
 interface MobileWorkspaceViewProps {
@@ -15,6 +15,9 @@ interface MobileWorkspaceViewProps {
   onTabChange: (tabId: string) => void;
   onAddTab: () => void;
   sandboxId: string;
+  repositories?: RepositoryWithUrls[];
+  selectedRepository?: RepositoryWithUrls | null;
+  onRepositoryChange?: (repository: RepositoryWithUrls) => void;
 }
 
 export function MobileWorkspaceView({ 
@@ -23,7 +26,10 @@ export function MobileWorkspaceView({
   activeTabId, 
   onTabChange, 
   onAddTab,
-  sandboxId
+  sandboxId,
+  repositories = [],
+  selectedRepository,
+  onRepositoryChange
 }: MobileWorkspaceViewProps) {
   const [currentView, setCurrentView] = useState<'terminal' | 'vscode'>('terminal');
   const [showSettings, setShowSettings] = useState(false);
@@ -114,6 +120,32 @@ export function MobileWorkspaceView({
           {/* Popup Menu */}
           <div className="fixed bottom-20 right-6 z-50 animate-in slide-in-from-bottom-2 duration-200">
             <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden min-w-52">
+              {/* Repository Selector */}
+              {repositories.length > 1 && (
+                <div className="border-b border-gray-200/50">
+                  <div className="px-6 py-3">
+                    <div className="text-xs font-medium text-gray-500 mb-2">REPOSITORY</div>
+                    <select
+                      value={selectedRepository?.name || ''}
+                      onChange={(e) => {
+                        const repo = repositories.find(r => r.name === e.target.value);
+                        if (repo && onRepositoryChange) {
+                          onRepositoryChange(repo);
+                          setShowSettings(false);
+                        }
+                      }}
+                      className="w-full text-sm border border-gray-300 rounded px-2 py-1 bg-white"
+                    >
+                      {repositories.map(repo => (
+                        <option key={repo.name} value={repo.name}>
+                          {repo.name} {repo.tech && `(${repo.tech})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+              
               <div className="py-2">
                 <button
                   onClick={handleOpenApp}

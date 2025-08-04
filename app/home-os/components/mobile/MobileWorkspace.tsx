@@ -1,19 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MobileDock from './MobileDock';
-import MobileHome from './MobileHome';
 import MobileApp from './MobileApp';
+import { MobileRepositoryPages } from './MobileRepositoryPages';
+import { MobileStatusBar } from './MobileStatusBar';
+import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { getAllApps } from '../../apps';
-import { AppMetadata } from '../../apps/BaseApp';
+import { AppMetadata, AppType } from '../../apps/BaseApp';
+import { WorkspaceStatusPanel } from '../workspace-status';
 
 export interface MobileApp {
   id: string;
   name: string;
   icon: AppMetadata['icon'];
   color: string;
-  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal';
+  type: AppType;
   comingSoon?: boolean;
+  repositoryUrl?: string;
 }
 
 const getMobileAppColor = (primaryColor: string): string => {
@@ -22,19 +26,33 @@ const getMobileAppColor = (primaryColor: string): string => {
   return `bg-${baseColor}`;
 };
 
-const defaultApps: MobileApp[] = getAllApps().map(app => ({
-  id: app.metadata.id,
-  name: app.metadata.name,
-  icon: app.metadata.icon,
-  color: getMobileAppColor(app.metadata.colors.primary),
-  type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
-  comingSoon: app.metadata.comingSoon
-}));
+// Get dock apps - only common apps (Settings)
+const getDockApps = (): MobileApp[] => {
+  const allApps = getAllApps();
+  const settingsApp = allApps.find(app => app.metadata.id === 'settings');
+  
+  return [
+    {
+      id: 'dock-settings',
+      name: 'Settings',
+      icon: settingsApp?.metadata.icon || { icon: '⚙️', fallback: '⚙️' },
+      color: getMobileAppColor(settingsApp?.metadata.colors.primary || 'bg-gray-500'),
+      type: 'settings' as const
+    }
+  ];
+};
 
 export default function MobileWorkspace() {
-  const [currentPage, setCurrentPage] = useState(0);
-  const [openApp, setOpenApp] = useState<MobileApp | null>(null);
+  const [activeAppId, setActiveAppId] = useState<string | null>(null);
+  const [loadedApps, setLoadedApps] = useState<Map<string, MobileApp>>(new Map());
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const { workspaces, activeWorkspaceId, sandboxId } = useWorkspaceStore();
+  const [animationOriginRect, setAnimationOriginRect] = useState<DOMRect | null>(null);
+  const [animationState, setAnimationState] = useState<'idle' | 'opening' | 'open' | 'closing'>('idle');
+  
+  // Refs to store timeout IDs for cleanup
+  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize theme from localStorage
   useEffect(() => {
@@ -61,48 +79,181 @@ export default function MobileWorkspace() {
     }
   }, [theme]);
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (openTimeoutRef.current) {
+        clearTimeout(openTimeoutRef.current);
+      }
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  const handleAppOpen = (app: MobileApp) => {
+  const handleAppOpen = (app: MobileApp, element: HTMLElement) => {
     // Don't open coming soon apps
     if (app.comingSoon) {
       // TODO: Show coming soon toast
       return;
     }
-    setOpenApp(app);
+    
+    // Get the icon position for animation
+    const rect = element.getBoundingClientRect();
+    setAnimationOriginRect(rect);
+    
+    // Add app to loaded apps Map if not already loaded (preserves the app data)
+    setLoadedApps(prev => new Map(prev.set(app.id, app)));
+    
+    // Set as active app and start animation
+    setActiveAppId(app.id);
+    setAnimationState('opening');
+    
+    // Transition to open state
+    openTimeoutRef.current = setTimeout(() => {
+      setAnimationState('open');
+    }, 50);
   };
 
   const handleAppClose = () => {
-    setOpenApp(null);
+    // Start closing animation
+    setAnimationState('closing');
+    
+    // Complete close after animation
+    closeTimeoutRef.current = setTimeout(() => {
+      setActiveAppId(null);
+      setAnimationState('idle');
+    }, 300);
   };
 
   const handleHomePress = () => {
-    setOpenApp(null);
-    setCurrentPage(0);
+    if (activeAppId) {
+      handleAppClose();
+    }
   };
+  
 
-  if (openApp) {
-    return (
-      <div className="h-full bg-black dark:bg-gray-900 overflow-hidden">
-        <MobileApp app={openApp} onClose={handleAppClose} theme={theme} onThemeChange={setTheme} />
-      </div>
-    );
-  }
+  // Get the current workspace name for status panel
+  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+  const workspaceName = activeWorkspace?.name 
+    ? `${activeWorkspace.name} Workspace` 
+    : 'AgentsOS Workspace';
 
   return (
     <div className="h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900 overflow-hidden relative">
-      
-      <MobileHome 
-        apps={defaultApps}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        onAppOpen={handleAppOpen}
+      {/* Workspace Status Panel - Shows when workspace needs attention */}
+      <WorkspaceStatusPanel 
+        sandboxId={sandboxId}
+        workspaceName={workspaceName}
+        className="!fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 !mx-0 !w-[90vw] !max-w-sm" // Perfect mobile centering
       />
       
-      <MobileDock 
-        apps={defaultApps.filter(app => !app.comingSoon).slice(0, 4)} // First 4 available apps in dock
-        onAppOpen={handleAppOpen}
-        onHomePress={handleHomePress}
-      />
+      {/* Desktop view */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-300 ${
+          animationState !== 'idle' ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        <MobileStatusBar />
+        <div className="pt-20 pb-24 h-full flex flex-col">
+          {workspaces.length > 0 ? (
+            <MobileRepositoryPages onAppOpen={handleAppOpen} />
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-white/70 text-center">
+                No workspace found.<br />
+                Please complete onboarding first.
+              </p>
+            </div>
+          )}
+        </div>
+        <MobileDock
+          apps={getDockApps()}
+          onAppOpen={handleAppOpen}
+          onHomePress={handleHomePress}
+        />
+      </div>
+
+      {/* Apps view */}
+      {Array.from(loadedApps.entries()).map(([appId, app]) => {
+        const isActive = appId === activeAppId;
+        const shouldAnimate = isActive && animationOriginRect;
+        
+        let appStyles: React.CSSProperties = {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: isActive ? 20 : -1,
+        };
+        
+        if (!isActive) {
+          // Hidden apps
+          appStyles.transform = 'translateX(100%)';
+        } else if (shouldAnimate) {
+          // iOS-style animation
+          if (animationState === 'opening') {
+            // Start from icon position
+            appStyles = {
+              position: 'fixed',
+              top: animationOriginRect.top,
+              left: animationOriginRect.left,
+              width: animationOriginRect.width,
+              height: animationOriginRect.height,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              zIndex: 20,
+              transition: 'none',
+            };
+          } else if (animationState === 'open') {
+            // Animate to fullscreen
+            appStyles = {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100%',
+              height: '100%',
+              borderRadius: '0px',
+              overflow: 'hidden',
+              zIndex: 20,
+              transition: 'all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            };
+          } else if (animationState === 'closing') {
+            // Animate back to icon position
+            appStyles = {
+              position: 'fixed',
+              top: animationOriginRect.top,
+              left: animationOriginRect.left,
+              width: animationOriginRect.width,
+              height: animationOriginRect.height,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              zIndex: 20,
+              transition: 'all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            };
+          }
+        }
+        
+        return (
+          <div
+            key={appId}
+            style={appStyles}
+          >
+            <MobileApp
+              app={app}
+              onClose={handleAppClose}
+              theme={theme}
+              onThemeChange={setTheme}
+              isOpening={animationState === 'open'}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

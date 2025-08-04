@@ -1,5 +1,39 @@
 import { ReactNode } from 'react';
 
+// App-specific props interfaces - each app defines its own props
+export interface TerminalAppProps {
+  repositoryUrl?: string;
+}
+
+export interface ClaudeAppProps {
+  repositoryUrl?: string;
+}
+
+export interface VSCodeAppProps {
+  repositoryUrl?: string;
+}
+
+// Create a proper "no props" type that's explicit about having no properties
+export type NoProps = Record<string, never>;
+
+// Settings app doesn't need any props
+export type SettingsAppProps = NoProps;
+
+// Diff app doesn't need any props
+export type DiffAppProps = NoProps;
+
+// Map app types to their prop types
+export interface AppPropsMap {
+  terminal: TerminalAppProps;
+  claude: ClaudeAppProps;
+  vscode: VSCodeAppProps;
+  settings: SettingsAppProps;
+  diff: DiffAppProps;
+}
+
+export type AppType = keyof AppPropsMap;
+export type AppId = AppType; // Alias for backward compatibility
+
 export interface AppMetadata {
   id: string;
   name: string;
@@ -30,9 +64,9 @@ export interface AppWindow {
   position: 'center' | 'cascade' | { x: number; y: number };
 }
 
-export interface AppContent {
-  desktop: () => ReactNode;
-  mobile: () => ReactNode;
+export interface AppContent<T extends AppType> {
+  desktop: (props: AppPropsMap[T]) => ReactNode;
+  mobile: (props: AppPropsMap[T]) => ReactNode;
 }
 
 export interface AppActions {
@@ -43,20 +77,23 @@ export interface AppActions {
   onMaximize?: () => void;
 }
 
-export interface BaseApp {
+export interface BaseApp<T extends AppType> {
   metadata: AppMetadata;
   window: AppWindow;
-  content: AppContent;
+  content: AppContent<T>;
   actions?: AppActions;
 }
 
 // Type-safe app registration system
-export interface AppRegistry {
-  [key: string]: BaseApp;
-}
+export type AppRegistry = {
+  [K in AppType]: BaseApp<K>;
+};
+
+// Helper type to get props for a specific app type
+export type PropsForApp<T extends AppType> = AppPropsMap[T];
 
 // Helper function to create a new app with type safety
-export function createApp(config: BaseApp): BaseApp {
+export function createApp<T extends AppType>(config: BaseApp<T>): BaseApp<T> {
   // Validate required fields at runtime
   if (!config.metadata.id) {
     throw new Error('App must have an id');
@@ -75,7 +112,7 @@ export function createApp(config: BaseApp): BaseApp {
 }
 
 // App store-like validation
-export function validateApp(app: BaseApp): { valid: boolean; errors: string[] } {
+export function validateApp<T extends AppType>(app: BaseApp<T>): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   // Required metadata

@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent } from '@/src/test/utils'
-import { createTouchEvent } from '@/src/test/utils'
+
+// Unmock the MobileDock component to test the real implementation
+vi.unmock('@/app/home-os/components/mobile/MobileDock')
+
+// Import after unmocking
 import MobileDock from './MobileDock'
 import { MobileApp } from './MobileWorkspace'
 
@@ -23,7 +27,7 @@ describe('MobileDock Component', () => {
     it('renders dock with all provided apps', () => {
       render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} onHomePress={mockOnHomePress} />)
       
-      // Check that all app icons are rendered (either as emoji or as app icons)
+      // Check that all app icons are rendered (now via AppIcon mock)
       expect(screen.getByText('💻')).toBeInTheDocument()
       expect(screen.getByText('🤖')).toBeInTheDocument()
       expect(screen.getByText('⚡')).toBeInTheDocument()
@@ -57,7 +61,7 @@ describe('MobileDock Component', () => {
       const vscodeIcon = screen.getByText('💻').closest('button')!
       fireEvent.click(vscodeIcon)
       
-      expect(mockOnAppOpen).toHaveBeenCalledWith(sampleApps[0])
+      expect(mockOnAppOpen).toHaveBeenCalledWith(sampleApps[0], vscodeIcon)
       expect(mockOnAppOpen).toHaveBeenCalledTimes(1)
     })
 
@@ -65,11 +69,9 @@ describe('MobileDock Component', () => {
       render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} />)
       
       const claudeIcon = screen.getByText('🤖').closest('button')!
-      const touchEvent = createTouchEvent('touchstart', [{ clientX: 100, clientY: 100 }])
+      fireEvent.touchStart(claudeIcon)
       
-      fireEvent(claudeIcon, touchEvent)
-      
-      expect(mockOnAppOpen).toHaveBeenCalledWith(sampleApps[1])
+      expect(mockOnAppOpen).toHaveBeenCalledWith(sampleApps[1], claudeIcon)
       expect(mockOnAppOpen).toHaveBeenCalledTimes(1)
     })
 
@@ -83,7 +85,7 @@ describe('MobileDock Component', () => {
         fireEvent.click(terminalIcon)
       }
       
-      expect(mockOnAppOpen).toHaveBeenCalledWith(sampleApps[2])
+      expect(mockOnAppOpen).toHaveBeenCalledWith(sampleApps[2], terminalIcon)
       expect(mockOnAppOpen).toHaveBeenCalledTimes(3)
     })
   })

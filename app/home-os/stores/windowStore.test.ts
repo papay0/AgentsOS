@@ -1,5 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+
+// Clear the mock before importing to ensure we get the real implementation
+beforeAll(() => {
+  vi.unmock('@/app/home-os/stores/windowStore')
+})
+
 import { useWindowStore, Window } from './windowStore'
 
 // Mock Date.now for consistent IDs
@@ -9,13 +15,16 @@ Object.defineProperty(Date, 'now', {
   writable: true,
 })
 
-// Helper to reset store to clean state
+// Helper to reset store to clean state  
 const resetStore = () => {
   useWindowStore.setState({
     windows: [],
     nextZIndex: 10, // WINDOW_Z_INDEX_BASE
     activeWindowId: null,
-  })
+    onboardingCompleted: false,
+    isCheckingWorkspaces: false,
+    workspaceData: null,
+  });
 }
 
 describe('WindowStore', () => {
@@ -23,7 +32,12 @@ describe('WindowStore', () => {
     vi.clearAllMocks()
     mockDateNow.mockReturnValue(1234567890)
     
-    // Reset store to clean state
+    // Reset store to clean state before each test
+    resetStore()
+  })
+
+  afterEach(() => {
+    // Also reset after each test to ensure clean state
     resetStore()
   })
 
@@ -31,6 +45,10 @@ describe('WindowStore', () => {
     it('initializes with empty state', () => {
       const { result } = renderHook(() => useWindowStore())
       
+      console.log('Store state:', result.current)
+      console.log('Windows:', result.current.windows)
+      
+      // The test expects empty state, but let's see what we actually get
       expect(result.current.windows).toEqual([])
       expect(result.current.nextZIndex).toBe(10) // WINDOW_Z_INDEX_BASE
       expect(result.current.activeWindowId).toBe(null)
@@ -101,9 +119,7 @@ describe('WindowStore', () => {
       const { result } = renderHook(() => useWindowStore())
       
       // Set nextZIndex to near maximum
-      act(() => {
-        useWindowStore.setState({ nextZIndex: 89 })
-      })
+      useWindowStore.setState({ nextZIndex: 89 })
 
       const windowData = {
         type: 'vscode' as const,
@@ -218,7 +234,9 @@ describe('WindowStore', () => {
 
   describe('Updating Windows', () => {
     it('basic updateWindow functionality test', () => {
-      // Start completely fresh
+      // Start completely fresh - reset first
+      resetStore();
+      
       useWindowStore.setState({
         windows: [{
           id: 'test-123',
@@ -756,9 +774,12 @@ describe('WindowStore', () => {
       const windowId = result.current.windows[0].id
 
       // Manually set z-index to near maximum  
-      act(() => {
-        useWindowStore.getState().updateWindow(windowId, { zIndex: 89 })
-      })
+      useWindowStore.setState((state) => ({
+        windows: state.windows.map(w => 
+          w.id === windowId ? { ...w, zIndex: 89 } : w
+        ),
+        nextZIndex: 90
+      }))
 
       // Focus should handle max z-index properly
       act(() => {
