@@ -83,7 +83,7 @@ export async function POST(
       
       // Create startup scripts
       await sandbox.process.executeCommand(
-        `echo '#!/bin/bash\ncd ${repoPath}\nexec bash' > /tmp/start-bash-${repo.name}.sh && chmod +x /tmp/start-bash-${repo.name}.sh`,
+        `echo '#!/bin/bash\ncd ${repoPath}\nexec zsh' > /tmp/start-zsh-${repo.name}.sh && chmod +x /tmp/start-zsh-${repo.name}.sh`,
         rootDir
       );
       
@@ -96,7 +96,7 @@ export async function POST(
       const terminalTheme = '{"background":"#ffffff","foreground":"#333333","cursor":"#333333","black":"#000000","brightBlack":"#666666","red":"#cc0000","brightRed":"#ff0000","green":"#4e9a06","brightGreen":"#8ae234","yellow":"#c4a000","brightYellow":"#fce94f","blue":"#3465a4","brightBlue":"#729fcf","magenta":"#75507b","brightMagenta":"#ad7fa8","cyan":"#06989a","brightCyan":"#34e2e2","white":"#d3d7cf","brightWhite":"#eeeeec"}';
       
       await sandbox.process.executeCommand(
-        `nohup ttyd --port ${repo.ports.terminal} --writable -t 'theme=${terminalTheme}' /tmp/start-bash-${repo.name}.sh > /tmp/ttyd-terminal-${repo.name.toLowerCase()}.log 2>&1 & echo "terminal started for ${repo.name}"`,
+        `nohup ttyd --port ${repo.ports.terminal} --writable -t 'theme=${terminalTheme}' /tmp/start-zsh-${repo.name}.sh > /tmp/ttyd-terminal-${repo.name.toLowerCase()}.log 2>&1 & echo "terminal started for ${repo.name}"`,
         rootDir
       );
       
