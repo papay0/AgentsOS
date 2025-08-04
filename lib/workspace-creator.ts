@@ -72,6 +72,7 @@ export class WorkspaceCreator {
       await this.installer.installTtyd(sandbox, rootDir);
       await this.installer.installCodeServer(sandbox, rootDir);
       await this.installer.installClaudeCode(sandbox, rootDir);
+      await this.installer.installOhMyZsh(sandbox, rootDir);
       
       // Set up services for each repository (separate instances)
       let repositoriesWithUrls: RepositoryWithUrls[] = [];

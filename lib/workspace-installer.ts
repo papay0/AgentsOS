@@ -5,9 +5,9 @@ export class WorkspaceInstaller {
   private logger = logger;
 
   async installSystemPackages(sandbox: Sandbox, rootDir: string): Promise<void> {
-    this.logger.workspace.installing('system packages (curl, wget, git)');
+    this.logger.workspace.installing('system packages (curl, wget, git, zsh)');
     const result = await sandbox.process.executeCommand(
-      `apt-get update -qq && apt-get install -y -qq curl wget git net-tools`,
+      `apt-get update -qq && apt-get install -y -qq curl wget git net-tools zsh`,
       rootDir,
       undefined,
       60000
@@ -90,6 +90,32 @@ export class WorkspaceInstaller {
       };
       this.logger.logError('Claude CLI installation failed, continuing without it', errorData);
       return;
+    }
+  }
+
+  async installOhMyZsh(sandbox: Sandbox, rootDir: string): Promise<void> {
+    this.logger.workspace.installing('Oh My Zsh');
+    const result = await sandbox.process.executeCommand(
+      `sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && 
+       echo 'export ZSH="$HOME/.oh-my-zsh"' > ~/.zshrc && 
+       echo 'ZSH_THEME="robbyrussell"' >> ~/.zshrc && 
+       echo 'plugins=(git)' >> ~/.zshrc && 
+       echo 'source $ZSH/oh-my-zsh.sh' >> ~/.zshrc && 
+       echo 'PROMPT="%{$fg[cyan]%}%c%{$reset_color%} $ "' >> ~/.zshrc &&
+       chsh -s $(which zsh)`,
+      rootDir,
+      undefined,
+      120000
+    );
+    
+    if (result.exitCode !== 0) {
+      const errorData: ErrorLogData = {
+        error: result.result,
+        code: 'OH_MY_ZSH_INSTALL_FAILED',
+        details: { exitCode: result.exitCode }
+      };
+      this.logger.logError('Oh My Zsh installation failed', errorData);
+      throw new Error(`Oh My Zsh installation failed: ${result.result}`);
     }
   }
 }

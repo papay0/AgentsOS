@@ -30,14 +30,14 @@ export class WorkspaceServices {
     );
     
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nexec bash' > /tmp/start-bash.sh && chmod +x /tmp/start-bash.sh`,
+      `echo '#!/bin/bash\ncd ${projectDir}\nexec zsh' > /tmp/start-zsh.sh && chmod +x /tmp/start-zsh.sh`,
       rootDir
     );
 
     // Start all services in parallel
     await Promise.all([
       this.startCodeServer(sandbox, rootDir, projectDir),
-      this.startBashTerminal(sandbox, rootDir, projectDir),
+      this.startZshTerminal(sandbox, rootDir, projectDir),
       this.startClaudeTerminal(sandbox, rootDir)
     ]);
 
@@ -107,9 +107,9 @@ export class WorkspaceServices {
       rootDir
     );
     
-    // Create bash startup script for this repository
+    // Create zsh startup script for this repository
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${repoPath}\nexec bash' > /tmp/start-bash-${repoName}.sh && chmod +x /tmp/start-bash-${repoName}.sh`,
+      `echo '#!/bin/bash\ncd ${repoPath}\nexec zsh' > /tmp/start-zsh-${repoName}.sh && chmod +x /tmp/start-zsh-${repoName}.sh`,
       rootDir
     );
   }
@@ -130,7 +130,7 @@ export class WorkspaceServices {
       
       // Start terminal for this repository
       sandbox.process.executeCommand(
-        `nohup ttyd --port ${ports.terminal} --writable -t 'theme=${TTYD_THEME}' /tmp/start-bash-${repoName}.sh > /tmp/ttyd-${repoName}.log 2>&1 & echo "terminal started for ${repoName}"`,
+        `nohup ttyd --port ${ports.terminal} --writable -t 'theme=${TTYD_THEME}' /tmp/start-zsh-${repoName}.sh > /tmp/ttyd-${repoName}.log 2>&1 & echo "terminal started for ${repoName}"`,
         rootDir
       ),
       
@@ -183,17 +183,17 @@ export class WorkspaceServices {
     );
   }
 
-  async startBashTerminal(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
-    this.logger.workspace.starting('bash terminal');
+  async startZshTerminal(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
+    this.logger.workspace.starting('zsh terminal');
     
     // Create a startup script that changes to project directory
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nexec bash' > /tmp/start-bash.sh && chmod +x /tmp/start-bash.sh`,
+      `echo '#!/bin/bash\ncd ${projectDir}\nexec zsh' > /tmp/start-zsh.sh && chmod +x /tmp/start-zsh.sh`,
       rootDir
     );
     
     await sandbox.process.executeCommand(
-      `nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' /tmp/start-bash.sh > /tmp/ttyd.log 2>&1 & echo "ttyd started"`,
+      `nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' /tmp/start-zsh.sh > /tmp/ttyd.log 2>&1 & echo "ttyd started"`,
       rootDir
     );
   }
@@ -244,7 +244,7 @@ export class WorkspaceServices {
         await sandbox.process.executeCommand(
           `pkill ttyd; pkill code-server; sleep 2 && 
            nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${rootDir} > /tmp/code-server.log 2>&1 & 
-           nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' bash > /tmp/ttyd.log 2>&1 & 
+           nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' /tmp/start-zsh.sh > /tmp/ttyd.log 2>&1 & 
            nohup ttyd --port 9998 --writable -t 'theme=${TTYD_THEME}' /tmp/start-claude.sh > /tmp/ttyd-claude.log 2>&1 &`,
           rootDir
         );
@@ -275,14 +275,14 @@ export class WorkspaceServices {
     );
     
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nexec bash' > /tmp/start-bash.sh && chmod +x /tmp/start-bash.sh`,
+      `echo '#!/bin/bash\ncd ${projectDir}\nexec zsh' > /tmp/start-zsh.sh && chmod +x /tmp/start-zsh.sh`,
       rootDir
     );
 
     // Start all services
     await Promise.all([
       this.startCodeServer(sandbox, rootDir, projectDir),
-      this.startBashTerminal(sandbox, rootDir, projectDir),
+      this.startZshTerminal(sandbox, rootDir, projectDir),
       this.startClaudeTerminal(sandbox, rootDir)
     ]);
 
