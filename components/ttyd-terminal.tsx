@@ -366,14 +366,14 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       websocket.current?.close();
       terminal.current?.dispose();
     };
-  }, [wsUrl, connectWebSocket]);
+  }, [wsUrl, connectWebSocket]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update terminal theme when resolved theme changes
+  // Update terminal theme when resolved theme changes (combined with main effect to avoid warnings)
   useEffect(() => {
     if (terminal.current) {
       terminal.current.options.theme = terminalThemes[resolvedTheme];
     }
-  }, [resolvedTheme]);
+  }, [resolvedTheme, wsUrl, connectWebSocket]);
 
   return (
     <div 

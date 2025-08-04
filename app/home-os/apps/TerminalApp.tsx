@@ -1,5 +1,4 @@
 import { createApp } from './BaseApp';
-import MobileAppTemplate from './MobileAppTemplate';
 import { Terminal } from 'lucide-react';
 import TTYDTerminal from '@/components/ttyd-terminal';
 

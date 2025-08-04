@@ -116,40 +116,6 @@ export default function MobileWorkspace() {
     }
   };
   
-  // Get all available apps data
-  const getAllMobileApps = () => {
-    const allApps: MobileApp[] = [];
-    workspaces.forEach(workspace => {
-      const apps = getDockApps().concat(
-        getAllApps()
-          .filter(app => !['settings'].includes(app.metadata.id))
-          .map(app => ({
-            id: `${app.metadata.id}-${workspace.repository.name}`,
-            name: app.metadata.name,  
-            icon: app.metadata.icon,
-            color: getMobileAppColor(app.metadata.colors.primary),
-            type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
-            comingSoon: app.metadata.comingSoon || app.metadata.id === 'diff',
-            repositoryUrl: getRepositoryUrlForApp(workspace.repository, app.metadata.id)
-          }))
-      );
-      allApps.push(...apps);
-    });
-    return allApps;
-  };
-  
-  const getRepositoryUrlForApp = (repository: any, appType: string): string => {
-    switch (appType) {
-      case 'vscode':
-        return repository.urls?.vscode || '';
-      case 'claude':
-        return repository.urls?.claude || '';
-      case 'terminal':
-        return repository.urls?.terminal || '';
-      default:
-        return '';
-    }
-  };
 
   return (
     <div className="h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900 overflow-hidden relative">
