@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Terminal, ITerminalAddon } from '@xterm/xterm';
-import { useTheme } from './theme-provider';
 import '@xterm/xterm/css/xterm.css';
 
 const terminalThemes = {
@@ -90,26 +89,36 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   const websocket = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   
-  // Theme management
-  const { theme } = useTheme();
+  // Get current theme from document (set by ThemeProvider)
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
 
-  // Resolve theme (handle system theme)
+  // Watch for theme changes from ThemeProvider
   useEffect(() => {
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const updateTheme = () => {
-        setResolvedTheme(mediaQuery.matches ? 'dark' : 'light');
-      };
-      
-      updateTheme(); // Set initial value
-      mediaQuery.addEventListener('change', updateTheme);
-      
-      return () => mediaQuery.removeEventListener('change', updateTheme);
-    } else {
-      setResolvedTheme(theme as 'light' | 'dark');
-    }
-  }, [theme]);
+    const updateResolvedTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const newTheme = isDark ? 'dark' : 'light';
+      setResolvedTheme(newTheme);
+    };
+
+    // Set initial theme
+    updateResolvedTheme();
+
+    // Listen for class changes on document element
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          updateResolvedTheme();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useImperativeHandle(ref, () => ({
     sendCommand: (command: string, addEnter = true) => {
@@ -368,12 +377,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     };
   }, [wsUrl, connectWebSocket]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update terminal theme when resolved theme changes (combined with main effect to avoid warnings)
+  // Update terminal theme when resolved theme changes
   useEffect(() => {
     if (terminal.current) {
       terminal.current.options.theme = terminalThemes[resolvedTheme];
     }
-  }, [resolvedTheme, wsUrl, connectWebSocket]);
+  }, [resolvedTheme]);
 
   return (
     <div 
