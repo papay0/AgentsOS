@@ -17,6 +17,51 @@ vi.mock('@/components/theme-provider', () => ({
   })
 }))
 
+// Mock workspace store
+vi.mock('../../stores/workspaceStore', () => ({
+  useWorkspaceStore: () => ({
+    workspaces: [{
+      id: 'workspace-1',
+      name: 'Test Workspace',
+      repository: {
+        name: 'test-repo',
+        url: 'https://github.com/test/repo',
+        urls: {
+          vscode: 'http://localhost:8080',
+          claude: 'http://localhost:8081',
+          terminal: 'http://localhost:8082'
+        }
+      },
+      windows: [],
+      nextZIndex: 10,
+      activeWindowId: null,
+      isInitialized: true
+    }],
+    activeWorkspaceId: 'workspace-1',
+    getActiveWorkspace: () => ({
+      id: 'workspace-1',
+      name: 'Test Workspace',
+      repository: {
+        name: 'test-repo',
+        url: 'https://github.com/test/repo',
+        urls: {
+          vscode: 'http://localhost:8080',
+          claude: 'http://localhost:8081',
+          terminal: 'http://localhost:8082'
+        }
+      },
+      windows: [],
+      nextZIndex: 10,
+      activeWindowId: null,
+      isInitialized: true
+    }),
+    switchToWorkspace: vi.fn(),
+    addWindow: vi.fn(),
+    removeWindow: vi.fn(),
+    updateWindow: vi.fn(),
+  })
+}))
+
 // Mock the dropdown components to make them simpler for testing
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => children,
@@ -26,6 +71,15 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
     React.createElement('div', { 'data-testid': 'dropdown-content' }, children),
   DropdownMenuItem: ({ children, onClick }: { children: React.ReactNode, onClick?: () => void }) => 
     React.createElement('button', { onClick, 'data-testid': 'dropdown-item' }, children),
+}))
+
+// Mock workspace UI components
+vi.mock('../ui/workspace-switcher', () => ({
+  WorkspaceSwitcher: () => React.createElement('div', { 'data-testid': 'workspace-switcher' }, 'Test Workspace')
+}))
+
+vi.mock('../ui/workspace-health', () => ({
+  WorkspaceHealth: () => React.createElement('div', { 'data-testid': 'workspace-health' }, 'Healthy')
 }))
 
 describe('MenuBar Component', () => {
@@ -179,8 +233,12 @@ describe('MenuBar Component', () => {
     it('has center section for active window info', () => {
       const { container } = render(<MenuBar />)
       
-      const centerSection = container.querySelector('.flex-1.text-center')
+      const centerSection = container.querySelector('.flex-1.flex.justify-center')
       expect(centerSection).toBeInTheDocument()
+      
+      // Check that workspace switcher and health are present
+      expect(screen.getByTestId('workspace-switcher')).toBeInTheDocument()
+      expect(screen.getByTestId('workspace-health')).toBeInTheDocument()
     })
   })
 

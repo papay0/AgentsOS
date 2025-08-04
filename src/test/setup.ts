@@ -197,36 +197,58 @@ vi.mock('@/app/home-os/stores/workspaceStore', () => ({
   })
 }))
 
-// Mock window store with all required functions  
-vi.mock('@/app/home-os/stores/windowStore', () => ({
-  useWindowStore: () => ({
-    windows: [{
-      id: 'test-window',
-      title: 'Test Window',
-      appType: 'terminal',
-      isMaximized: false,
-      isMinimized: false,
-      position: { x: 100, y: 100 },
-      size: { width: 800, height: 600 },
-      zIndex: 1,
-      isAnimating: false
-    }],
-    activeWindowId: 'test-window',
-    addWindow: vi.fn(),
-    removeWindow: vi.fn(),
-    updateWindow: vi.fn(),
-    bringToFront: vi.fn(),
-    minimizeWindow: vi.fn(),
-    maximizeWindow: vi.fn(),
-    restoreWindow: vi.fn(),
-    setWindowPosition: vi.fn(),
-    setWindowSize: vi.fn(),
-    setWindowAnimating: vi.fn(),
-    getNextZIndex: vi.fn(() => 2),
-    isValidPosition: vi.fn(() => true),
-    snapToGrid: vi.fn((pos: { x: number; y: number }) => pos),
-  })
-}))
+// NOTE: windowStore is NOT mocked here to allow windowStore.test.ts to test the real implementation
+// Individual test files that need mocked windowStore should import and use windowStore.mock.ts
+
+// However, we need to provide a mock for other test files that import windowStore
+// This mock will be ignored by windowStore.test.ts since it imports the real store directly
+vi.mock('@/app/home-os/stores/windowStore', async () => {
+  // Check if we're in windowStore.test.ts - if so, return the actual module
+  const stack = new Error().stack || '';
+  if (stack.includes('windowStore.test.ts')) {
+    const actual = await vi.importActual('@/app/home-os/stores/windowStore');
+    return actual;
+  }
+  
+  // Otherwise return the mock
+  return {
+    useWindowStore: () => ({
+      windows: [{
+        id: 'test-window',
+        title: 'Test Window',
+        type: 'terminal',
+        isMaximized: false,
+        isMinimized: false,
+        minimized: false,
+        maximized: false,
+        focused: true,
+        position: { x: 100, y: 100 },
+        size: { width: 800, height: 600 },
+        zIndex: 1,
+        isAnimating: false
+      }],
+      nextZIndex: 10,
+      activeWindowId: 'test-window',
+      onboardingCompleted: false,
+      isCheckingWorkspaces: false,
+      workspaceData: null,
+      addWindow: vi.fn(),
+      removeWindow: vi.fn(),
+      updateWindow: vi.fn(),
+      focusWindow: vi.fn(),
+      minimizeWindow: vi.fn(),
+      maximizeWindow: vi.fn(),
+      restoreWindow: vi.fn(),
+      moveWindow: vi.fn(),
+      resizeWindow: vi.fn(),
+      setWindowAnimating: vi.fn(),
+      initializeWindows: vi.fn(),
+      completeOnboarding: vi.fn(),
+      checkExistingWorkspaces: vi.fn(),
+      setWorkspaceData: vi.fn(),
+    })
+  };
+});
 
 // Mock getAllApps function
 vi.mock('@/app/home-os/apps', () => ({
@@ -332,7 +354,7 @@ vi.mock('@/app/home-os/components/mobile/MobileWorkspace', () => ({
 
 // Mock MobileRepositoryPages
 vi.mock('@/app/home-os/components/mobile/MobileRepositoryPages', () => ({
-  MobileRepositoryPages: ({ onAppOpen }: { onAppOpen: (app: any, element: HTMLElement) => void }) => {
+  MobileRepositoryPages: ({ onAppOpen }: { onAppOpen: (app: { id: string; name: string; type: string }, element: HTMLElement) => void }) => {
     const mockApps = ['VSCode', 'Claude Code', 'Terminal'];
     return React.createElement('div', { 'data-testid': 'mobile-repository-pages' },
       React.createElement('div', { className: 'apps-grid' },
@@ -367,7 +389,7 @@ vi.mock('@/app/home-os/components/mobile/MobileRepositoryPages', () => ({
 vi.mock('@/app/home-os/components/mobile/MobileDock', () => ({
   default: ({ apps, onAppOpen, onHomePress }: {
     apps: Array<{ id: string; name: string; type: string }>;
-    onAppOpen: (app: any, element: HTMLElement) => void;
+    onAppOpen: (app: { id: string; name: string; type: string }, element: HTMLElement) => void;
     onHomePress: () => void;
   }) => React.createElement('div', { 'data-testid': 'mobile-dock' },
     React.createElement('button', {
@@ -487,12 +509,11 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   value: mockCanvas.getContext,
 })
 
-// Mock TTYDTerminal component
-vi.mock('@/components/ttyd-terminal', () => ({
-  default: React.forwardRef<
-    { sendCommand: (cmd: string, addEnter?: boolean) => void; sendKey: (key: string) => void; isConnected: () => boolean },
-    { wsUrl: string; className?: string; onConnectionChange?: (connected: boolean) => void; onStatusChange?: (status: string) => void }
-  >((props, ref) => {
+// Mock TTYDTerminal component  
+const TTYDTerminal = React.forwardRef<
+  { sendCommand: (cmd: string, addEnter?: boolean) => void; sendKey: (key: string) => void; isConnected: () => boolean },
+  { wsUrl: string; className?: string; onConnectionChange?: (connected: boolean) => void; onStatusChange?: (status: string) => void }
+>((props, ref) => {
     React.useImperativeHandle(ref, () => ({
       sendCommand: vi.fn(),
       sendKey: vi.fn(),
@@ -502,7 +523,12 @@ vi.mock('@/components/ttyd-terminal', () => ({
       'data-testid': 'ttyd-terminal',
       className: props.className 
     }, 'Terminal')
-  }),
+  })
+
+TTYDTerminal.displayName = 'TTYDTerminal'
+
+vi.mock('@/components/ttyd-terminal', () => ({
+  default: TTYDTerminal,
 }))
 
 // Mock MobileTerminalPalette component

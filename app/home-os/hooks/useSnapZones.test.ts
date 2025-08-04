@@ -19,7 +19,7 @@ const mockWindows = [
 ]
 
 vi.mock('../stores/windowStore', () => ({
-  useWindowStore: Object.assign((selector?: any) => {
+  useWindowStore: Object.assign((selector?: (state: unknown) => unknown) => {
     const state = {
       updateWindow: mockUpdateWindow,
       windows: mockWindows,

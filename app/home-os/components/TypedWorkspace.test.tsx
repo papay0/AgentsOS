@@ -107,8 +107,8 @@ describe('Workspace - Strongly Typed Tests', () => {
     mockedUseIsMobile.mockReturnValue(false)
     
     // Mock Firebase onSnapshot to return completed onboarding user
-    mockedDoc.mockReturnValue({} as any)
-    mockedOnSnapshot.mockImplementation((docRef, onNext, onError) => {
+    mockedDoc.mockReturnValue({} as DocumentReference)
+    mockedOnSnapshot.mockImplementation((docRef, onNext) => {
       // Simulate Firebase returning user data with completed onboarding
       setTimeout(() => {
         onNext({
