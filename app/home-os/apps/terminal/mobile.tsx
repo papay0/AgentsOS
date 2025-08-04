@@ -1,7 +1,11 @@
-import TTYDTerminal from '@/components/ttyd-terminal';
+import TTYDTerminal, { TTYDTerminalRef } from '@/components/ttyd-terminal';
+import MobileTerminalPalette from '@/components/mobile-terminal-palette';
 import { TerminalAppProps } from '../BaseApp';
+import { useRef, useState } from 'react';
 
 export const TerminalMobile = ({ repositoryUrl }: TerminalAppProps) => {
+  const terminalRef = useRef<TTYDTerminalRef>(null);
+  const [isConnected, setIsConnected] = useState(false);
   
   // If we have a repository URL, use the real terminal
   if (repositoryUrl) {
@@ -9,7 +13,17 @@ export const TerminalMobile = ({ repositoryUrl }: TerminalAppProps) => {
     const wsUrl = repositoryUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws';
     return (
       <div className="absolute inset-0 flex flex-col">
-        <TTYDTerminal wsUrl={wsUrl} className="flex-1 w-full" />
+        <TTYDTerminal 
+          ref={terminalRef}
+          wsUrl={wsUrl} 
+          className="flex-1 w-full" 
+          onConnectionChange={setIsConnected}
+        />
+        <MobileTerminalPalette
+          terminalRef={terminalRef}
+          isConnected={isConnected}
+          className="flex-none"
+        />
       </div>
     );
   }
