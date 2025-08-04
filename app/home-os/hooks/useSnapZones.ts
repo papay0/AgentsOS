@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useWindowStore } from '../stores/windowStore';
 import { MENU_BAR_HEIGHT, TOTAL_DOCK_AREA, SNAP_TRIGGER_WIDTH, SNAP_TRIGGER_HEIGHT } from '../constants/layout';
 
 export interface SnapZone {

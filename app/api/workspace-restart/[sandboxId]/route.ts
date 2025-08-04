@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { DaytonaClient } from '@/lib/daytona';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
 import { auth } from '@clerk/nextjs/server';
 
@@ -32,7 +31,7 @@ export async function POST(
     const userService = UserServiceAdmin.getInstance();
     const userWorkspace = await userService.getUserWorkspace(userId);
     
-    console.log(`Restarting AgentsOS workspace with ${userWorkspace?.repositories?.length || 0} repositories`);
+    console.log(`Restarting AgentsOS workspace ${sandboxId} with ${userWorkspace?.repositories?.length || 0} repositories`);
     
     // Use the fix-services approach which handles AgentsOS multi-repository architecture
     const response = await fetch(`${request.url.replace('/workspace-restart/', '/fix-services/')}`, {

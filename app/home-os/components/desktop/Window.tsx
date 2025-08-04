@@ -10,13 +10,6 @@ import { X, Minus, Square } from 'lucide-react';
 import { TOTAL_DOCK_AREA, MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT, MENU_BAR_HEIGHT } from '../../constants/layout';
 import { getApp } from '../../apps';
 
-function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>();
-  useEffect(() => {
-    ref.current = value;
-  });
-  return ref.current;
-}
 
 interface WindowProps {
   window: WindowType;
@@ -35,7 +28,6 @@ export default function Window({ window }: WindowProps) {
   const [optimizedPosition, setOptimizedPosition] = useState<{ x: number; y: number } | null>(null);
 
   const { focusWindow, removeWindow, minimizeWindow, maximizeWindow, restoreWindow, moveWindow, updateWindow, setWindowAnimating } = useWorkspaceStore();
-  const prevMinimized = usePrevious(window.minimized);
 
   useEffect(() => {
     const dockIcon = document.querySelector(`[data-dock-icon="${window.type}"]`);
@@ -77,7 +69,7 @@ export default function Window({ window }: WindowProps) {
     }
     setDragOffset(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
     handleDragMove(currentX, currentY);
-  }, [window.maximized, window.previousState, handleDragMove, updateWindow]);
+  }, [window.id, window.maximized, window.previousState, handleDragMove, updateWindow]);
 
   const handleDragStart = useCallback(() => {
     focusWindow(window.id);

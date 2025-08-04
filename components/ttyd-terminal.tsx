@@ -358,7 +358,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       websocket.current?.close();
       terminal.current?.dispose();
     };
-  }, [wsUrl, connectWebSocket]); // Removed resolvedTheme from dependencies!
+  }, [wsUrl, connectWebSocket, resolvedTheme]);
 
   // Update terminal theme when resolved theme changes
   useEffect(() => {

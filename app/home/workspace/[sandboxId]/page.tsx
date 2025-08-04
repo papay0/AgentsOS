@@ -169,7 +169,7 @@ export default function WorkspacePage({ params }: WorkspacePageProps) {
       setTabs([claudeTab, terminalTab]);
       setActiveTabId(claudeTab.id);
     }
-  }, [selectedRepository?.name, baseTerminalUrl, claudeTerminalUrl]);
+  }, [selectedRepository, baseTerminalUrl, claudeTerminalUrl]);
 
   // Initialize tabs for backward compatibility (single workspace mode)
   useEffect(() => {
