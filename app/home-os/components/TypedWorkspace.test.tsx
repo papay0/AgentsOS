@@ -7,6 +7,7 @@ import { useAgentsOSUser } from '@/hooks/use-agentsos-user'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import Workspace from './Workspace'
 import { createMockWindowStore } from '../stores/windowStore.mock'
+import { onSnapshot, doc } from 'firebase/firestore'
 
 // Type the mocked modules
 const mockedUseWindowStore = vi.mocked(useWindowStore as unknown as Mock)
@@ -14,6 +15,29 @@ const mockedUseIsMobile = vi.mocked(useIsMobile as unknown as Mock)
 const mockedUseAuth = vi.mocked(useAuth as unknown as Mock)
 const mockedUseAgentsOSUser = vi.mocked(useAgentsOSUser as unknown as Mock)
 const mockedUseWorkspaceStore = vi.mocked(useWorkspaceStore as unknown as Mock)
+const mockedOnSnapshot = vi.mocked(onSnapshot as unknown as Mock)
+const mockedDoc = vi.mocked(doc as unknown as Mock)
+
+// Mock Firebase
+vi.mock('firebase/firestore', () => ({
+  onSnapshot: vi.fn(),
+  doc: vi.fn(),
+  Timestamp: {
+    now: vi.fn(() => ({ seconds: 1234567890, nanoseconds: 0 }))
+  }
+}))
+
+vi.mock('@/lib/firebase', () => ({
+  db: {}
+}))
+
+// Mock OSBootScreen to complete immediately
+vi.mock('./desktop/OSBootScreen', () => ({
+  OSBootScreen: ({ onComplete }: { onComplete: () => void }) => {
+    setTimeout(onComplete, 0)
+    return null
+  }
+}))
 
 // Mock the store and hooks
 vi.mock('../stores/windowStore')
@@ -81,6 +105,39 @@ describe('Workspace - Strongly Typed Tests', () => {
     })
     
     mockedUseIsMobile.mockReturnValue(false)
+    
+    // Mock Firebase onSnapshot to return completed onboarding user
+    mockedDoc.mockReturnValue({} as any)
+    mockedOnSnapshot.mockImplementation((docRef, onNext, onError) => {
+      // Simulate Firebase returning user data with completed onboarding
+      setTimeout(() => {
+        onNext({
+          exists: () => true,
+          data: () => ({
+            agentsOS: {
+              onboardingCompleted: true,
+              workspace: {
+                sandboxId: 'test-sandbox',
+                repositories: [{
+                  url: 'https://github.com/test/repo',
+                  name: 'test-repo',
+                  description: 'Test Repository',
+                  tech: 'React',
+                  urls: {
+                    vscode: 'http://localhost:8080',
+                    terminal: 'http://localhost:8082',
+                    claude: 'http://localhost:8081'
+                  }
+                }]
+              }
+            }
+          })
+        })
+      }, 0)
+      
+      // Return unsubscribe function
+      return vi.fn()
+    })
   })
 
   describe('Platform Detection', () => {

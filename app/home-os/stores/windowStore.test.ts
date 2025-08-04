@@ -9,13 +9,24 @@ Object.defineProperty(Date, 'now', {
   writable: true,
 })
 
-// Helper to reset store to clean state
+// Helper to reset store to clean state  
 const resetStore = () => {
-  useWindowStore.setState({
-    windows: [],
-    nextZIndex: 10, // WINDOW_Z_INDEX_BASE
-    activeWindowId: null,
-  })
+  // Access the Zustand store internals to reset state
+  const storeApi = (useWindowStore as any).getState ? useWindowStore as any : null;
+  if (storeApi) {
+    // Get the setState function from the store API
+    const setState = storeApi.setState || ((useWindowStore as any).setState);
+    if (setState) {
+      setState({
+        windows: [],
+        nextZIndex: 10, // WINDOW_Z_INDEX_BASE
+        activeWindowId: null,
+        onboardingCompleted: false,
+        isCheckingWorkspaces: false,
+        workspaceData: null,
+      });
+    }
+  }
 }
 
 describe('WindowStore', () => {
@@ -31,6 +42,10 @@ describe('WindowStore', () => {
     it('initializes with empty state', () => {
       const { result } = renderHook(() => useWindowStore())
       
+      console.log('Store state:', result.current)
+      console.log('Windows:', result.current.windows)
+      
+      // The test expects empty state, but let's see what we actually get
       expect(result.current.windows).toEqual([])
       expect(result.current.nextZIndex).toBe(10) // WINDOW_Z_INDEX_BASE
       expect(result.current.activeWindowId).toBe(null)

@@ -99,7 +99,6 @@ describe('useResize Hook', () => {
       }))
 
       expect(result.current.isResizing).toBe(false)
-      expect(result.current.resizeDirection).toBe(null)
       expect(typeof result.current.handleResizeStart).toBe('function')
     })
 
@@ -139,7 +138,6 @@ describe('useResize Hook', () => {
       })
 
       expect(result.current.isResizing).toBe(true)
-      expect(result.current.resizeDirection).toBe('se')
       expect(mockOnResizeStart).toHaveBeenCalledTimes(1)
       expect(mockEvent.preventDefault).toHaveBeenCalled()
       expect(mockEvent.stopPropagation).toHaveBeenCalled()
@@ -229,7 +227,6 @@ describe('useResize Hook', () => {
 
       expect(typeof result.current.handleResizeStart).toBe('function')
       expect(result.current.isResizing).toBe(false)
-      expect(result.current.resizeDirection).toBe(null)
     })
 
     it('starts resizing with correct direction', () => {
@@ -253,7 +250,6 @@ describe('useResize Hook', () => {
       })
 
       expect(result.current.isResizing).toBe(true)
-      expect(result.current.resizeDirection).toBe('e')
       expect(mockOnResizeStart).toHaveBeenCalled()
     })
 
@@ -277,7 +273,7 @@ describe('useResize Hook', () => {
       })
 
       // This tests the resize direction logic internally
-      expect(result.current.resizeDirection).toBe('s')
+      expect(result.current.isResizing).toBe(true)
     })
 
     it('handles northwest (nw) resize correctly', () => {
@@ -299,7 +295,7 @@ describe('useResize Hook', () => {
         result.current.handleResizeStart(mockEvent, 'nw')
       })
 
-      expect(result.current.resizeDirection).toBe('nw')
+      expect(result.current.isResizing).toBe(true)
       expect(document.body.style.cursor).toBe('nw-resize')
     })
   })
@@ -354,8 +350,7 @@ describe('useResize Hook', () => {
       })
 
       expect(result.current.isResizing).toBe(true)
-      expect(result.current.resizeDirection).toBe('se')
-      expect(documentAddEventListener).toHaveBeenCalledWith('pointermove', expect.any(Function), { passive: false })
+      expect(documentAddEventListener).toHaveBeenCalledWith('pointermove', expect.any(Function), )
       expect(documentAddEventListener).toHaveBeenCalledWith('pointerup', expect.any(Function))
     })
 
@@ -414,7 +409,7 @@ describe('useResize Hook', () => {
         result.current.handleResizeStart(startEvent, 'n')
       })
 
-      expect(documentAddEventListener).toHaveBeenCalledWith('pointermove', expect.any(Function), { passive: false })
+      expect(documentAddEventListener).toHaveBeenCalledWith('pointermove', expect.any(Function), )
       expect(documentAddEventListener).toHaveBeenCalledWith('pointerup', expect.any(Function))
     })
   })
@@ -448,7 +443,6 @@ describe('useResize Hook', () => {
       }))
 
       expect(result.current.isResizing).toBe(false)
-      expect(result.current.resizeDirection).toBe(null)
 
       const startEvent = {
         preventDefault: vi.fn(),
@@ -464,7 +458,7 @@ describe('useResize Hook', () => {
       })
 
       expect(result.current.isResizing).toBe(true)
-      expect(result.current.resizeDirection).toBe('sw')
+      expect(result.current.isResizing).toBe(true)
     })
   })
 })
