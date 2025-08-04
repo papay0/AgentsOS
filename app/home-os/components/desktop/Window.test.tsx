@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, type Mock, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@/src/test/utils'
-import { useWindowStore } from '../../stores/windowStore'
+import { useWorkspaceStore } from '../../stores/workspaceStore'
 import { createMockWindow } from '@/src/test/utils'
 import { useWindowAnimation } from '../../hooks/useWindowAnimation'
 
@@ -10,10 +10,10 @@ vi.unmock('@/app/home-os/components/desktop/Window')
 // Import after unmocking
 import Window from './Window'
 
-// Mock the window store
-const mockedUseWindowStore = vi.mocked(useWindowStore as unknown as Mock)
+// Mock the workspace store
+const mockedUseWorkspaceStore = vi.mocked(useWorkspaceStore as unknown as Mock)
 
-vi.mock('../../stores/windowStore')
+vi.mock('../../stores/workspaceStore')
 
 // Mock animation hook
 vi.mock('../../hooks/useWindowAnimation')
@@ -41,24 +41,30 @@ describe('Window Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockedUseWindowStore.mockImplementation((selector) => {
-      const mockStore = {
-        windows: [],
-        updateWindow: mockUpdateWindow,
-        focusWindow: mockFocusWindow,
-        minimizeWindow: mockMinimizeWindow,
-        maximizeWindow: mockMaximizeWindow,
-        removeWindow: mockRemoveWindow,
-        setWindowAnimating: mockSetWindowAnimating,
-        restoreWindow: mockRestoreWindow,
-        moveWindow: mockMoveWindow,
-        resizeWindow: mockResizeWindow,
-      }
-      if (typeof selector === 'function') {
-        return selector(mockStore)
-      }
-      return mockStore
-    })
+    mockedUseWorkspaceStore.mockImplementation(() => ({
+      workspaces: [],
+      activeWorkspaceId: null,
+      windows: [],
+      activeWindowId: null,
+      // Window management functions
+      focusWindow: mockFocusWindow,
+      removeWindow: mockRemoveWindow,
+      minimizeWindow: mockMinimizeWindow,
+      maximizeWindow: mockMaximizeWindow,
+      restoreWindow: mockRestoreWindow,
+      moveWindow: mockMoveWindow,
+      updateWindow: mockUpdateWindow,
+      setWindowAnimating: mockSetWindowAnimating,
+      // Other workspace functions
+      switchToWorkspace: vi.fn(),
+      addWorkspace: vi.fn(),
+      removeWorkspace: vi.fn(),
+      updateWorkspace: vi.fn(),
+      addWindow: vi.fn(),
+      getNextZIndex: vi.fn(() => 2),
+      isValidPosition: vi.fn(() => true),
+      snapToGrid: vi.fn((pos: { x: number; y: number }) => pos),
+    }))
 
     // Mock useWindowAnimation
     mockAnimateMinimizeToTarget.mockReturnValue(mockAnimation)

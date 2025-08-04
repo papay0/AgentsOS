@@ -23,7 +23,7 @@ describe('MobileDock Component', () => {
     it('renders dock with all provided apps', () => {
       render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} onHomePress={mockOnHomePress} />)
       
-      // Check that all app icons are rendered (either as emoji or as app icons)
+      // Check that all app icons are rendered (now via AppIcon mock)
       expect(screen.getByText('💻')).toBeInTheDocument()
       expect(screen.getByText('🤖')).toBeInTheDocument()
       expect(screen.getByText('⚡')).toBeInTheDocument()
