@@ -28,7 +28,7 @@ interface HealthCheckResponse {
 export function WorkspaceHealth() {
   const { activeWorkspaceId, workspaces, sandboxId } = useWorkspaceStore();
   const [healthData, setHealthData] = useState<HealthCheckResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as loading
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -54,28 +54,46 @@ export function WorkspaceHealth() {
     }
   }, [sandboxId]);
 
-  // Auto-check health when component mounts or workspace changes (with delay)
+  // Consolidated health checking effects
   useEffect(() => {
-    if (sandboxId) {
-      // Add a small delay to let the workspace fully load
-      const timer = setTimeout(() => {
-        checkHealth();
-      }, 2000);
-      
-      return () => clearTimeout(timer);
+    if (!sandboxId) {
+      // Reset state when no sandbox
+      setIsLoading(false);
+      setHealthData(null);
+      setError(null);
+      return;
     }
+
+    // Initial check after workspace loads (with delay)
+    const initialTimer = setTimeout(() => {
+      checkHealth();
+    }, 2000);
+
+    // Periodic health checking every 100 seconds
+    const healthInterval = setInterval(() => {
+      checkHealth();
+    }, 100000);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(healthInterval);
+    };
   }, [sandboxId, activeWorkspaceId, checkHealth]);
 
-  // Also check health when opening the popover
+  // Check health when opening the popover (on-demand)
   useEffect(() => {
     if (isOpen && sandboxId) {
       checkHealth();
     }
-  }, [isOpen]);
+  }, [isOpen, sandboxId, checkHealth]);
 
   const getHealthIcon = () => {
+    if (!sandboxId) {
+      return <Activity className="h-4 w-4 text-gray-400" />;
+    }
+    
     if (isLoading) {
-      return <RefreshCw className="h-4 w-4 animate-spin" />;
+      return <RefreshCw className="h-4 w-4 animate-spin text-blue-400" />;
     }
     
     if (error || !healthData) {
@@ -94,6 +112,28 @@ export function WorkspaceHealth() {
     }
     
     return <XCircle className="h-4 w-4 text-red-500" />;
+  };
+
+  const getHealthText = () => {
+    if (!sandboxId) {
+      return <span className="text-xs">Health</span>;
+    }
+    
+    if (isLoading) {
+      return <span className="text-xs text-blue-300">Checking...</span>;
+    }
+    
+    if (error || !healthData) {
+      return <span className="text-xs">Health</span>;
+    }
+    
+    const healthyStatuses = ['200', '302', '301'];
+    const allHealthy = healthData.services.every(s => s.listening && healthyStatuses.includes(s.httpStatus));
+    if (allHealthy) {
+      return <span className="text-xs text-green-300">Healthy</span>;
+    }
+    
+    return <span className="text-xs text-amber-300">Issues</span>;
   };
 
   const getServiceIcon = (service: ServiceStatus) => {
@@ -138,7 +178,7 @@ export function WorkspaceHealth() {
           className="gap-2 text-white hover:bg-white/10"
         >
           {getHealthIcon()}
-          <span className="text-xs">Health</span>
+          {getHealthText()}
         </Button>
       </HoverCardTrigger>
       <HoverCardContent className="w-80" align="end">

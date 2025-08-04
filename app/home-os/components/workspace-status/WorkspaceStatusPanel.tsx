@@ -33,7 +33,7 @@ export function WorkspaceStatusPanel({
   } = useWorkspaceStatus({ 
     sandboxId,
     enabled: !!sandboxId,
-    pollingInterval: 45000 // Check every 45 seconds (less aggressive)
+    pollingInterval: 60000 // Check every 60 seconds (less aggressive since menubar handles frequent checks)
   });
 
   const refreshWorkspaceUrls = React.useCallback(async () => {
@@ -66,13 +66,22 @@ export function WorkspaceStatusPanel({
     return null;
   }
 
-  // Don't show panel if workspace is healthy or we don't have status yet
-  if (!status || (isWorkspaceHealthy && !isLoading && !error)) {
+  // Only show panel for critical issues that require user intervention
+  const shouldShowPanel = (
+    // Show for critical errors that prevent workspace functionality
+    (error && error !== 'Failed to check workspace status') ||
+    // Show when workspace is completely stopped or in error state (not just unhealthy services)
+    (status && (status.status === 'stopped' || status.status === 'error')) ||
+    // Show when we need restart and user hasn't been recently notified
+    (needsRestart && status?.status !== 'started')
+  );
+
+  if (!shouldShowPanel) {
     return null;
   }
 
-  // Also don't show if we're just loading and don't have any status information yet
-  if (isLoading && !status && !error) {
+  // Don't show if we're just doing routine loading and everything was working
+  if (isLoading && !error && status?.status === 'started') {
     return null;
   }
 
