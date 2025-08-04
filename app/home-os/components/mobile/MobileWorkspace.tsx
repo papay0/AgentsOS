@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import MobileDock from './MobileDock';
-import MobileHome from './MobileHome';
 import MobileApp from './MobileApp';
+import { MobileRepositoryPages } from './MobileRepositoryPages';
+import { MobileStatusBar } from './MobileStatusBar';
+import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { getAllApps } from '../../apps';
 import { AppMetadata } from '../../apps/BaseApp';
 
@@ -14,6 +16,7 @@ export interface MobileApp {
   color: string;
   type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal';
   comingSoon?: boolean;
+  repositoryUrl?: string;
 }
 
 const getMobileAppColor = (primaryColor: string): string => {
@@ -22,19 +25,26 @@ const getMobileAppColor = (primaryColor: string): string => {
   return `bg-${baseColor}`;
 };
 
-const defaultApps: MobileApp[] = getAllApps().map(app => ({
-  id: app.metadata.id,
-  name: app.metadata.name,
-  icon: app.metadata.icon,
-  color: getMobileAppColor(app.metadata.colors.primary),
-  type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
-  comingSoon: app.metadata.comingSoon
-}));
+// Get dock apps - only common apps (Settings)
+const getDockApps = (): MobileApp[] => {
+  const allApps = getAllApps();
+  const settingsApp = allApps.find(app => app.metadata.id === 'settings');
+  
+  return [
+    {
+      id: 'dock-settings',
+      name: 'Settings',
+      icon: settingsApp?.metadata.icon || { icon: '⚙️', fallback: '⚙️' },
+      color: getMobileAppColor(settingsApp?.metadata.colors.primary || 'bg-gray-500'),
+      type: 'settings' as const
+    }
+  ];
+};
 
 export default function MobileWorkspace() {
-  const [currentPage, setCurrentPage] = useState(0);
   const [openApp, setOpenApp] = useState<MobileApp | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const { workspaces } = useWorkspaceStore();
 
   // Initialize theme from localStorage
   useEffect(() => {
@@ -77,7 +87,6 @@ export default function MobileWorkspace() {
 
   const handleHomePress = () => {
     setOpenApp(null);
-    setCurrentPage(0);
   };
 
   if (openApp) {
@@ -91,15 +100,25 @@ export default function MobileWorkspace() {
   return (
     <div className="h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900 overflow-hidden relative">
       
-      <MobileHome 
-        apps={defaultApps}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        onAppOpen={handleAppOpen}
-      />
+      {/* Mobile Status Bar */}
+      <MobileStatusBar />
+      
+      {/* Main Content Area */}
+      <div className="pt-20 pb-24 h-full flex flex-col">
+        {workspaces.length > 0 ? (
+          <MobileRepositoryPages onAppOpen={handleAppOpen} />
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-white/70 text-center">
+              No workspace found.<br />
+              Please complete onboarding first.
+            </p>
+          </div>
+        )}
+      </div>
       
       <MobileDock 
-        apps={defaultApps.filter(app => !app.comingSoon).slice(0, 4)} // First 4 available apps in dock
+        apps={getDockApps()}
         onAppOpen={handleAppOpen}
         onHomePress={handleHomePress}
       />
