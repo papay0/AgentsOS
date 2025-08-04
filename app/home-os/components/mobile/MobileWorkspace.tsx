@@ -8,6 +8,7 @@ import { MobileStatusBar } from './MobileStatusBar';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { getAllApps } from '../../apps';
 import { AppMetadata, AppType } from '../../apps/BaseApp';
+import { WorkspaceStatusPanel } from '../workspace-status';
 
 export interface MobileApp {
   id: string;
@@ -45,7 +46,7 @@ export default function MobileWorkspace() {
   const [activeAppId, setActiveAppId] = useState<string | null>(null);
   const [loadedApps, setLoadedApps] = useState<Map<string, MobileApp>>(new Map());
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
-  const { workspaces } = useWorkspaceStore();
+  const { workspaces, activeWorkspaceId, sandboxId } = useWorkspaceStore();
   const [animationOriginRect, setAnimationOriginRect] = useState<DOMRect | null>(null);
   const [animationState, setAnimationState] = useState<'idle' | 'opening' | 'open' | 'closing'>('idle');
 
@@ -117,8 +118,21 @@ export default function MobileWorkspace() {
   };
   
 
+  // Get the current workspace name for status panel
+  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+  const workspaceName = activeWorkspace?.name 
+    ? `${activeWorkspace.name} Workspace` 
+    : 'AgentsOS Workspace';
+
   return (
     <div className="h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900 overflow-hidden relative">
+      {/* Workspace Status Panel - Shows when workspace needs attention */}
+      <WorkspaceStatusPanel 
+        sandboxId={sandboxId}
+        workspaceName={workspaceName}
+        className="!fixed !top-1/2 !left-1/2 !transform !-translate-x-1/2 !-translate-y-1/2 !mx-0 !w-[90vw] !max-w-sm" // Perfect mobile centering
+      />
+      
       {/* Desktop view */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
