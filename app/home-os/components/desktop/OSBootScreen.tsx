@@ -21,7 +21,7 @@ export function OSBootScreen({ onComplete }: OSBootScreenProps) {
     "Finalizing OS Components"
   ];
 
-  const MINIMUM_BOOT_TIME = 4000; // 4 seconds minimum
+  const MINIMUM_BOOT_TIME = 1800; // 1.8 seconds minimum
 
   useEffect(() => {
     const startTime = Date.now();
