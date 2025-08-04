@@ -52,7 +52,7 @@ const getRepositoryUrlForApp = (repository: Repository, appType: string): string
 };
 
 interface MobileRepositoryPagesProps {
-  onAppOpen: (app: MobileApp) => void;
+  onAppOpen: (app: MobileApp, element: HTMLElement) => void;
 }
 
 export function MobileRepositoryPages({ onAppOpen }: MobileRepositoryPagesProps) {
@@ -153,9 +153,9 @@ export function MobileRepositoryPages({ onAppOpen }: MobileRepositoryPagesProps)
     }
   };
 
-  const handleAppClick = (app: MobileApp) => {
+  const handleAppClick = (app: MobileApp, event: React.MouseEvent<HTMLButtonElement>) => {
     if (app.comingSoon) return;
-    onAppOpen(app);
+    onAppOpen(app, event.currentTarget);
   };
 
   if (repositories.length === 0) {
@@ -211,7 +211,7 @@ export function MobileRepositoryPages({ onAppOpen }: MobileRepositoryPagesProps)
                     {pageApps.slice(0, 16).map((app) => (
                     <button
                       key={app.id}
-                      onClick={() => handleAppClick(app)}
+                      onClick={(e) => handleAppClick(app, e)}
                       className="flex flex-col items-center space-y-2 p-2 rounded-xl hover:bg-white/10 transition-colors relative"
                       disabled={app.comingSoon}
                     >

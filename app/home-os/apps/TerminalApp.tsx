@@ -31,8 +31,8 @@ const TerminalMobileContent = (props?: { repositoryUrl?: string }) => {
     // Convert HTTP URL to WebSocket URL for ttyd
     const wsUrl = repositoryUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws';
     return (
-      <div className="h-full bg-black">
-        <TTYDTerminal key={repositoryUrl} wsUrl={wsUrl} className="w-full h-full" />
+      <div className="absolute inset-0 bg-black flex flex-col">
+        <TTYDTerminal wsUrl={wsUrl} className="flex-1 w-full" />
       </div>
     );
   }

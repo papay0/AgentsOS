@@ -46,6 +46,8 @@ export default function MobileWorkspace() {
   const [loadedApps, setLoadedApps] = useState<Map<string, MobileApp>>(new Map());
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const { workspaces } = useWorkspaceStore();
+  const [animationOriginRect, setAnimationOriginRect] = useState<DOMRect | null>(null);
+  const [animationState, setAnimationState] = useState<'idle' | 'opening' | 'open' | 'closing'>('idle');
 
   // Initialize theme from localStorage
   useEffect(() => {
@@ -73,28 +75,45 @@ export default function MobileWorkspace() {
   }, [theme]);
 
 
-  const handleAppOpen = (app: MobileApp) => {
+  const handleAppOpen = (app: MobileApp, element: HTMLElement) => {
     // Don't open coming soon apps
     if (app.comingSoon) {
       // TODO: Show coming soon toast
       return;
     }
     
+    // Get the icon position for animation
+    const rect = element.getBoundingClientRect();
+    setAnimationOriginRect(rect);
+    
     // Add app to loaded apps Map if not already loaded (preserves the app data)
     setLoadedApps(prev => new Map(prev.set(app.id, app)));
     
-    // Set as active app
+    // Set as active app and start animation
     setActiveAppId(app.id);
+    setAnimationState('opening');
+    
+    // Transition to open state
+    setTimeout(() => {
+      setAnimationState('open');
+    }, 50);
   };
 
   const handleAppClose = () => {
-    // Don't remove from loaded apps, just hide
-    setActiveAppId(null);
+    // Start closing animation
+    setAnimationState('closing');
+    
+    // Complete close after animation
+    setTimeout(() => {
+      setActiveAppId(null);
+      setAnimationState('idle');
+    }, 300);
   };
 
   const handleHomePress = () => {
-    // Don't remove from loaded apps, just hide
-    setActiveAppId(null);
+    if (activeAppId) {
+      handleAppClose();
+    }
   };
   
   // Get all available apps data
@@ -137,7 +156,7 @@ export default function MobileWorkspace() {
       {/* Desktop view */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 ${
-          activeAppId ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          animationState !== 'idle' ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
       >
         <MobileStatusBar />
@@ -161,21 +180,85 @@ export default function MobileWorkspace() {
       </div>
 
       {/* Apps view */}
-      {Array.from(loadedApps.entries()).map(([appId, app]) => (
-        <div
-          key={appId}
-          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
-            appId === activeAppId ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
-          <MobileApp
-            app={app}
-            onClose={handleAppClose}
-            theme={theme}
-            onThemeChange={setTheme}
-          />
-        </div>
-      ))}
+      {Array.from(loadedApps.entries()).map(([appId, app]) => {
+        const isActive = appId === activeAppId;
+        const shouldAnimate = isActive && animationOriginRect;
+        
+        let appStyles: React.CSSProperties = {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: isActive ? 20 : -1,
+        };
+        
+        if (!isActive) {
+          // Hidden apps
+          appStyles.transform = 'translateX(100%)';
+        } else if (shouldAnimate) {
+          // iOS-style animation
+          if (animationState === 'opening') {
+            // Start from icon position
+            appStyles = {
+              position: 'fixed',
+              top: animationOriginRect.top,
+              left: animationOriginRect.left,
+              width: animationOriginRect.width,
+              height: animationOriginRect.height,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              zIndex: 20,
+              transition: 'none',
+            };
+          } else if (animationState === 'open') {
+            // Animate to fullscreen
+            appStyles = {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100%',
+              height: '100%',
+              borderRadius: '0px',
+              overflow: 'hidden',
+              zIndex: 20,
+              transition: 'all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            };
+          } else if (animationState === 'closing') {
+            // Animate back to icon position
+            appStyles = {
+              position: 'fixed',
+              top: animationOriginRect.top,
+              left: animationOriginRect.left,
+              width: animationOriginRect.width,
+              height: animationOriginRect.height,
+              borderRadius: '12px',
+              overflow: 'hidden',
+              zIndex: 20,
+              transition: 'all 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            };
+          }
+        }
+        
+        return (
+          <div
+            key={appId}
+            style={appStyles}
+          >
+            <MobileApp
+              app={app}
+              onClose={handleAppClose}
+              theme={theme}
+              onThemeChange={setTheme}
+              isOpening={animationState === 'open'}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

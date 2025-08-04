@@ -302,23 +302,26 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     // Open terminal in DOM
     terminal.current.open(terminalRef.current);
     
-    // Force xterm elements to take full height
-    setTimeout(() => {
+    // Force xterm elements to take full height and fit properly
+    const fitTerminal = () => {
       if (terminalRef.current) {
         const xtermScreen = terminalRef.current.querySelector('.xterm-screen');
         const xtermViewport = terminalRef.current.querySelector('.xterm-viewport');
         
         if (xtermScreen) {
           (xtermScreen as HTMLElement).style.height = '100%';
+          (xtermScreen as HTMLElement).style.width = '100%';
         }
         if (xtermViewport) {
           (xtermViewport as HTMLElement).style.height = '100%';
+          (xtermViewport as HTMLElement).style.width = '100%';
         }
         
-        // Make the terminal container flex
+        // Make the terminal container flex and full size
         const xtermContainer = terminalRef.current.querySelector('.terminal');
         if (xtermContainer) {
           (xtermContainer as HTMLElement).style.height = '100%';
+          (xtermContainer as HTMLElement).style.width = '100%';
           (xtermContainer as HTMLElement).style.display = 'flex';
           (xtermContainer as HTMLElement).style.flexDirection = 'column';
         }
@@ -327,7 +330,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       if (fitAddon.current) {
         fitAddon.current.fit();
       }
-    }, 100);
+    };
+    
+    // Initial fits with delays for mobile animation
+    setTimeout(fitTerminal, 100);
+    setTimeout(fitTerminal, 350);
+    setTimeout(fitTerminal, 600);
 
     // Connect to WebSocket
     connectWebSocket();
@@ -358,7 +366,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       websocket.current?.close();
       terminal.current?.dispose();
     };
-  }, [wsUrl, connectWebSocket, resolvedTheme]);
+  }, [wsUrl, connectWebSocket]);
 
   // Update terminal theme when resolved theme changes
   useEffect(() => {
@@ -370,10 +378,14 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   return (
     <div 
       ref={terminalRef}
-      className={`h-full ${className || ''}`}
+      className={className || ''}
       style={{
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        position: 'relative'
       }}
     />
   );

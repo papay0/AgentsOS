@@ -12,9 +12,10 @@ interface MobileAppProps {
   onClose: () => void;
   theme?: 'light' | 'dark' | 'system';
   onThemeChange?: (theme: 'light' | 'dark' | 'system') => void;
+  isOpening?: boolean;
 }
 
-export default function MobileApp({ app, onClose, theme, onThemeChange }: MobileAppProps) {
+export default function MobileApp({ app, onClose, theme, onThemeChange, isOpening }: MobileAppProps) {
 
   const getAppContent = () => {
     // Special handling for settings app that needs theme props
@@ -45,12 +46,14 @@ export default function MobileApp({ app, onClose, theme, onThemeChange }: Mobile
 
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+    <div className="h-full w-full flex flex-col bg-white dark:bg-gray-900 overflow-hidden">
       {/* App header with close button */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 border-b">
+      <div className={`flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 border-b transition-opacity duration-300 ${
+        isOpening ? 'opacity-100 delay-150' : 'opacity-0'
+      }`}>
         <button
           onClick={onClose}
-          className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center"
+          className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center transition-transform active:scale-95"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -59,7 +62,9 @@ export default function MobileApp({ app, onClose, theme, onThemeChange }: Mobile
       </div>
       
       {/* App content */}
-      <div className="flex-1 overflow-hidden">
+      <div className={`flex-1 w-full overflow-hidden relative transition-opacity duration-300 ${
+        isOpening ? 'opacity-100 delay-200' : 'opacity-0'
+      }`}>
         {getAppContent()}
       </div>
     </div>
