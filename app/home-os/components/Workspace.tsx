@@ -16,6 +16,7 @@ import MobileWorkspace from './mobile/MobileWorkspace';
 import { Onboarding } from './desktop/Onboarding';
 import { MobileOnboarding } from './mobile/MobileOnboarding';
 import { WorkspaceStatusPanel } from './workspace-status';
+import { OSBootScreen } from './desktop/OSBootScreen';
 
 interface FirebaseUserData {
   agentsOS?: {
@@ -41,7 +42,6 @@ export default function Workspace() {
   const { 
     workspaces, 
     activeWorkspaceId, 
-    isLoading: isWorkspaceLoading, 
     sandboxId,
     initializeWorkspaces,
     setSandboxId 
@@ -58,6 +58,7 @@ export default function Workspace() {
   // REAL-TIME Firebase state
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUserData | null>(null);
   const [isFirebaseLoading, setIsFirebaseLoading] = useState(true);
+  const [showBootScreen, setShowBootScreen] = useState(true);
   
   const [globalSnapState, setGlobalSnapState] = useState<{
     activeZone: { 
@@ -157,92 +158,109 @@ export default function Workspace() {
 
   // Derive state from Firebase data
   const hasCompletedOnboarding = firebaseUser?.agentsOS?.onboardingCompleted || false;
-  const isReady = !isFirebaseLoading && userId !== undefined;
 
-  // Show loading while data is loading
-  if (isWorkspaceLoading || isFirebaseLoading || !isReady) {
-    return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading AgentsOS...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // SIMPLE: Show onboarding if Firebase says user hasn't completed it
-  if (!hasCompletedOnboarding) {
-    if (isMobile) {
-      return <MobileOnboarding onComplete={handleOnboardingComplete} />;
-    }
-    return <Onboarding onComplete={handleOnboardingComplete} />;
-  }
-
-  // Render mobile workspace on mobile devices
-  if (isMobile) {
-    return (
-      <div data-testid="mobile-workspace" className="h-full w-full">
-        <MobileWorkspace />
-      </div>
-    );
-  }
-
-  // Get the current workspace name for status panel
-  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
-  const workspaceName = activeWorkspace?.name 
-    ? `${activeWorkspace.name} Workspace` 
-    : 'AgentsOS Workspace';
-
-  // Render desktop workspace on desktop devices
-  return (
-    <div 
-      data-testid="desktop-workspace"
-      className="relative w-full h-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900"
-    >
-      {/* Menu Bar */}
-      <MenuBar />
-      
-      {/* Workspace Status Panel - Shows when workspace needs attention */}
-      <WorkspaceStatusPanel 
-        sandboxId={sandboxId}
-        workspaceName={workspaceName}
-      />
-      
-      {/* Main workspace area - Full height, windows go behind dock */}
-      <div className="absolute inset-x-0 top-8 bottom-0 overflow-hidden">
-        {/* Render all workspaces but only show the active one */}
-        {workspaces.map((workspace) => (
-          <div
-            key={workspace.id}
-            className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
-              workspace.id === activeWorkspaceId 
-                ? 'translate-x-0' 
-                : activeWorkspaceId && workspace.id < activeWorkspaceId 
-                  ? '-translate-x-full' 
-                  : 'translate-x-full'
-            }`}
-          >
-            {workspace.windows
-              .map((window) => {
-                // Debug logging for window URLs
-                if (workspace.id === activeWorkspaceId) {
-                  console.log(`Window ${window.title} URL:`, window.repositoryUrl);
-                }
-                return <Window key={window.id} window={window} />;
-              })}
+  // ALWAYS render the main content if we have basic data - be aggressive!
+  let mainContent = null;
+  
+  if (userId !== undefined) {  // We have user context
+    if (isFirebaseLoading) {
+      // Still loading Firebase data, but we can show a basic loading state
+      mainContent = null;
+    } else if (!hasCompletedOnboarding) {
+      // User needs onboarding - render it immediately
+      if (isMobile) {
+        mainContent = <MobileOnboarding onComplete={handleOnboardingComplete} />;
+      } else {
+        mainContent = <Onboarding onComplete={handleOnboardingComplete} />;
+      }
+    } else {
+      // User has completed onboarding - render workspace IMMEDIATELY to start loading
+      if (isMobile) {
+        mainContent = (
+          <div data-testid="mobile-workspace" className="h-full w-full">
+            <MobileWorkspace />
           </div>
-        ))}
-      </div>
+        );
+      } else {
+        // Get the current workspace name for status panel
+        const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+        const workspaceName = activeWorkspace?.name 
+          ? `${activeWorkspace.name} Workspace` 
+          : 'AgentsOS Workspace';
 
-      {/* Dock - Floating over workspace (workspace-scoped) */}
-      <Dock />
-      
-      {/* Global snap zone overlay */}
-      <SnapZoneOverlay 
-        activeZone={globalSnapState.activeZone}
-        isVisible={globalSnapState.isVisible}
-      />
-    </div>
-  );
+        // Render desktop workspace - terminals will start loading immediately
+        mainContent = (
+          <div 
+            data-testid="desktop-workspace"
+            className="relative w-full h-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900"
+          >
+            {/* Menu Bar */}
+            <MenuBar />
+            
+            {/* Workspace Status Panel - Shows when workspace needs attention */}
+            <WorkspaceStatusPanel 
+              sandboxId={sandboxId}
+              workspaceName={workspaceName}
+            />
+            
+            {/* Main workspace area - Full height, windows go behind dock */}
+            <div className="absolute inset-x-0 top-8 bottom-0 overflow-hidden">
+              {/* Render all workspaces but only show the active one */}
+              {workspaces.map((workspace) => (
+                <div
+                  key={workspace.id}
+                  className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
+                    workspace.id === activeWorkspaceId 
+                      ? 'translate-x-0' 
+                      : activeWorkspaceId && workspace.id < activeWorkspaceId 
+                        ? '-translate-x-full' 
+                        : 'translate-x-full'
+                  }`}
+                >
+                  {workspace.windows
+                    .map((window) => {
+                      // Debug logging for window URLs
+                      if (workspace.id === activeWorkspaceId) {
+                        console.log(`Window ${window.title} URL:`, window.repositoryUrl);
+                      }
+                      return <Window key={window.id} window={window} />;
+                    })}
+                </div>
+              ))}
+            </div>
+
+            {/* Dock - Floating over workspace (workspace-scoped) */}
+            <Dock />
+            
+            {/* Global snap zone overlay */}
+            <SnapZoneOverlay 
+              activeZone={globalSnapState.activeZone}
+              isVisible={globalSnapState.isVisible}
+            />
+          </div>
+        );
+      }
+    }
+  }
+  
+  // Show boot screen overlay ONLY for very initial load
+  if (showBootScreen) {
+    return (
+      <>
+        {/* Main content renders and starts loading behind boot screen */}
+        {mainContent}
+        
+        {/* Boot screen overlay with high z-index */}
+        <OSBootScreen 
+          onComplete={() => {
+            // Complete after minimum time, regardless of loading state
+            setShowBootScreen(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  // No boot screen needed, show main content directly
+  return mainContent;
 }
