@@ -42,7 +42,8 @@ const getDockApps = (): MobileApp[] => {
 };
 
 export default function MobileWorkspace() {
-  const [openApp, setOpenApp] = useState<MobileApp | null>(null);
+  const [activeAppId, setActiveAppId] = useState<string | null>(null);
+  const [loadedApps, setLoadedApps] = useState<Map<string, MobileApp>>(new Map());
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const { workspaces } = useWorkspaceStore();
 
@@ -78,50 +79,103 @@ export default function MobileWorkspace() {
       // TODO: Show coming soon toast
       return;
     }
-    setOpenApp(app);
+    
+    // Add app to loaded apps Map if not already loaded (preserves the app data)
+    setLoadedApps(prev => new Map(prev.set(app.id, app)));
+    
+    // Set as active app
+    setActiveAppId(app.id);
   };
 
   const handleAppClose = () => {
-    setOpenApp(null);
+    // Don't remove from loaded apps, just hide
+    setActiveAppId(null);
   };
 
   const handleHomePress = () => {
-    setOpenApp(null);
+    // Don't remove from loaded apps, just hide
+    setActiveAppId(null);
   };
-
-  if (openApp) {
-    return (
-      <div className="h-full bg-black dark:bg-gray-900 overflow-hidden">
-        <MobileApp app={openApp} onClose={handleAppClose} theme={theme} onThemeChange={setTheme} />
-      </div>
-    );
-  }
+  
+  // Get all available apps data
+  const getAllMobileApps = () => {
+    const allApps: MobileApp[] = [];
+    workspaces.forEach(workspace => {
+      const apps = getDockApps().concat(
+        getAllApps()
+          .filter(app => !['settings'].includes(app.metadata.id))
+          .map(app => ({
+            id: `${app.metadata.id}-${workspace.repository.name}`,
+            name: app.metadata.name,  
+            icon: app.metadata.icon,
+            color: getMobileAppColor(app.metadata.colors.primary),
+            type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
+            comingSoon: app.metadata.comingSoon || app.metadata.id === 'diff',
+            repositoryUrl: getRepositoryUrlForApp(workspace.repository, app.metadata.id)
+          }))
+      );
+      allApps.push(...apps);
+    });
+    return allApps;
+  };
+  
+  const getRepositoryUrlForApp = (repository: any, appType: string): string => {
+    switch (appType) {
+      case 'vscode':
+        return repository.urls?.vscode || '';
+      case 'claude':
+        return repository.urls?.claude || '';
+      case 'terminal':
+        return repository.urls?.terminal || '';
+      default:
+        return '';
+    }
+  };
 
   return (
     <div className="h-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900 overflow-hidden relative">
-      
-      {/* Mobile Status Bar */}
-      <MobileStatusBar />
-      
-      {/* Main Content Area */}
-      <div className="pt-20 pb-24 h-full flex flex-col">
-        {workspaces.length > 0 ? (
-          <MobileRepositoryPages onAppOpen={handleAppOpen} />
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-white/70 text-center">
-              No workspace found.<br />
-              Please complete onboarding first.
-            </p>
-          </div>
-        )}
+      {/* Desktop view */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-300 ${
+          activeAppId ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+      >
+        <MobileStatusBar />
+        <div className="pt-20 pb-24 h-full flex flex-col">
+          {workspaces.length > 0 ? (
+            <MobileRepositoryPages onAppOpen={handleAppOpen} />
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-white/70 text-center">
+                No workspace found.<br />
+                Please complete onboarding first.
+              </p>
+            </div>
+          )}
+        </div>
+        <MobileDock
+          apps={getDockApps()}
+          onAppOpen={handleAppOpen}
+          onHomePress={handleHomePress}
+        />
       </div>
-      
-      <MobileDock 
-        apps={getDockApps()}
-        onAppOpen={handleAppOpen}
-        onHomePress={handleHomePress}
-      />
+
+      {/* Apps view */}
+      {Array.from(loadedApps.entries()).map(([appId, app]) => (
+        <div
+          key={appId}
+          className={`absolute inset-0 transition-transform duration-300 ease-in-out ${
+            appId === activeAppId ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <MobileApp
+            app={app}
+            onClose={handleAppClose}
+            theme={theme}
+            onThemeChange={setTheme}
+          />
+        </div>
+      ))}
     </div>
   );
 }

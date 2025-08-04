@@ -40,7 +40,7 @@ export default function MobileApp({ app, onClose, theme, onThemeChange }: Mobile
 
     // Use the mobile content from the app
     const MobileContent = appConfig.content.mobile;
-    return <MobileContent />;
+    return <MobileContent repositoryUrl={app.repositoryUrl} />;
   };
 
 
