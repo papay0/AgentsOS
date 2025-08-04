@@ -224,6 +224,100 @@ After workspace loads, optional interactive tutorial:
 - **Cloud Native**: Access from anywhere
 - **Cost Effective**: Pay only for what you use
 
+## Mobile Implementation Roadmap
+
+### 📱 iOS-Style Mobile Experience Todo List
+
+Based on the desktop improvements completed, here's the comprehensive roadmap for bringing the same polished experience to mobile with iOS-style navigation:
+
+#### 🎯 Core Mobile UX Improvements
+- [ ] **iOS-Style Page System**: One page per repository (Page 1: Project A, Page 2: Project B, etc.)
+- [ ] **Swipe Navigation**: Smooth horizontal swiping between repository pages
+- [ ] **Page Indicators**: Dot navigation near dock showing current page and total pages (like iOS)
+- [ ] **Mobile Boot Screen**: Port OSBootScreen.tsx to mobile with 1.8-second animation
+- [ ] **Mobile Loading States**: Rotating activity messages during workspace creation
+- [ ] **Touch-Optimized Animations**: All transitions optimized for touch devices
+
+#### 🔄 Onboarding System Port
+- [ ] **Mobile Onboarding Polish**: Update MobileOnboarding.tsx with desktop improvements
+- [ ] **Repository Selection UI**: Touch-friendly repository cards with selection indicators
+- [ ] **Launch Button UX**: Fix duplicate button issues from desktop port
+- [ ] **Progress Animation**: Port rotating activity messages to mobile creation flow
+- [ ] **Error Handling**: Proper error states and retry mechanisms
+
+#### 🏠 Page-Based Workspace Architecture
+- [ ] **Page Container System**: Create MobilePage.tsx component for each repository
+- [ ] **Repository Store Integration**: Connect page system to workspace store
+- [ ] **Page Transitions**: Smooth slide animations between pages
+- [ ] **Active Page Tracking**: State management for current page index
+- [ ] **Page Indicators Component**: Dot navigation with smooth animations
+
+#### 📱 Mobile App Organization
+- [ ] **Per-Page App Layout**: Each repository page has its own app instances
+- [ ] **VSCode Integration**: Full-screen VSCode per repository
+- [ ] **Terminal Access**: Repository-specific terminal instances
+- [ ] **Claude Code Mobile**: Touch-optimized Claude interface per project
+- [ ] **Settings Persistence**: Per-repository settings and preferences
+
+#### 🎨 Visual & Animation Polish
+- [ ] **Gesture Recognition**: Swipe threshold and velocity detection
+- [ ] **Spring Animations**: iOS-like bounce and spring effects
+- [ ] **Loading Indicators**: Skeleton screens and progressive loading
+- [ ] **Touch Feedback**: Haptic feedback simulation and visual feedback
+- [ ] **Dark Mode Support**: Consistent theming across all mobile components
+
+#### 🔧 Mobile-Specific Features
+- [ ] **Pull-to-Refresh**: Refresh workspace status and services
+- [ ] **Long-Press Menus**: Context menus for repositories and apps
+- [ ] **Mobile Keyboard**: Optimize for on-screen keyboard interactions
+- [ ] **Safe Area Handling**: Proper notch and safe area support
+- [ ] **Responsive Typography**: Mobile-optimized text sizes and spacing
+
+#### 🏗️ Technical Infrastructure
+- [ ] **Mobile State Management**: Extend useWorkspaceStore for page-based navigation
+- [ ] **Touch Event Handling**: Custom hooks for swipe and gesture detection
+- [ ] **Performance Optimization**: Lazy loading and virtualization for multiple pages
+- [ ] **Memory Management**: Efficient cleanup when switching between pages
+- [ ] **Service Worker Updates**: Mobile-specific caching strategies
+
+#### 🧪 Testing & Quality
+- [ ] **Mobile Test Suite**: Update all mobile component tests
+- [ ] **Touch Testing**: Verify all gestures work correctly
+- [ ] **Cross-Device Testing**: Test on various mobile screen sizes
+- [ ] **Performance Testing**: Ensure smooth animations on slower devices
+- [ ] **Accessibility**: Mobile screen reader and accessibility support
+
+#### 🚀 Advanced Mobile Features
+- [ ] **Workspace Switching**: Quick switcher between multiple workspaces
+- [ ] **Mobile Shortcuts**: Touch shortcuts for common development tasks
+- [ ] **Split Screen Support**: Basic split-screen on larger mobile devices
+- [ ] **Mobile-Specific Apps**: Mobile-optimized versions of desktop apps
+- [ ] **Push Notifications**: Build completion and workspace status updates
+
+### Implementation Priority
+
+**Phase 1: Core iOS-Style Navigation (High Priority)**
+1. Page-based architecture with swipe navigation
+2. Page indicators and smooth transitions
+3. Mobile boot screen and loading states
+
+**Phase 2: Onboarding & UX Polish (High Priority)**
+4. Mobile onboarding improvements
+5. Repository selection and workspace creation flow
+6. Error handling and retry mechanisms
+
+**Phase 3: App Integration (Medium Priority)**
+7. Per-page app instances
+8. Mobile-optimized VSCode and terminal
+9. Touch-optimized Claude interface
+
+**Phase 4: Advanced Features (Lower Priority)**
+10. Advanced gestures and animations
+11. Performance optimizations
+12. Mobile-specific features and shortcuts
+
+This comprehensive mobile roadmap ensures the mobile experience matches the polish and functionality of the desktop version while embracing iOS-style navigation patterns for an intuitive touch experience.
+
 ## Summary
 
 AgentsOS transforms cloud development by providing a familiar desktop experience powered by Daytona workspaces. With pre-installed tools like VSCode and Claude Code CLI, developers can start coding immediately without any local setup.

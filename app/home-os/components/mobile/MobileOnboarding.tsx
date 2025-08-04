@@ -39,7 +39,7 @@ export function MobileOnboarding({ onComplete, onSkip }: MobileOnboardingProps) 
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome')
   const [selectedRepositories, setSelectedRepositories] = useState<string[]>([])
   const [isCreating, setIsCreating] = useState(false)
-  const [creationProgress, setCreationProgress] = useState(0)
+  const [currentActivityIndex, setCurrentActivityIndex] = useState(0)
 
   const goToNext = () => {
     const steps: OnboardingStep[] = ['welcome', 'github', 'repository', 'launch']
@@ -69,15 +69,48 @@ export function MobileOnboarding({ onComplete, onSkip }: MobileOnboardingProps) 
     )
   }
 
+  const creationActivities = [
+    "Initializing cloud workspace...",
+    "Spinning up virtual machine...",
+    "Installing Ubuntu system packages...",
+    "Setting up Node.js 20 environment...",
+    "Installing development tools...",
+    "Configuring Git and SSH keys...",
+    "Installing VSCode Server...",
+    "Setting up code-server extensions...",
+    "Installing terminal multiplexer...",
+    "Configuring ttyd for web terminals...",
+    "Installing Claude Code CLI...",
+    "Setting up AI assistant integration...",
+    "Cloning selected repositories...",
+    "Installing project dependencies...",
+    "Configuring workspace settings...",
+    "Starting background services...",
+    "Initializing file watchers...",
+    "Setting up port forwarding...",
+    "Configuring security policies...",
+    "Optimizing performance settings...",
+    "Running initial health checks...",
+    "Preparing development environment...",
+    "Synchronizing workspace state...",
+    "Finalizing service connections...",
+    "Almost ready..."
+  ]
+
   const handleLaunch = async () => {
     setIsCreating(true)
+    setCurrentActivityIndex(0)
+    
+    // Rotate through activity messages every 2 seconds
+    const activityInterval = setInterval(() => {
+      setCurrentActivityIndex(prev => (prev + 1) % creationActivities.length)
+    }, 2000)
     
     try {
       // Get selected repositories
       const selectedRepos = repositories.filter(repo => selectedRepositories.includes(repo.id))
       
       // Create workspace with repositories
-      setCreationProgress(25)
       await workspaceApi.createWorkspace({
         repositories: selectedRepos.map(repo => ({
           url: repo.url,
@@ -90,20 +123,18 @@ export function MobileOnboarding({ onComplete, onSkip }: MobileOnboardingProps) 
           : selectedRepos[0]?.name || 'AgentsOS Workspace'
       })
       
-      setCreationProgress(50)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      clearInterval(activityInterval)
       
-      setCreationProgress(75)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      setCreationProgress(100)
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      onComplete()
+      // Show completion message briefly
+      setCurrentActivityIndex(creationActivities.length - 1)
+      setTimeout(() => {
+        onComplete()
+      }, 1000)
     } catch (error) {
       console.error('Failed to create workspace:', error)
+      clearInterval(activityInterval)
       setIsCreating(false)
-      setCreationProgress(0)
+      setCurrentActivityIndex(0)
       // TODO: Show error message to user
     }
   }
@@ -301,21 +332,22 @@ export function MobileOnboarding({ onComplete, onSkip }: MobileOnboardingProps) 
                 <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center animate-pulse">
                   <Code className="w-10 h-10 text-primary" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <h1 className="text-2xl font-bold">Creating Workspace</h1>
-                  <p className="text-muted-foreground text-sm">
-                    {creationProgress === 25 && 'Creating workspace...'}
-                    {creationProgress === 50 && 'Installing VSCode...'}
-                    {creationProgress === 75 && 'Setting up Claude...'}
-                    {creationProgress === 100 && 'Configuring terminal...'}
-                  </p>
-                </div>
-                <div className="w-full max-w-xs">
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary transition-all duration-1000 ease-out"
-                      style={{ width: `${creationProgress}%` }}
-                    />
+                  <div className="min-h-[60px] flex items-center justify-center">
+                    <p className="text-muted-foreground text-sm text-center transition-opacity duration-500">
+                      {creationActivities[currentActivityIndex]}
+                    </p>
+                  </div>
+                  <div className="flex justify-center">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                  <div className="text-center text-xs text-muted-foreground">
+                    This may take up to 60 seconds...
                   </div>
                 </div>
               </>
