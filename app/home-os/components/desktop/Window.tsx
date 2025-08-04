@@ -279,9 +279,36 @@ const WindowContent = memo(function WindowContent({ window }: { window: WindowTy
 
   const DesktopContent = app.content.desktop;
   
+  // Render content with proper typed props based on app type
+  const renderContent = () => {
+    // Switch case ensures we handle all app types - compiler will error if we add new types
+    switch (window.type) {
+      case 'terminal': {
+        const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
+        return <Component repositoryUrl={window.repositoryUrl} />;
+      }
+      case 'claude': {
+        const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
+        return <Component repositoryUrl={window.repositoryUrl} />;
+      }
+      case 'vscode': {
+        const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
+        return <Component repositoryUrl={window.repositoryUrl} />;
+      }
+      case 'settings': {
+        const Component = DesktopContent as React.ComponentType<Record<string, never>>;
+        return <Component />;
+      }
+      case 'diff': {
+        const Component = DesktopContent as React.ComponentType<Record<string, never>>;
+        return <Component />;
+      }
+    }
+  };
+  
   return (
     <div ref={contentRef} className="w-full h-full flex flex-col">
-      <DesktopContent repositoryUrl={window.repositoryUrl} />
+      {renderContent()}
     </div>
   );
 });

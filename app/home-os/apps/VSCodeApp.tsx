@@ -2,8 +2,9 @@ import { createApp } from './BaseApp';
 import MobileAppTemplate from './MobileAppTemplate';
 import { VSCodeEditor } from '@/components/workspace/vscode-editor';
 
-const VSCodeDesktopContent = (props?: { repositoryUrl?: string }) => {
-  const { repositoryUrl } = props || {};
+import { VSCodeAppProps } from './BaseApp';
+
+const VSCodeDesktopContent = ({ repositoryUrl }: VSCodeAppProps) => {
   // If we have a repository URL, use the real VSCode editor
   if (repositoryUrl) {
     return <VSCodeEditor key={repositoryUrl} url={repositoryUrl} className="w-full h-full" />;
@@ -20,7 +21,7 @@ const VSCodeDesktopContent = (props?: { repositoryUrl?: string }) => {
   );
 };
 
-const VSCodeMobileContent = () => (
+const VSCodeMobileContent = (/* _props: VSCodeAppProps */) => (
   <MobileAppTemplate
     title="VSCode Mobile"
     subtitle="Code Editor"
@@ -38,7 +39,7 @@ const VSCodeMobileContent = () => (
   </MobileAppTemplate>
 );
 
-export const VSCodeApp = createApp({
+export const VSCodeApp = createApp<'vscode'>({
   metadata: {
     id: 'vscode',
     name: 'VSCode',

@@ -72,7 +72,7 @@ const DiffMobileContent = () => (
   </div>
 );
 
-export const DiffApp = createApp({
+export const DiffApp = createApp<'diff'>({
   metadata: {
     id: 'diff',
     name: 'Code Diff',

@@ -4,6 +4,7 @@ import React from 'react';
 import { type MobileApp } from './MobileWorkspace';
 import { ArrowLeft } from 'lucide-react';
 import { getApp } from '../../apps';
+import { type AppType } from '../../apps/BaseApp';
 import MobileSettings from './MobileSettings';
 import AppIcon from '../ui/AppIcon';
 
@@ -39,9 +40,33 @@ export default function MobileApp({ app, onClose, theme, onThemeChange, isOpenin
       );
     }
 
-    // Use the mobile content from the app
+    // Use the mobile content from the app with proper typed props
     const MobileContent = appConfig.content.mobile;
-    return <MobileContent repositoryUrl={app.repositoryUrl} />;
+    
+    // Switch case ensures we handle all app types - compiler will error if we add new types  
+    // Force TypeScript to recognize this as the full AppType union
+    switch (app.type as AppType) {
+      case 'terminal': {
+        const Component = MobileContent as React.ComponentType<{ repositoryUrl?: string }>;
+        return <Component repositoryUrl={app.repositoryUrl} />;
+      }
+      case 'claude': {
+        const Component = MobileContent as React.ComponentType<{ repositoryUrl?: string }>;
+        return <Component repositoryUrl={app.repositoryUrl} />;
+      }
+      case 'vscode': {
+        const Component = MobileContent as React.ComponentType<{ repositoryUrl?: string }>;
+        return <Component repositoryUrl={app.repositoryUrl} />;
+      }
+      case 'settings': {
+        const Component = MobileContent as React.ComponentType<Record<string, never>>;
+        return <Component />;
+      }
+      case 'diff': {
+        const Component = MobileContent as React.ComponentType<Record<string, never>>;
+        return <Component />;
+      }
+    }
   };
 
 

@@ -7,14 +7,14 @@ import { MobileRepositoryPages } from './MobileRepositoryPages';
 import { MobileStatusBar } from './MobileStatusBar';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { getAllApps } from '../../apps';
-import { AppMetadata } from '../../apps/BaseApp';
+import { AppMetadata, AppType } from '../../apps/BaseApp';
 
 export interface MobileApp {
   id: string;
   name: string;
   icon: AppMetadata['icon'];
   color: string;
-  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal';
+  type: AppType;
   comingSoon?: boolean;
   repositoryUrl?: string;
 }

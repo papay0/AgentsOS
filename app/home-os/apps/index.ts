@@ -1,44 +1,71 @@
-// App Registry - Central place to register all apps
-import { AppRegistry, validateApp } from './BaseApp';
+// App Registry - Central place to register all apps with strong typing
+import { AppRegistry, validateApp, AppId, BaseApp } from './BaseApp';
 import { VSCodeApp } from './VSCodeApp';
 import { ClaudeApp } from './ClaudeApp';
 import { DiffApp } from './DiffApp';
 import { SettingsApp } from './SettingsApp';
 import { TerminalApp } from './TerminalApp';
 
-// Register all apps
+// Strongly typed app store - each app must match its declared type
 export const AppStore: AppRegistry = {
   vscode: VSCodeApp,
   claude: ClaudeApp,
   diff: DiffApp,
   settings: SettingsApp,
   terminal: TerminalApp,
-};
+} as const;
 
 // Validate all apps at startup (development only)
 if (process.env.NODE_ENV === 'development') {
-  Object.entries(AppStore).forEach(([id, app]) => {
-    const validation = validateApp(app);
+  (Object.entries(AppStore) as Array<[AppId, AppRegistry[AppId]]>).forEach(([id, app]) => {
+    // Type-safe validation using function overloading
+    const validation = (() => {
+      switch (id) {
+        case 'terminal': return validateApp(app as BaseApp<'terminal'>);
+        case 'claude': return validateApp(app as BaseApp<'claude'>);
+        case 'vscode': return validateApp(app as BaseApp<'vscode'>);
+        case 'settings': return validateApp(app as BaseApp<'settings'>);
+        case 'diff': return validateApp(app as BaseApp<'diff'>);
+        default: throw new Error(`Unknown app id: ${id}`);
+      }
+    })();
+    
     if (!validation.valid) {
       console.error(`App validation failed for "${id}":`, validation.errors);
     }
   });
 }
 
-// Helper functions for working with apps
-export const getApp = (id: string) => AppStore[id];
+// Strongly typed helper functions for working with apps
+export const getApp = <T extends AppId>(id: T): AppRegistry[T] => AppStore[id];
 
-export const getAllApps = () => Object.values(AppStore);
+export const getAllApps = () => Object.values(AppStore) as readonly AppRegistry[AppId][];
 
 export const getAvailableApps = () => 
-  Object.values(AppStore).filter(app => !app.metadata.comingSoon);
+  Object.values(AppStore).filter(app => !app.metadata.comingSoon) as readonly AppRegistry[AppId][];
 
 export const getComingSoonApps = () => 
-  Object.values(AppStore).filter(app => app.metadata.comingSoon);
+  Object.values(AppStore).filter(app => app.metadata.comingSoon) as readonly AppRegistry[AppId][];
 
 export const getAppsByCategory = (category: string) =>
-  Object.values(AppStore).filter(app => app.metadata.category === category);
+  Object.values(AppStore).filter(app => app.metadata.category === category) as readonly AppRegistry[AppId][];
 
-// Type exports for consumers
-export type { BaseApp, AppMetadata, AppWindow, AppContent } from './BaseApp';
+// Strongly typed exports for consumers
+export type { 
+  BaseApp, 
+  AppMetadata, 
+  AppWindow, 
+  AppActions,
+  AppId,
+  AppType,
+  AppContent,
+  AppPropsMap,
+  PropsForApp,
+  TerminalAppProps,
+  ClaudeAppProps,
+  VSCodeAppProps,
+  SettingsAppProps,
+  DiffAppProps,
+  AppRegistry
+} from './BaseApp';
 export { createApp, validateApp } from './BaseApp';

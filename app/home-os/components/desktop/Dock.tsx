@@ -4,7 +4,7 @@ import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useWindowAnimation } from '../../hooks/useWindowAnimation';
 import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
-import { getAllApps, getApp } from '../../apps';
+import { getAllApps, getApp, AppStore } from '../../apps';
 import AppIcon from '../ui/AppIcon';
 
 export default function Dock() {
@@ -123,14 +123,14 @@ export default function Dock() {
   };
 
   const getAppIcon = (type: string) => {
-    const app = getApp(type);
+    const app = AppStore[type as keyof typeof AppStore];
     if (!app) return <Code className="w-6 h-6" />;
     
     return <AppIcon icon={app.metadata.icon} size="md" />;
   };
 
   const getAppColor = (type: string) => {
-    const app = getApp(type);
+    const app = AppStore[type as keyof typeof AppStore];
     if (!app) return 'bg-gray-500 hover:bg-gray-600';
     
     // Extract the base color from the app's primary color
