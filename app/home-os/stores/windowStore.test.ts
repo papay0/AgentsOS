@@ -17,13 +17,15 @@ Object.defineProperty(Date, 'now', {
 
 // Helper to reset store to clean state  
 const resetStore = () => {
-  useWindowStore.setState({
-    windows: [],
-    nextZIndex: 10, // WINDOW_Z_INDEX_BASE
-    activeWindowId: null,
-    onboardingCompleted: false,
-    isCheckingWorkspaces: false,
-    workspaceData: null,
+  act(() => {
+    useWindowStore.setState({
+      windows: [],
+      nextZIndex: 10, // WINDOW_Z_INDEX_BASE
+      activeWindowId: null,
+      onboardingCompleted: false,
+      isCheckingWorkspaces: false,
+      workspaceData: null,
+    });
   });
 }
 
@@ -119,7 +121,9 @@ describe('WindowStore', () => {
       const { result } = renderHook(() => useWindowStore())
       
       // Set nextZIndex to near maximum
-      useWindowStore.setState({ nextZIndex: 89 })
+      act(() => {
+        useWindowStore.setState({ nextZIndex: 89 })
+      })
 
       const windowData = {
         type: 'vscode' as const,
@@ -237,20 +241,22 @@ describe('WindowStore', () => {
       // Start completely fresh - reset first
       resetStore();
       
-      useWindowStore.setState({
-        windows: [{
-          id: 'test-123',
-          type: 'vscode' as const,
-          title: 'Original Title',
-          position: { x: 0, y: 0 },
-          size: { width: 400, height: 300 },
-          zIndex: 10,
-          minimized: false,
-          maximized: false,
-          focused: true,
-        }],
-        nextZIndex: 11,
-        activeWindowId: 'test-123',
+      act(() => {
+        useWindowStore.setState({
+          windows: [{
+            id: 'test-123',
+            type: 'vscode' as const,
+            title: 'Original Title',
+            position: { x: 0, y: 0 },
+            size: { width: 400, height: 300 },
+            zIndex: 10,
+            minimized: false,
+            maximized: false,
+            focused: true,
+          }],
+          nextZIndex: 11,
+          activeWindowId: 'test-123',
+        })
       })
       
       // Call updateWindow directly on the store
@@ -774,12 +780,14 @@ describe('WindowStore', () => {
       const windowId = result.current.windows[0].id
 
       // Manually set z-index to near maximum  
-      useWindowStore.setState((state) => ({
-        windows: state.windows.map(w => 
-          w.id === windowId ? { ...w, zIndex: 89 } : w
-        ),
-        nextZIndex: 90
-      }))
+      act(() => {
+        useWindowStore.setState((state) => ({
+          windows: state.windows.map(w => 
+            w.id === windowId ? { ...w, zIndex: 89 } : w
+          ),
+          nextZIndex: 90
+        }))
+      })
 
       // Focus should handle max z-index properly
       act(() => {
