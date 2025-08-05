@@ -19,9 +19,9 @@
 
 ### Mobile Experience
 <div align="center">
-    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-terminal.png" alt="AgentsPod Mobile Terminal" width="250" style="margin: 0 20px;">
-    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-vscode.png" alt="AgentsPod Mobile VSCode" width="250" style="margin: 0 20px;">
-    <p><em>Full terminal and VSCode experience on mobile devices</em></p>
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-claude.png" alt="AgentsPod Mobile Terminal" width="250" style="margin: 0 20px;">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-homescreen.png" alt="AgentsOS Mobile Homescreen" width="250" style="margin: 0 20px;">
+    <p><em>Full terminal and Claude Code experience on mobile devices</em></p>
 </div>
 
 > Launch on-demand development workspaces with VSCode and Claude Code CLI pre-installed. Code with AI assistance from anywhere, even your phone.
