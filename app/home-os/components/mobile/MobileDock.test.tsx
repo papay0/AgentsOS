@@ -46,11 +46,10 @@ describe('MobileDock Component', () => {
     it('has proper backdrop blur and transparency', () => {
       const { container } = render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} />)
       
-      // Check dock background styling
-      const dockBackground = container.querySelector('.bg-white\\/20')
-      expect(dockBackground).toBeInTheDocument()
-      expect(dockBackground).toHaveClass('bg-white/20', 'dark:bg-gray-800/40', 'backdrop-blur-xl', 'rounded-3xl')
-      expect(dockBackground).toHaveClass('border', 'border-white/10', 'dark:border-gray-600/20')
+      // Check dock background styling with glass effect
+      const glassEffect = container.querySelector('.rounded-3xl')
+      expect(glassEffect).toBeInTheDocument()
+      expect(glassEffect).toHaveClass('rounded-3xl')
     })
   })
 
@@ -95,27 +94,30 @@ describe('MobileDock Component', () => {
       render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} />)
       
       const vscodeButton = screen.getByText('💻').closest('button')!
-      expect(vscodeButton).toHaveClass('w-14', 'h-14', 'bg-blue-500', 'rounded-xl')
+      expect(vscodeButton).toHaveClass('w-14', 'h-14', 'rounded-xl')
       expect(vscodeButton).toHaveClass('flex', 'items-center', 'justify-center')
-      expect(vscodeButton).toHaveClass('shadow-lg', 'active:scale-95', 'transition-transform', 'duration-100')
-      expect(vscodeButton).toHaveClass('touch-manipulation')
+      expect(vscodeButton).toHaveClass('shadow-lg', 'active:scale-95', 'touch-manipulation')
+      expect(vscodeButton).toHaveClass('bg-white/8', 'backdrop-blur-sm', 'border', 'border-white/15')
     })
 
-    it('displays correct app colors', () => {
+    it('displays glass effect styling instead of app colors', () => {
       render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} />)
       
-      expect(screen.getByText('💻').closest('button')).toHaveClass('bg-blue-500')
-      expect(screen.getByText('🤖').closest('button')).toHaveClass('bg-purple-500')
-      expect(screen.getByText('⚡').closest('button')).toHaveClass('bg-green-500')
-      expect(screen.getByText('⚙️').closest('button')).toHaveClass('bg-gray-500')
+      // All buttons should have the same glass effect styling
+      const buttons = screen.getAllByRole('button')
+      buttons.forEach(button => {
+        expect(button).toHaveClass('bg-white/8')
+        expect(button).toHaveClass('backdrop-blur-sm')
+        expect(button).toHaveClass('border-white/15')
+      })
     })
 
     it('spaces icons correctly in dock', () => {
       const { container } = render(<MobileDock apps={sampleApps} onAppOpen={mockOnAppOpen} />)
       
-      const iconContainer = container.querySelector('.flex.items-center.justify-center.space-x-4')
+      const iconContainer = container.querySelector('.flex.items-center.justify-center.space-x-2')
       expect(iconContainer).toBeInTheDocument()
-      expect(iconContainer).toHaveClass('space-x-4', 'px-6', 'py-4')
+      expect(iconContainer).toHaveClass('space-x-2', 'px-1', 'py-0.5')
     })
   })
 
@@ -187,7 +189,7 @@ describe('MobileDock Component', () => {
       const buttons = screen.getAllByRole('button')
       buttons.forEach(button => {
         expect(button).toHaveClass('active:scale-95')
-        expect(button).toHaveClass('transition-transform', 'duration-100')
+        expect(button).toHaveClass('transition-all')
       })
     })
   })

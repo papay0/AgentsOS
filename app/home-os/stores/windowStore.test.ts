@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 
 // Clear the mock before importing to ensure we get the real implementation

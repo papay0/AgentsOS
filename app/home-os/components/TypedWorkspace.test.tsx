@@ -252,7 +252,7 @@ describe('Workspace - Strongly Typed Tests', () => {
   })
 
   describe('Theme Support', () => {
-    it('applies correct gradient classes on desktop', async () => {
+    it('applies correct wallpaper background class on desktop', async () => {
       mockedUseIsMobile.mockReturnValue(false)
       render(<Workspace />)
       
@@ -262,13 +262,13 @@ describe('Workspace - Strongly Typed Tests', () => {
       }, { timeout: 1000 })
       
       const workspace = screen.getByTestId('desktop-workspace')
-      expect(workspace).toHaveClass('bg-gradient-to-br')
-      expect(workspace).toHaveClass('from-blue-200')
-      expect(workspace).toHaveClass('via-purple-200')
-      expect(workspace).toHaveClass('to-pink-200')
+      expect(workspace).toHaveClass('wallpaper-background')
+      expect(workspace).toHaveClass('relative')
+      expect(workspace).toHaveClass('w-full')
+      expect(workspace).toHaveClass('h-full')
     })
 
-    it('includes dark mode gradient classes on desktop', async () => {
+    it('includes select-none class on desktop', async () => {
       mockedUseIsMobile.mockReturnValue(false)
       render(<Workspace />)
       
@@ -278,9 +278,7 @@ describe('Workspace - Strongly Typed Tests', () => {
       }, { timeout: 1000 })
       
       const workspace = screen.getByTestId('desktop-workspace')
-      expect(workspace).toHaveClass('dark:from-blue-900')
-      expect(workspace).toHaveClass('dark:via-purple-900')
-      expect(workspace).toHaveClass('dark:to-gray-900')
+      expect(workspace).toHaveClass('select-none')
     })
   })
 
