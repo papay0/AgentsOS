@@ -266,15 +266,6 @@ export default function Dock() {
     return <AppIcon icon={app.metadata.icon} size="md" />;
   };
 
-  const getAppColor = (type: string) => {
-    const app = AppStore[type as keyof typeof AppStore];
-    if (!app) return 'bg-gray-500 hover:bg-gray-600';
-    
-    // Extract the base color from the app's primary color
-    const primaryColor = app.metadata.colors.primary;
-    const baseColor = primaryColor.replace('bg-', '');
-    return `bg-${baseColor} hover:bg-${baseColor.replace('-500', '-600')}`;
-  };
 
   // Don't render dock if no active workspace
   if (!activeWorkspace) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Monitor, Brain, Layers, Smartphone, Terminal, GitBranch } from 'lucide-react';
+import { Monitor, Brain, Smartphone, GitBranch } from 'lucide-react';
 import { AgentsBentoGrid, type BentoItem } from '@/components/ui/agents-bento-grid';
 import './AgentsOSArchitecture.css';
 

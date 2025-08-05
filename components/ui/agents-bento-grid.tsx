@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { AgentsOSArchitecture } from "@/app/components/landing/AgentsOSArchitecture";
 
 export interface BentoItem {
     title: string;

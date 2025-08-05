@@ -64,10 +64,10 @@ export function WaitlistSection() {
                 >
                   <Mail className="h-12 w-12 mx-auto text-green-600 dark:text-green-400 mb-4" />
                   <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
-                    You're on the list! 🎉
+                    You&apos;re on the list! 🎉
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    We'll notify you as soon as AgentsOS is ready for you.
+                    We&apos;ll notify you as soon as AgentsOS is ready for you.
                   </p>
                 </motion.div>
               ) : (
