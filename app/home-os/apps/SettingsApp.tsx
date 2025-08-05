@@ -1,12 +1,76 @@
-import { User, Moon, Sun, Download, Monitor } from 'lucide-react';
+import { User, Moon, Sun, Download, Monitor, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useTheme } from '@/components/theme-provider';
 import { createApp } from './BaseApp';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
+
+// Wallpapers
+const wallpapers = [
+  {
+    id: 'wallpaper-1',
+    name: 'Wallpaper 1',
+    url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2560&h=1440&fit=crop&crop=center&q=80',
+    thumb: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=120&fit=crop&crop=center&q=80'
+  },
+  {
+    id: 'wallpaper-2',
+    name: 'Wallpaper 2',
+    url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=2560&h=1440&fit=crop&crop=center&q=80',
+    thumb: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&h=120&fit=crop&crop=center&q=80'
+  },
+  {
+    id: 'wallpaper-3',
+    name: 'Wallpaper 3',
+    url: 'https://images.unsplash.com/photo-1544198365-f5d60b6d8190?w=2560&h=1440&fit=crop&crop=center&q=80',
+    thumb: 'https://images.unsplash.com/photo-1544198365-f5d60b6d8190?w=200&h=120&fit=crop&crop=center&q=80'
+  },
+  {
+    id: 'wallpaper-4',
+    name: 'Wallpaper 4',
+    url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=2560&h=1440&fit=crop&crop=center&q=80',
+    thumb: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&h=120&fit=crop&crop=center&q=80'
+  }
+];
 
 const SettingsDesktopContent = () => {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
+  const [selectedWallpaper, setSelectedWallpaper] = useState('wallpaper-1');
+
+  // Load wallpaper preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('agentsos-wallpaper');
+    if (saved) {
+      setSelectedWallpaper(saved);
+    } else {
+      // Set default wallpaper on first load
+      const defaultWallpaper = wallpapers.find(w => w.id === 'wallpaper-1');
+      if (defaultWallpaper && typeof document !== 'undefined') {
+        document.documentElement.style.setProperty(
+          '--desktop-background', 
+          `url("${defaultWallpaper.url}")`
+        );
+        localStorage.setItem('agentsos-wallpaper', 'wallpaper-1');
+      }
+    }
+  }, []);
+
+  // Apply wallpaper to desktop background
+  useEffect(() => {
+    const wallpaper = wallpapers.find(w => w.id === selectedWallpaper);
+    if (wallpaper && typeof document !== 'undefined') {
+      document.documentElement.style.setProperty(
+        '--desktop-background', 
+        `url("${wallpaper.url}")`
+      );
+      localStorage.setItem('agentsos-wallpaper', selectedWallpaper);
+    }
+  }, [selectedWallpaper]);
+
+  const handleWallpaperChange = (wallpaperId: string) => {
+    setSelectedWallpaper(wallpaperId);
+  };
 
   return (
     <div className="w-full h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 overflow-y-auto">
@@ -95,6 +159,50 @@ const SettingsDesktopContent = () => {
             </div>
           </div>
 
+          {/* Desktop Wallpaper */}
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <ImageIcon className="w-5 h-5 mr-2" />
+              Desktop Wallpaper
+            </h2>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {wallpapers.map((wallpaper) => (
+                <div key={wallpaper.id} className="relative">
+                  <button
+                    onClick={() => handleWallpaperChange(wallpaper.id)}
+                    className={`relative w-full h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      selectedWallpaper === wallpaper.id 
+                        ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800' 
+                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-300'
+                    }`}
+                  >
+                    <Image
+                      src={wallpaper.thumb}
+                      alt={wallpaper.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 200px"
+                    />
+                    {selectedWallpaper === wallpaper.id && (
+                      <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                  <div className="mt-2">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {wallpaper.name}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Installed Apps */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center">
@@ -153,6 +261,78 @@ const SettingsDesktopContent = () => {
               </div>
             </div>
           </div>
+
+          {/* OpenSource Credits */}
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <ExternalLink className="w-5 h-5 mr-2" />
+              OpenSource Credits
+            </h2>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-white text-sm">🔮</span>
+                  </div>
+                  <div>
+                    <div className="font-medium">Liquid Glass Dock</div>
+                    <div className="text-sm text-gray-500">Glass effect dock design</div>
+                  </div>
+                </div>
+                <a 
+                  href="https://21st.dev/suraj-xd/liquid-glass/default" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-white text-sm">🖥️</span>
+                  </div>
+                  <div>
+                    <div className="font-medium">CPU Architecture</div>
+                    <div className="text-sm text-gray-500">Animated CPU design component</div>
+                  </div>
+                </div>
+                <a 
+                  href="https://21st.dev/svg-ui/cpu-architecture/default" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-white text-sm">🎨</span>
+                  </div>
+                  <div>
+                    <div className="font-medium">Bento Grid</div>
+                    <div className="text-sm text-gray-500">Features grid layout component</div>
+                  </div>
+                </div>
+                <a 
+                  href="https://21st.dev/kokonutd/bento-grid/default" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 text-sm flex items-center"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>Thank you!</strong> These amazing open source tools helped make AgentsOS beautiful and functional.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -162,6 +342,41 @@ const SettingsDesktopContent = () => {
 const SettingsMobileContent = () => {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
+  const [selectedWallpaper, setSelectedWallpaper] = useState('wallpaper-1');
+
+  // Load wallpaper preference from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('agentsos-wallpaper');
+    if (saved) {
+      setSelectedWallpaper(saved);
+    } else {
+      // Set default wallpaper on first load
+      const defaultWallpaper = wallpapers.find(w => w.id === 'wallpaper-1');
+      if (defaultWallpaper && typeof document !== 'undefined') {
+        document.documentElement.style.setProperty(
+          '--desktop-background', 
+          `url("${defaultWallpaper.url}")`
+        );
+        localStorage.setItem('agentsos-wallpaper', 'wallpaper-1');
+      }
+    }
+  }, []);
+
+  // Apply wallpaper to desktop background
+  useEffect(() => {
+    const wallpaper = wallpapers.find(w => w.id === selectedWallpaper);
+    if (wallpaper && typeof document !== 'undefined') {
+      document.documentElement.style.setProperty(
+        '--desktop-background', 
+        `url("${wallpaper.url}")`
+      );
+      localStorage.setItem('agentsos-wallpaper', selectedWallpaper);
+    }
+  }, [selectedWallpaper]);
+
+  const handleWallpaperChange = (wallpaperId: string) => {
+    setSelectedWallpaper(wallpaperId);
+  };
 
   return (
     <div className="w-full h-full bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 p-4 overflow-y-auto">
@@ -241,6 +456,50 @@ const SettingsMobileContent = () => {
           </div>
         </div>
 
+        {/* Desktop Wallpaper */}
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+          <h3 className="font-medium mb-3 flex items-center">
+            <ImageIcon className="w-4 h-4 mr-2" />
+            Desktop Wallpaper
+          </h3>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {wallpapers.map((wallpaper) => (
+              <div key={wallpaper.id} className="relative">
+                <button
+                  onClick={() => handleWallpaperChange(wallpaper.id)}
+                  className={`relative w-full h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                    selectedWallpaper === wallpaper.id 
+                      ? 'border-blue-500 ring-1 ring-blue-200 dark:ring-blue-800' 
+                      : 'border-gray-300 dark:border-gray-600 hover:border-blue-300'
+                  }`}
+                >
+                  <Image
+                    src={wallpaper.thumb}
+                    alt={wallpaper.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 150px, 200px"
+                  />
+                  {selectedWallpaper === wallpaper.id && (
+                    <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </button>
+                <div className="mt-1">
+                  <div className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                    {wallpaper.name}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Apps */}
         <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
           <h3 className="font-medium mb-3 flex items-center">
@@ -275,6 +534,78 @@ const SettingsMobileContent = () => {
           <div className="space-y-1 text-sm">
             <div>AgentsPod v1.0.0</div>
             <div className="text-gray-500">Web Platform</div>
+          </div>
+        </div>
+
+        {/* OpenSource Credits */}
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+          <h3 className="font-medium mb-3 flex items-center">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            OpenSource Credits
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded mr-2 flex items-center justify-center">
+                  <span className="text-white text-xs">🔮</span>
+                </div>
+                <div>
+                  <div className="text-sm font-medium">Liquid Glass Dock</div>
+                  <div className="text-xs text-gray-500">Glass effect design</div>
+                </div>
+              </div>
+              <a 
+                href="https://21st.dev/suraj-xd/liquid-glass/default" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-emerald-500 rounded mr-2 flex items-center justify-center">
+                  <span className="text-white text-xs">🖥️</span>
+                </div>
+                <div>
+                  <div className="text-sm font-medium">CPU Architecture</div>
+                  <div className="text-xs text-gray-500">Animated component</div>
+                </div>
+              </div>
+              <a 
+                href="https://21st.dev/svg-ui/cpu-architecture/default" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded mr-2 flex items-center justify-center">
+                  <span className="text-white text-xs">🎨</span>
+                </div>
+                <div>
+                  <div className="text-sm font-medium">Bento Grid</div>
+                  <div className="text-xs text-gray-500">Features layout</div>
+                </div>
+              </div>
+              <a 
+                href="https://21st.dev/kokonutd/bento-grid/default" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+          <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+            <div className="text-xs text-blue-800 dark:text-blue-200">
+              <strong>Thank you!</strong> These tools helped make AgentsOS beautiful.
+            </div>
           </div>
         </div>
       </div>

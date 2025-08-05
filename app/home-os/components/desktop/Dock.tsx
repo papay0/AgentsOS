@@ -6,6 +6,143 @@ import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
 import { getAllApps, getApp, AppStore } from '../../apps';
 import AppIcon from '../ui/AppIcon';
+import React, { useState } from 'react';
+
+// Glass Effect Components
+interface GlassEffectProps {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+const GlassEffect: React.FC<GlassEffectProps> = ({
+  children,
+  className = "",
+  style = {},
+}) => {
+  const glassStyle = {
+    boxShadow: "0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1)",
+    transitionTimingFunction: "cubic-bezier(0.175, 0.885, 0.32, 2.2)",
+    ...style,
+  };
+
+  return (
+    <div
+      className={`relative flex overflow-visible cursor-pointer transition-all duration-700 ${className}`}
+      style={glassStyle}
+    >
+      {/* Glass Layers */}
+      <div
+        className="absolute inset-0 z-0 overflow-hidden rounded-3xl"
+        style={{
+          backdropFilter: "blur(8px)",
+          filter: "url(#glass-distortion)",
+          isolation: "isolate",
+        }}
+      />
+      <div
+        className="absolute inset-0 z-10 rounded-3xl"
+        style={{ background: "rgba(255, 255, 255, 0.12)" }}
+      />
+      <div
+        className="absolute inset-0 z-20 rounded-3xl overflow-hidden"
+        style={{
+          boxShadow:
+            "inset 2px 2px 2px 0 rgba(255, 255, 255, 0.25), inset -2px -2px 2px 0 rgba(255, 255, 255, 0.15)",
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-30">{children}</div>
+    </div>
+  );
+};
+
+// SVG Filter Component
+const GlassFilter: React.FC = () => (
+  <svg style={{ display: "none" }}>
+    <filter
+      id="glass-distortion"
+      x="0%"
+      y="0%"
+      width="100%"
+      height="100%"
+      filterUnits="objectBoundingBox"
+    >
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.001 0.005"
+        numOctaves="1"
+        seed="17"
+        result="turbulence"
+      />
+      <feComponentTransfer in="turbulence" result="mapped">
+        <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+        <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+        <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+      </feComponentTransfer>
+      <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
+      <feSpecularLighting
+        in="softMap"
+        surfaceScale="5"
+        specularConstant="1"
+        specularExponent="100"
+        lightingColor="white"
+        result="specLight"
+      >
+        <fePointLight x="-200" y="-200" z="300" />
+      </feSpecularLighting>
+      <feComposite
+        in="specLight"
+        operator="arithmetic"
+        k1="0"
+        k2="1"
+        k3="1"
+        k4="0"
+        result="litImage"
+      />
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="softMap"
+        scale="200"
+        xChannelSelector="R"
+        yChannelSelector="G"
+      />
+    </filter>
+  </svg>
+);
+
+// macOS-style Tooltip Component
+interface TooltipProps {
+  text: string;
+  children: React.ReactNode;
+}
+
+const MacTooltip: React.FC<TooltipProps> = ({ text, children }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <div 
+      className="relative"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      {isVisible && (
+        <div 
+          className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 pointer-events-none"
+          style={{ zIndex: 9999 }}
+        >
+          <div className="bg-gray-900/95 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-xl border border-gray-600/30 whitespace-nowrap">
+            {text}
+          </div>
+          {/* Arrow */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-gray-900/95"></div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Dock() {
   const { 
@@ -129,15 +266,6 @@ export default function Dock() {
     return <AppIcon icon={app.metadata.icon} size="md" />;
   };
 
-  const getAppColor = (type: string) => {
-    const app = AppStore[type as keyof typeof AppStore];
-    if (!app) return 'bg-gray-500 hover:bg-gray-600';
-    
-    // Extract the base color from the app's primary color
-    const primaryColor = app.metadata.colors.primary;
-    const baseColor = primaryColor.replace('bg-', '');
-    return `bg-${baseColor} hover:bg-${baseColor.replace('-500', '-600')}`;
-  };
 
   // Don't render dock if no active workspace
   if (!activeWorkspace) {
@@ -145,66 +273,82 @@ export default function Dock() {
   }
 
   return (
-    <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2" style={{ zIndex: DOCK_Z_INDEX }}>
-      <div className="flex items-center space-x-2 bg-black/30 backdrop-blur-xl rounded-2xl px-4 py-3 border border-white/10 shadow-2xl">
-        {/* Main app icons */}
-        {getAllApps().map((app) => (
-          <DockIcon 
-            key={app.metadata.id}
-            onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal')}
-            className={`${getAppColor(app.metadata.id)} ${app.metadata.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={`${app.metadata.name} - ${activeWorkspace.name}`}
-            dataAttribute={app.metadata.id}
-          >
-            {getAppIcon(app.metadata.id)}
-          </DockIcon>
-        ))}
+    <>
+      <GlassFilter />
+      <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2" style={{ zIndex: DOCK_Z_INDEX }}>
+        <GlassEffect className="rounded-3xl p-3 hover:p-3.5 transition-all duration-300">
+          <div className="flex items-center justify-center space-x-2 px-2 py-1">
+            {/* Main app icons */}
+            {getAllApps().map((app) => (
+              <MacTooltip key={app.metadata.id} text={app.metadata.name}>
+                <GlassDockIcon
+                  onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal')}
+                  className={`${app.metadata.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title="" // Remove default tooltip since we have custom one
+                  dataAttribute={app.metadata.id}
+                  disabled={app.metadata.comingSoon}
+                >
+                  {getAppIcon(app.metadata.id)}
+                </GlassDockIcon>
+              </MacTooltip>
+            ))}
 
-        {/* Separator */}
-        {minimizedWindows.length > 0 && (
-          <div className="w-px h-8 bg-white/20 mx-2" />
-        )}
+            {/* Separator */}
+            {minimizedWindows.length > 0 && (
+              <div className="w-px h-8 bg-white/25 mx-2" />
+            )}
 
-        {/* Minimized windows */}
-        {minimizedWindows.map((window) => (
-          <DockIcon
-            key={window.id}
-            onClick={() => handleMinimizedWindowClick(window.id)}
-            className={`${getAppColor(window.type)} relative`}
-            title={window.title}
-            dataAttribute={window.type}
-          >
-            {getAppIcon(window.type)}
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
-          </DockIcon>
-        ))}
-
+            {/* Minimized windows */}
+            {minimizedWindows.map((window) => (
+              <MacTooltip key={window.id} text={window.title}>
+                <GlassDockIcon
+                  onClick={() => handleMinimizedWindowClick(window.id)}
+                  className="relative"
+                  title="" // Remove default tooltip since we have custom one
+                  dataAttribute={window.type}
+                >
+                  {getAppIcon(window.type)}
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-lg" />
+                </GlassDockIcon>
+              </MacTooltip>
+            ))}
+          </div>
+        </GlassEffect>
       </div>
-    </div>
+    </>
   );
 }
 
-interface DockIconProps {
+interface GlassDockIconProps {
   onClick: () => void;
-  className: string;
+  className?: string;
   title: string;
   children: React.ReactNode;
   dataAttribute?: string;
+  disabled?: boolean;
 }
 
-function DockIcon({ onClick, className, title, children, dataAttribute }: DockIconProps) {
+function GlassDockIcon({ onClick, className = "", title, children, dataAttribute, disabled = false }: GlassDockIconProps) {
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       className={`
-        w-12 h-12 rounded-xl flex items-center justify-center text-white
-        transition-all duration-200 ease-out
-        hover:scale-110 hover:shadow-lg
+        w-14 h-14 rounded-2xl flex items-center justify-center text-white
+        transition-all duration-300 ease-out
+        hover:scale-110 hover:shadow-xl hover:-translate-y-1
         active:scale-95
+        bg-white/10 backdrop-blur-md
+        border border-white/20
+        shadow-lg
+        ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
         ${className}
       `}
+      style={{
+        transitionTimingFunction: "cubic-bezier(0.175, 0.885, 0.32, 2.2)",
+      }}
       title={title}
       data-dock-icon={dataAttribute}
+      disabled={disabled}
     >
       {children}
     </button>

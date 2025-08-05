@@ -44,7 +44,7 @@ export default function Workspace() {
     activeWorkspaceId, 
     sandboxId,
     initializeWorkspaces,
-    setSandboxId 
+    setSandboxId
   } = useWorkspaceStore();
   
   const { userId } = useAuth();
@@ -54,6 +54,13 @@ export default function Workspace() {
   } = useAgentsOSUser();
   
   const isMobile = useIsMobile();
+  const [dragSelect, setDragSelect] = useState<{
+    isSelecting: boolean;
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+  } | null>(null);
   
   // REAL-TIME Firebase state
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUserData | null>(null);
@@ -76,20 +83,20 @@ export default function Workspace() {
       return;
     }
 
-    console.log('Setting up real-time Firebase listener for user:', userId);
+    // Setting up real-time Firebase listener
     
     const unsubscribe = onSnapshot(
       doc(db, 'users', userId),
       (snapshot) => {
         if (snapshot.exists()) {
           const userData = snapshot.data();
-          console.log('Firebase real-time update:', userData);
+          // Firebase real-time update received
           setFirebaseUser(userData);
           
           // Initialize workspace if we have data
           const workspace = userData?.agentsOS?.workspace;
           if (workspace?.repositories && workspace.sandboxId) {
-            console.log('Initializing workspace from Firebase:', workspace);
+            // Initializing workspace from Firebase data
             setSandboxId(workspace.sandboxId);
             
             if (workspaces.length === 0) {
@@ -97,7 +104,7 @@ export default function Workspace() {
             }
           }
         } else {
-          console.log('No Firebase user document found');
+          // No Firebase user document found
           setFirebaseUser(null);
         }
         setIsFirebaseLoading(false);
@@ -123,7 +130,7 @@ export default function Workspace() {
 
   // ULTRA SIMPLE onboarding completion - save workspace to Firebase
   const handleOnboardingComplete = async (workspaceData?: CreateWorkspaceResponse) => {
-    console.log('Onboarding completed - saving to Firebase');
+    // Onboarding completed - saving to Firebase
     
     // Mark onboarding as complete
     await completeAgentsOSOnboarding();
@@ -159,6 +166,54 @@ export default function Workspace() {
   // Derive state from Firebase data
   const hasCompletedOnboarding = firebaseUser?.agentsOS?.onboardingCompleted || false;
 
+  // Handle drag selection (desktop only)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isMobile) return;
+    // Allow drag select if not on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-window-id]') || target.closest('[data-dock]') || target.closest('[data-menubar]')) return;
+    // Starting drag select
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragSelect({
+      isSelecting: true,
+      startX: e.clientX - rect.left,
+      startY: e.clientY - rect.top,
+      currentX: e.clientX - rect.left,
+      currentY: e.clientY - rect.top,
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragSelect?.isSelecting || isMobile) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragSelect({
+      ...dragSelect,
+      currentX: e.clientX - rect.left,
+      currentY: e.clientY - rect.top,
+    });
+  };
+
+  const handleMouseUp = () => {
+    if (!dragSelect?.isSelecting || isMobile) return;
+    setDragSelect(null);
+  };
+
+
+  // Calculate drag selection rectangle
+  const getSelectionRect = () => {
+    if (!dragSelect?.isSelecting) return null;
+    
+    const { startX, startY, currentX, currentY } = dragSelect;
+    return {
+      left: Math.min(startX, currentX),
+      top: Math.min(startY, currentY),
+      width: Math.abs(currentX - startX),
+      height: Math.abs(currentY - startY),
+    };
+  };
+
   // ALWAYS render the main content if we have basic data - be aggressive!
   let mainContent = null;
   
@@ -190,12 +245,39 @@ export default function Workspace() {
 
         // Render desktop workspace - terminals will start loading immediately
         mainContent = (
-          <div 
-            data-testid="desktop-workspace"
-            className="relative w-full h-full bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 dark:from-blue-900 dark:via-purple-900 dark:to-gray-900"
-          >
+              <div 
+                data-testid="desktop-workspace"
+                className="relative w-full h-full wallpaper-background select-none"
+                style={{
+                  backgroundImage: 'var(--desktop-background, url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2560&h=1440&fit=crop&crop=center&q=80"))',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundAttachment: 'fixed'
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+            {/* Drag selection rectangle - absolutely first, behind everything */}
+            {dragSelect?.isSelecting && getSelectionRect() && (
+              <div
+                className="absolute border-2 border-blue-500 bg-blue-500/20 pointer-events-none"
+                style={{
+                  left: `${getSelectionRect()!.left}px`,
+                  top: `${getSelectionRect()!.top}px`,
+                  width: `${getSelectionRect()!.width}px`,
+                  height: `${getSelectionRect()!.height}px`,
+                  zIndex: 0,
+                }}
+              />
+            )}
+            
             {/* Menu Bar */}
-            <MenuBar />
+            <div data-menubar>
+              <MenuBar />
+            </div>
             
             {/* Workspace Status Panel - Shows when workspace needs attention */}
             <WorkspaceStatusPanel 
@@ -221,23 +303,30 @@ export default function Workspace() {
                     .map((window) => {
                       // Debug logging for window URLs
                       if (workspace.id === activeWorkspaceId) {
-                        console.log(`Window ${window.title} URL:`, window.repositoryUrl);
+                        // Debug: Window URL logging removed
                       }
-                      return <Window key={window.id} window={window} />;
+                      return (
+                        <div key={window.id} data-window-id={window.id}>
+                          <Window window={window} />
+                        </div>
+                      );
                     })}
                 </div>
               ))}
             </div>
 
             {/* Dock - Floating over workspace (workspace-scoped) */}
-            <Dock />
+            <div data-dock>
+              <Dock />
+            </div>
+            
             
             {/* Global snap zone overlay */}
             <SnapZoneOverlay 
               activeZone={globalSnapState.activeZone}
               isVisible={globalSnapState.isVisible}
             />
-          </div>
+              </div>
         );
       }
     }

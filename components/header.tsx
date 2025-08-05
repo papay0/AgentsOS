@@ -15,7 +15,7 @@ export function Header() {
         {/* Left side - Logo */}
         <Link href="/home" className="flex items-center space-x-2">
           <Terminal className="h-6 w-6" />
-          <span className="font-bold">AgentsPod</span>
+          <span className="font-bold">AgentsOS</span>
         </Link>
         
         {/* Right side - Navigation */}
