@@ -83,20 +83,20 @@ export default function Workspace() {
       return;
     }
 
-    console.log('Setting up real-time Firebase listener for user:', userId);
+    // Setting up real-time Firebase listener
     
     const unsubscribe = onSnapshot(
       doc(db, 'users', userId),
       (snapshot) => {
         if (snapshot.exists()) {
           const userData = snapshot.data();
-          console.log('Firebase real-time update:', userData);
+          // Firebase real-time update received
           setFirebaseUser(userData);
           
           // Initialize workspace if we have data
           const workspace = userData?.agentsOS?.workspace;
           if (workspace?.repositories && workspace.sandboxId) {
-            console.log('Initializing workspace from Firebase:', workspace);
+            // Initializing workspace from Firebase data
             setSandboxId(workspace.sandboxId);
             
             if (workspaces.length === 0) {
@@ -104,7 +104,7 @@ export default function Workspace() {
             }
           }
         } else {
-          console.log('No Firebase user document found');
+          // No Firebase user document found
           setFirebaseUser(null);
         }
         setIsFirebaseLoading(false);
@@ -130,7 +130,7 @@ export default function Workspace() {
 
   // ULTRA SIMPLE onboarding completion - save workspace to Firebase
   const handleOnboardingComplete = async (workspaceData?: CreateWorkspaceResponse) => {
-    console.log('Onboarding completed - saving to Firebase');
+    // Onboarding completed - saving to Firebase
     
     // Mark onboarding as complete
     await completeAgentsOSOnboarding();
@@ -172,7 +172,7 @@ export default function Workspace() {
     // Allow drag select if not on interactive elements
     const target = e.target as HTMLElement;
     if (target.closest('[data-window-id]') || target.closest('[data-dock]') || target.closest('[data-menubar]')) return;
-    console.log('Starting drag select');
+    // Starting drag select
     
     const rect = e.currentTarget.getBoundingClientRect();
     setDragSelect({
@@ -303,7 +303,7 @@ export default function Workspace() {
                     .map((window) => {
                       // Debug logging for window URLs
                       if (workspace.id === activeWorkspaceId) {
-                        console.log(`Window ${window.title} URL:`, window.repositoryUrl);
+                        // Debug: Window URL logging removed
                       }
                       return (
                         <div key={window.id} data-window-id={window.id}>

@@ -47,9 +47,6 @@ describe('WindowStore', () => {
     it('initializes with empty state', () => {
       const { result } = renderHook(() => useWindowStore())
       
-      console.log('Store state:', result.current)
-      console.log('Windows:', result.current.windows)
-      
       // The test expects empty state, but let's see what we actually get
       expect(result.current.windows).toEqual([])
       expect(result.current.nextZIndex).toBe(10) // WINDOW_Z_INDEX_BASE
