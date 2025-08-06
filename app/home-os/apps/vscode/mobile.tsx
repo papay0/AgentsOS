@@ -1,4 +1,4 @@
-import { VSCodeEditor } from '@/components/workspace/vscode-editor';
+import { VSCodeEditor } from '@/app/home-os/components/ui/vscode-editor';
 import { VSCodeAppProps } from '../BaseApp';
 
 export const VSCodeMobile = ({ repositoryUrl }: VSCodeAppProps) => {
