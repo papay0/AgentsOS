@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useFirebaseAuth } from './use-firebase-auth';
-import { UserService, UserWorkspace } from '@/lib/user-service';
+import { UserService } from '@/lib/user-service';
+import type { UserWorkspace } from '@/types/workspace';
 
 /**
  * Hook for managing AgentsOS user state and operations
@@ -79,8 +80,7 @@ export function useAgentsOSUser() {
    * Update workspace status
    */
   const updateWorkspaceStatus = useCallback(async (
-    status: UserWorkspace['status'],
-    urls?: UserWorkspace['urls']
+    status: UserWorkspace['status']
   ) => {
     const uid = getFirebaseUid();
     if (!uid) {
@@ -88,11 +88,11 @@ export function useAgentsOSUser() {
     }
 
     try {
-      await userService.updateWorkspaceStatus(uid, status, urls);
+      await userService.updateWorkspaceStatus(uid, status);
       
       // Update local state
       setWorkspace(prev => 
-        prev ? { ...prev, status, ...(urls && { urls }) } : null
+        prev ? { ...prev, status, updatedAt: new Date() } : null
       );
     } catch (error) {
       console.error('Error updating workspace status:', error);

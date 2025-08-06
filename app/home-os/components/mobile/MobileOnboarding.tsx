@@ -24,14 +24,6 @@ const repositories = [
     icon: <Code className="w-6 h-6" />,
     tech: 'Next.js, TypeScript',
   },
-  {
-    id: 'pettitude',
-    name: 'Pettitude',
-    description: 'Pet care application',
-    url: 'https://github.com/papay0/Pettitude.git',
-    icon: <FileText className="w-6 h-6" />,
-    tech: 'React, TypeScript',
-  },
 ]
 
 export function MobileOnboarding({ onComplete, onSkip }: MobileOnboardingProps) {

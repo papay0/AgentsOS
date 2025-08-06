@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
+import { WorkspaceManager } from '@/lib/workspace-manager';
 
 export async function GET(
   request: Request,
@@ -36,23 +37,39 @@ export async function GET(
       );
     }
     
+    // Get sandbox to generate URLs
+    const workspaceManager = new WorkspaceManager(process.env.DAYTONA_API_KEY!);
+    const sandbox = await workspaceManager.getSandbox(sandboxId);
+    
     // Return repository data with URLs
     if (workspace.repositories && workspace.repositories.length > 0) {
-      // Return repository-specific URLs
+      // Generate URLs dynamically from ports for each repository
+      const repositoriesWithUrls = await Promise.all(
+        workspace.repositories.map(async (repo) => {
+          const [vscodeInfo, terminalInfo, claudeInfo] = await Promise.all([
+            sandbox.getPreviewLink(repo.ports.vscode),
+            sandbox.getPreviewLink(repo.ports.terminal),
+            sandbox.getPreviewLink(repo.ports.claude)
+          ]);
+          
+          return {
+            ...repo,
+            urls: {
+              vscode: vscodeInfo.url,
+              terminal: terminalInfo.url,
+              claude: claudeInfo.url
+            }
+          };
+        })
+      );
+
       return NextResponse.json({
-        repositories: workspace.repositories,
-        // For backward compatibility, use first repository's URLs as defaults
-        terminalUrl: workspace.repositories[0]?.urls?.terminal || '',
-        claudeTerminalUrl: workspace.repositories[0]?.urls?.claude || '',
-        vscodeUrl: workspace.repositories[0]?.urls?.vscode || ''
+        repositories: repositoriesWithUrls
       });
     } else {
-      // Fallback to legacy URLs if no repositories
+      // No repositories found
       return NextResponse.json({
-        repositories: [],
-        terminalUrl: workspace.urls?.terminal || '',
-        claudeTerminalUrl: workspace.urls?.claude || '',
-        vscodeUrl: workspace.urls?.vscode || ''
+        repositories: []
       });
     }
 
