@@ -36,6 +36,31 @@ const Timestamp = admin.firestore.Timestamp;
 import type { UserWorkspace } from '@/types/workspace';
 
 /**
+ * Clean undefined values from object to avoid Firestore errors
+ */
+function cleanUndefinedValues(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(cleanUndefinedValues);
+  }
+  
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = cleanUndefinedValues(value);
+      }
+    }
+    return cleaned;
+  }
+  
+  return obj;
+}
+
+/**
  * Server-side service for managing user data in Firebase (Admin SDK)
  */
 export class UserServiceAdmin {
@@ -59,10 +84,13 @@ export class UserServiceAdmin {
     try {
       const userRef = adminDb.collection('users').doc(uid);
       
+      // Clean the workspace data to avoid undefined values
+      const cleanedWorkspace = cleanUndefinedValues(workspace);
+      
       // Create or update user's embedded workspace
       await userRef.set({
         agentsOS: {
-          workspace: workspace,
+          workspace: cleanedWorkspace,
           lastAccessedAt: Timestamp.now(),
           onboardingCompleted: true,
           preferences: {

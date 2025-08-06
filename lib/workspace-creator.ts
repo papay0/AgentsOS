@@ -71,6 +71,10 @@ export class WorkspaceCreator {
         // Create default workspace repository
         const defaultRepo = PortManager.createDefaultRepository();
         
+        // Create directory for default repository (since cloneRepositories wasn't called)
+        this.logger.workspace.creating(`Creating default repository directory`);
+        await this.cloneRepositories(sandbox, projectDir, [defaultRepo]);
+        
         // Set up services for default repository
         repositoriesWithUrls = await this.services.setupRepositoryServices(sandbox, rootDir, [defaultRepo]);
       }
@@ -147,10 +151,18 @@ export class WorkspaceCreator {
       const clonedRepos: string[] = [];
       
       for (const repository of repositories) {
-        // Skip repositories without URLs (default, manual workspaces)
+        // Handle repositories without URLs (default, manual workspaces)
         if (!repository.url || repository.sourceType === 'default' || repository.sourceType === 'manual') {
-          this.logger.workspace.creating(`Skipping ${repository.sourceType} repository: ${repository.name}`);
-          clonedRepos.push(repository.name); // Count as processed
+          this.logger.workspace.creating(`Creating ${repository.sourceType} repository directory: ${repository.name}`);
+          
+          // Create empty directory for default/manual workspaces
+          const safeFolderName = repository.name.replace(/[^a-zA-Z0-9-_]/g, '-');
+          const mkdirCommand = `mkdir -p "${projectDir}/${safeFolderName}"`;
+          
+          await sandbox.process.executeCommand(mkdirCommand, projectDir);
+          this.logger.workspace.creating(`Created directory: ${projectDir}/${safeFolderName}`);
+          
+          clonedRepos.push(safeFolderName);
           continue;
         }
         
