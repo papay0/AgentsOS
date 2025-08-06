@@ -94,8 +94,7 @@ export class UserServiceAdmin {
           lastAccessedAt: Timestamp.now(),
           onboardingCompleted: true,
           preferences: {
-            theme: 'system',
-            notifications: true
+            theme: 'system'
           }
         },
         updatedAt: Timestamp.now(),

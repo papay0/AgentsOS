@@ -20,7 +20,6 @@ export interface UserProfile {
     workspace?: UserWorkspace; // Single workspace per user
     preferences: {
       theme: 'light' | 'dark' | 'system';
-      notifications: boolean;
     };
     createdAt: Timestamp;
     lastAccessedAt: Timestamp;
@@ -117,8 +116,7 @@ export class UserService {
       const agentsOSData = {
         'agentsOS.onboardingCompleted': true,
         'agentsOS.preferences': {
-          theme: 'system',
-          notifications: true,
+          theme: 'system'
         },
         'agentsOS.createdAt': now,
         'agentsOS.lastAccessedAt': now,
@@ -248,7 +246,6 @@ export class UserService {
         const userData = userDoc.data() as UserProfile;
         const currentPreferences = userData.agentsOS?.preferences || {
           theme: 'system',
-          notifications: true,
         };
         
         await updateDoc(userRef, {
