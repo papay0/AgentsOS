@@ -292,7 +292,6 @@ Based on the desktop improvements completed, here's the comprehensive roadmap fo
 - [ ] **Mobile Shortcuts**: Touch shortcuts for common development tasks
 - [ ] **Split Screen Support**: Basic split-screen on larger mobile devices
 - [ ] **Mobile-Specific Apps**: Mobile-optimized versions of desktop apps
-- [ ] **Push Notifications**: Build completion and workspace status updates
 
 ### Implementation Priority
 

@@ -40,7 +40,6 @@ export interface FirebaseUserData {
     };
     preferences: {
       theme: 'light' | 'dark' | 'system';
-      notifications: boolean;
     };
     createdAt: unknown;
     lastAccessedAt: unknown;
@@ -112,8 +111,7 @@ export class FirebaseAuthService {
         userData.agentsOS = {
           onboardingCompleted: false,
           preferences: {
-            theme: 'system',
-            notifications: true,
+            theme: 'system'
           },
           createdAt: serverTimestamp(),
           lastAccessedAt: serverTimestamp(),
