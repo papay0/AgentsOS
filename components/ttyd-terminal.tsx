@@ -120,6 +120,58 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     return () => observer.disconnect();
   }, []);
 
+  // Handle mobile keyboard visibility for proper scrolling behavior
+  useEffect(() => {
+    if (!window.visualViewport) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+    const handleViewportChange = () => {
+      // Clear any pending scroll operations
+      clearTimeout(scrollTimeout);
+
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+
+      // Calculate keyboard height
+      const keyboardHeight = window.innerHeight - viewport.height;
+      
+      // Only act if keyboard is visible (threshold to avoid false positives)
+      if (keyboardHeight > 50) {
+        // Find the command palette element (parent container)
+        const commandPalette = document.querySelector('.mobile-terminal-palette');
+        if (commandPalette) {
+          const paletteRect = commandPalette.getBoundingClientRect();
+          const viewportTop = viewport.offsetTop;
+          const viewportBottom = viewport.offsetTop + viewport.height;
+
+          // Check if command palette is obscured by keyboard
+          if (paletteRect.bottom > viewportBottom || paletteRect.top > viewportBottom - 50) {
+            // Calculate scroll to show entire command palette above keyboard
+            const scrollTarget = viewportTop + paletteRect.bottom - viewport.height + 10; // 10px padding
+
+            // Smooth scroll with a slight delay to ensure keyboard animation is complete
+            scrollTimeout = setTimeout(() => {
+              window.scrollTo({
+                top: scrollTarget,
+                behavior: 'smooth'
+              });
+            }, 100);
+          }
+        }
+      }
+    };
+
+    // Listen for viewport changes (keyboard show/hide)
+    window.visualViewport.addEventListener('resize', handleViewportChange);
+    window.visualViewport.addEventListener('scroll', handleViewportChange);
+
+    return () => {
+      clearTimeout(scrollTimeout);
+      window.visualViewport?.removeEventListener('resize', handleViewportChange);
+      window.visualViewport?.removeEventListener('scroll', handleViewportChange);
+    };
+  }, []);
+
   useImperativeHandle(ref, () => ({
     sendCommand: (command: string, addEnter = true) => {
       if (websocket.current?.readyState === WebSocket.OPEN) {
@@ -140,11 +192,16 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
           case 'Ctrl+C': data = '\x03'; break;
           case 'Ctrl+L': data = '\x0c'; break;
           case 'Ctrl+D': data = '\x04'; break;
+          case 'Ctrl+U': data = '\x15'; break;
+          case 'Tab': data = '\x09'; break;
           case 'Enter': data = '\r'; break;
           case 'ArrowUp': data = '\x1b[A'; break;
           case 'ArrowDown': data = '\x1b[B'; break;
           case 'ArrowLeft': data = '\x1b[D'; break;
           case 'ArrowRight': data = '\x1b[C'; break;
+          case 'Insert': data = '\x1b[2~'; break;
+          case '\x09': data = '\x09'; break; // Handle raw tab
+          case '\x7f': data = '\x7f'; break; // Handle raw delete
           default: data = key;
         }
         
@@ -384,10 +441,42 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     }
   }, [resolvedTheme]);
 
+  // Handle terminal click/tap for mobile keyboard focus
+  const handleTerminalInteraction = useCallback(() => {
+    // Only trigger on mobile devices
+    if (window.visualViewport && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
+      // Small delay to allow keyboard to start appearing
+      setTimeout(() => {
+        const viewport = window.visualViewport;
+        if (viewport) {
+          const keyboardHeight = window.innerHeight - viewport.height;
+          
+          // If keyboard is appearing, ensure command palette is visible
+          if (keyboardHeight > 50) {
+            const commandPalette = document.querySelector('.mobile-terminal-palette');
+            if (commandPalette) {
+              const paletteRect = commandPalette.getBoundingClientRect();
+              const viewportBottom = viewport.offsetTop + viewport.height;
+              
+              if (paletteRect.bottom > viewportBottom) {
+                commandPalette.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'end',
+                  inline: 'nearest'
+                });
+              }
+            }
+          }
+        }
+      }, 300);
+    }
+  }, []);
+
   return (
     <div 
       ref={terminalRef}
       className={className || ''}
+      onClick={handleTerminalInteraction}
       style={{
         display: 'flex',
         flexDirection: 'column',

@@ -18,6 +18,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AgentsPod - Vibe Code from Anywhere",
   description: "Claude Code + VSCode in your browser. Zero setup. Even works on your phone.",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
   openGraph: {
     title: "Vibe Code from Anywhere",
     description: "Claude Coder + VSCode in your browser. Zero setup. Even works on your phone.",
