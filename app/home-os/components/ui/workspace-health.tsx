@@ -14,15 +14,28 @@ import { cn } from '@/lib/utils';
 interface ServiceStatus {
   service: string;
   port: number;
-  listening: boolean;
-  httpStatus: string;
+  status: 'running' | 'stopped' | 'error';
+  pid?: number;
+  url?: string;
   error?: string;
 }
 
 interface HealthCheckResponse {
   sandboxId: string;
+  sandboxState: string;
+  summary: {
+    running: number;
+    total: number;
+    healthy: boolean;
+  };
   services: ServiceStatus[];
   processes: string[];
+  repositories: Array<{
+    name: string;
+    sourceType: string;
+    ports: { vscode: number; terminal: number; claude: number; };
+  }>;
+  timestamp: string;
 }
 
 export function WorkspaceHealth() {
@@ -100,13 +113,12 @@ export function WorkspaceHealth() {
       return <AlertCircle className="h-4 w-4 text-amber-500" />;
     }
     
-    const healthyStatuses = ['200', '302', '301'];
-    const allHealthy = healthData.services.every(s => s.listening && healthyStatuses.includes(s.httpStatus));
+    const allHealthy = healthData.services.every(s => s.status === 'running');
     if (allHealthy) {
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     }
     
-    const someHealthy = healthData.services.some(s => s.listening);
+    const someHealthy = healthData.services.some(s => s.status === 'running');
     if (someHealthy) {
       return <AlertCircle className="h-4 w-4 text-amber-500" />;
     }
@@ -127,8 +139,7 @@ export function WorkspaceHealth() {
       return <span className="text-xs">Health</span>;
     }
     
-    const healthyStatuses = ['200', '302', '301'];
-    const allHealthy = healthData.services.every(s => s.listening && healthyStatuses.includes(s.httpStatus));
+    const allHealthy = healthData.services.every(s => s.status === 'running');
     if (allHealthy) {
       return <span className="text-xs text-green-300">Healthy</span>;
     }
@@ -137,14 +148,12 @@ export function WorkspaceHealth() {
   };
 
   const getServiceIcon = (service: ServiceStatus) => {
-    const healthyStatuses = ['200', '302', '301']; // 200=OK, 302=Redirect, 301=Moved Permanently
-    
-    if (service.listening && healthyStatuses.includes(service.httpStatus)) {
+    if (service.status === 'running') {
       return <CheckCircle className="h-3 w-3 text-green-500" />;
-    } else if (service.listening) {
-      return <AlertCircle className="h-3 w-3 text-amber-500" />;
-    } else {
+    } else if (service.status === 'error') {
       return <XCircle className="h-3 w-3 text-red-500" />;
+    } else {
+      return <AlertCircle className="h-3 w-3 text-amber-500" />;
     }
   };
 
@@ -218,14 +227,15 @@ export function WorkspaceHealth() {
                   </div>
                   <div className="flex items-center gap-2 text-gray-500">
                     <span>:{service.port}</span>
-                    {service.listening && (
-                      <span className="text-xs">({service.httpStatus})</span>
+                    <span className="text-xs">({service.status})</span>
+                    {service.pid && (
+                      <span className="text-xs">PID: {service.pid}</span>
                     )}
                   </div>
                 </div>
               ))}
               
-              {healthData.services.some(s => !s.listening || !['200', '302', '301'].includes(s.httpStatus)) && (
+              {healthData.services.some(s => s.status !== 'running') && (
                 <Button
                   variant="outline"
                   size="sm"

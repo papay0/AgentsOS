@@ -38,7 +38,7 @@ import type { UserWorkspace } from '@/types/workspace';
 /**
  * Clean undefined values from object to avoid Firestore errors
  */
-function cleanUndefinedValues(obj: any): any {
+function cleanUndefinedValues(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
     return null;
   }
@@ -48,7 +48,7 @@ function cleanUndefinedValues(obj: any): any {
   }
   
   if (typeof obj === 'object') {
-    const cleaned: any = {};
+    const cleaned: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       if (value !== undefined) {
         cleaned[key] = cleanUndefinedValues(value);
