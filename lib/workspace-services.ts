@@ -1,13 +1,8 @@
 import { Sandbox } from '@daytonaio/sdk';
 import { logger } from './logger';
 import { TTYD_THEME } from './workspace-constants';
-
-interface Repository {
-  url: string;
-  name: string;
-  description?: string;
-  tech?: string;
-}
+import { PortManager } from './port-manager';
+import type { Repository } from '@/types/workspace';
 
 interface RepositoryWithUrls extends Repository {
   urls: {
@@ -93,11 +88,8 @@ export class WorkspaceServices {
   }
 
   private allocatePorts(index: number): { vscode: number; terminal: number; claude: number } {
-    return {
-      vscode: 8080 + index,           // 8080, 8081, 8082...
-      terminal: 9999 - (index * 10), // 9999, 9989, 9979...
-      claude: 9998 - (index * 10)    // 9998, 9988, 9978...
-    };
+    // Use new PortManager for consistent port allocation
+    return PortManager.getPortsForSlot(index);
   }
 
   private async createRepositoryScripts(sandbox: Sandbox, rootDir: string, repoPath: string, repoName: string): Promise<void> {
