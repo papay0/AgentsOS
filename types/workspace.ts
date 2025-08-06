@@ -72,3 +72,26 @@ export interface WorkspaceViewProps {
   onRemoveTerminal: (terminalId: string) => void;
   onViewModeChange?: (mode: ViewMode) => void;
 }
+
+// Simple multi-repository support
+export interface Repository {
+  id: string;
+  url: string;           // Git URL, or empty for default/manual
+  name: string;
+  description?: string;
+  sourceType: 'default' | 'github' | 'manual';
+  ports: {
+    vscode: number;    // 8080+
+    terminal: number;  // 10000+  
+    claude: number;    // 4000+
+  };
+}
+
+export interface UserWorkspace {
+  id: string;
+  sandboxId: string;
+  repositories: Repository[];
+  status: 'creating' | 'running' | 'stopped' | 'error';
+  createdAt: Date;
+  updatedAt: Date;
+}
