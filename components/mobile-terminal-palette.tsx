@@ -40,13 +40,27 @@ export default function MobileTerminalPalette({
 
   const sendCommand = () => {
     if (commandText.trim() && terminalRef.current && isConnected) {
-      // Send the command without enter first
-      terminalRef.current.sendCommand(commandText, false);
-      // Then send Enter key separately
+      // First send Enter to ensure we're on a new line
       terminalRef.current.sendKey('Enter');
-      setCommandText('');
-      // Keep focus on input for continuous typing
-      inputRef.current?.focus();
+      
+      // Small delay between operations
+      setTimeout(() => {
+        if (terminalRef.current) {
+          // Send the command
+          terminalRef.current.sendCommand(commandText, false);
+          
+          // Another small delay before final Enter
+          setTimeout(() => {
+            if (terminalRef.current) {
+              // Send Enter to execute
+              terminalRef.current.sendKey('Enter');
+              setCommandText('');
+              // Keep focus on input for continuous typing
+              inputRef.current?.focus();
+            }
+          }, 50);
+        }
+      }, 100);
     }
   };
 

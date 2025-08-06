@@ -69,6 +69,8 @@ export interface TTYDTerminalRef {
   sendKey: (key: string) => void;
   /** Check if terminal is connected */
   isConnected: () => boolean;
+  /** Focus the terminal */
+  focusTerminal: () => void;
 }
 
 /**
@@ -183,6 +185,11 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         payload[0] = 0x30; // '0' as byte
         payload.set(commandBytes, 1);
         websocket.current.send(payload);
+      }
+    },
+    focusTerminal: () => {
+      if (terminal.current) {
+        terminal.current.focus();
       }
     },
     sendKey: (key: string) => {
