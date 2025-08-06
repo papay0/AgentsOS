@@ -41,7 +41,7 @@ export function HeroSection({ shouldShowWaitlist }: HeroSectionProps) {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] mb-8 md:mb-12"
           >
             <span className="text-sm text-gray-600 dark:text-white/60 tracking-wide">
-              Code Anywhere, Anytime
+              Your AI Coding Operating System
             </span>
           </motion.div>
 
@@ -65,8 +65,8 @@ export function HeroSection({ shouldShowWaitlist }: HeroSectionProps) {
             animate="visible"
           >
             <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-16 leading-relaxed font-light tracking-wide max-w-2xl mx-auto px-4">
-              Claude Code at your fingertips. Desktop or mobile. 
-              No setup, just the tools you need to build with AI.
+              Code anywhere, anytime. Claude Code and AI tools built-in.
+              Zero setup, just open and start building.
             </p>
           </motion.div>
 
