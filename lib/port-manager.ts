@@ -25,7 +25,8 @@ export class PortManager {
     return {
       id: 'default-workspace',
       url: '',
-      name: 'Default Workspace',
+      name: 'default',
+      description: 'Default workspace for new projects',
       sourceType: 'default',
       ports: this.getPortsForSlot(0),
     };
