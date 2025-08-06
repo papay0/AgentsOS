@@ -4,8 +4,9 @@ import { useWorkspaceStore } from '../stores/workspaceStore';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAgentsOSUser } from '@/hooks/use-agentsos-user';
+import { PortManager } from '@/lib/port-manager';
 import type { CreateWorkspaceResponse } from '@/types/workspace';
-import { Timestamp, doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@clerk/nextjs';
 import Window from './desktop/Window';
@@ -137,26 +138,20 @@ export default function Workspace() {
     
     // Save workspace data to Firebase if we have it
     if (workspaceData?.repositories && workspaceData.sandboxId) {
-      const now = Timestamp.now();
       await createOrUpdateWorkspace({
         id: workspaceData.sandboxId,
         sandboxId: workspaceData.sandboxId,
-        name: `Workspace ${new Date().toLocaleDateString()}`,
-        repositories: workspaceData.repositories.map(repo => ({
+        repositories: workspaceData.repositories.map((repo, index) => ({
+          id: repo.url ? `repo-${Date.now()}-${index}` : 'default-workspace',
           url: repo.url,
           name: repo.name,
           description: repo.description,
-          tech: repo.tech,
-          urls: repo.urls, // IMPORTANT: Include the service URLs!
+          sourceType: repo.url ? ('github' as const) : ('default' as const),
+          ports: PortManager.getPortsForSlot(index),
         })),
         status: 'running' as const,
-        urls: {
-          vscode: workspaceData.vscodeUrl,
-          terminal: workspaceData.terminalUrl,
-          claude: workspaceData.claudeTerminalUrl,
-        },
-        createdAt: now,
-        lastAccessedAt: now,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
     }
     

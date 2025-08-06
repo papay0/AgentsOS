@@ -6,6 +6,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WorkspaceServices } from '../workspace-services';
 import { PortManager } from '../port-manager';
 
+// Type for accessing private methods in tests
+type WorkspaceServicesPrivate = {
+  allocatePorts: (slot: number) => { vscode: number; terminal: number; claude: number };
+};
+
 // Mock the Daytona SDK
 vi.mock('@daytonaio/sdk', () => ({
   Sandbox: vi.fn(),
@@ -30,7 +35,7 @@ describe('WorkspaceServices', () => {
   describe('port allocation integration', () => {
     it('should use PortManager for port allocation', () => {
       // Access the private method via reflection for testing
-      const allocatePorts = (workspaceServices as any).allocatePorts;
+      const allocatePorts = (workspaceServices as unknown as WorkspaceServicesPrivate).allocatePorts;
       
       const ports0 = allocatePorts(0);
       const expectedPorts0 = PortManager.getPortsForSlot(0);
@@ -44,7 +49,7 @@ describe('WorkspaceServices', () => {
     });
 
     it('should allocate different ports for different repository indices', () => {
-      const allocatePorts = (workspaceServices as any).allocatePorts;
+      const allocatePorts = (workspaceServices as unknown as WorkspaceServicesPrivate).allocatePorts;
       
       const ports0 = allocatePorts(0);
       const ports1 = allocatePorts(1);
@@ -66,7 +71,7 @@ describe('WorkspaceServices', () => {
     });
 
     it('should generate expected port sequences', () => {
-      const allocatePorts = (workspaceServices as any).allocatePorts;
+      const allocatePorts = (workspaceServices as unknown as WorkspaceServicesPrivate).allocatePorts;
       
       const sequences = [];
       for (let i = 0; i < 5; i++) {
@@ -85,7 +90,7 @@ describe('WorkspaceServices', () => {
 
   describe('port allocation consistency', () => {
     it('should be consistent with PortManager across multiple calls', () => {
-      const allocatePorts = (workspaceServices as any).allocatePorts;
+      const allocatePorts = (workspaceServices as unknown as WorkspaceServicesPrivate).allocatePorts;
       
       // Test consistency across multiple calls
       for (let i = 0; i < 10; i++) {
@@ -97,7 +102,7 @@ describe('WorkspaceServices', () => {
     });
 
     it('should handle edge cases same as PortManager', () => {
-      const allocatePorts = (workspaceServices as any).allocatePorts;
+      const allocatePorts = (workspaceServices as unknown as WorkspaceServicesPrivate).allocatePorts;
       
       // Test slot 0
       expect(allocatePorts(0)).toEqual(PortManager.getPortsForSlot(0));

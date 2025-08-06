@@ -2,6 +2,7 @@
 
 import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
+import type { Repository, UserWorkspace } from '@/types/workspace';
 
 /**
  * User profile data structure in Firebase
@@ -24,35 +25,6 @@ export interface UserProfile {
     createdAt: Timestamp;
     lastAccessedAt: Timestamp;
   };
-}
-
-/**
- * Repository information
- */
-export interface Repository {
-  url: string;
-  name: string;
-  description?: string;
-  tech?: string;
-  clonedAt?: Timestamp;
-}
-
-/**
- * Workspace data associated with a user (embedded in user profile)
- */
-export interface UserWorkspace {
-  id: string;
-  sandboxId: string;
-  name: string;
-  repositories: Repository[];
-  status: 'creating' | 'running' | 'stopped' | 'error';
-  urls?: {
-    vscode: string;
-    terminal: string;
-    claude: string;
-  };
-  createdAt: Timestamp;
-  lastAccessedAt: Timestamp;
 }
 
 /**
@@ -197,23 +169,18 @@ export class UserService {
    */
   async updateWorkspaceStatus(
     uid: string,
-    status: UserWorkspace['status'],
-    urls?: UserWorkspace['urls']
+    status: UserWorkspace['status']
   ): Promise<void> {
     try {
       const userRef = doc(db, 'users', uid);
       const now = Timestamp.now();
       
-      const baseUpdate = {
+      const updateData = {
         'agentsOS.workspace.status': status,
-        'agentsOS.workspace.lastAccessedAt': now,
+        'agentsOS.workspace.updatedAt': now,
         'agentsOS.lastAccessedAt': now,
         updatedAt: now,
       };
-      
-      const updateData = urls 
-        ? { ...baseUpdate, 'agentsOS.workspace.urls': urls }
-        : baseUpdate;
       
       await updateDoc(userRef, updateData);
     } catch (error) {

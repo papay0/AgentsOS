@@ -33,33 +33,7 @@ export const adminDb = admin.apps.length > 0 ? admin.firestore() : null;
 // Use Firebase Admin timestamp
 const Timestamp = admin.firestore.Timestamp;
 
-export interface Repository {
-  url: string;
-  name: string;
-  description?: string;
-  tech?: string;
-  clonedAt?: admin.firestore.Timestamp;
-  urls?: {
-    vscode: string;
-    terminal: string;
-    claude: string;
-  };
-}
-
-export interface UserWorkspace {
-  id: string;
-  sandboxId: string;
-  name: string;
-  repositories: Repository[];
-  status: 'creating' | 'running' | 'stopped' | 'error';
-  urls?: {
-    vscode: string;
-    terminal: string;
-    claude: string;
-  };
-  createdAt: admin.firestore.Timestamp;
-  lastAccessedAt: admin.firestore.Timestamp;
-}
+import type { UserWorkspace } from '@/types/workspace';
 
 /**
  * Server-side service for managing user data in Firebase (Admin SDK)
@@ -134,8 +108,7 @@ export class UserServiceAdmin {
    */
   async updateWorkspaceStatus(
     uid: string,
-    status: UserWorkspace['status'],
-    urls?: UserWorkspace['urls']
+    status: UserWorkspace['status']
   ): Promise<void> {
     if (!adminDb) {
       throw new Error('Firebase Admin not initialized');
@@ -145,14 +118,10 @@ export class UserServiceAdmin {
       const userRef = adminDb.collection('users').doc(uid);
       const now = Timestamp.now();
       
-      const workspaceUpdate: Partial<UserWorkspace> = {
+      const workspaceUpdate = {
         status: status,
-        lastAccessedAt: now,
+        updatedAt: now.toDate(),
       };
-      
-      if (urls) {
-        workspaceUpdate.urls = urls;
-      }
       
       await userRef.set({
         agentsOS: {

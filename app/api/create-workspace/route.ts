@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { DaytonaClient } from '@/lib/daytona';
+import { WorkspaceCreator } from '@/lib/workspace-creator';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
 import admin from 'firebase-admin';
-import type { CreateWorkspaceResponse } from '@/types/workspace';
+import type { CreateWorkspaceResponse, UserWorkspace, Repository } from '@/types/workspace';
 
-interface Repository {
-  url: string;
-  name: string;
-  description?: string;
-  tech?: string;
-}
+// Firebase-compatible workspace type
+type FirebaseUserWorkspace = Omit<UserWorkspace, 'createdAt' | 'updatedAt'> & {
+  createdAt: admin.firestore.Timestamp;
+  updatedAt: admin.firestore.Timestamp;
+};
 
 interface CreateWorkspaceRequest {
   repositories?: Repository[];
@@ -59,37 +59,27 @@ export async function POST(request: Request): Promise<NextResponse<CreateWorkspa
     // Save workspace data to Firebase user profile
     const userService = UserServiceAdmin.getInstance();
     
-    // Use the repositories with URLs from the workspace creation, or fallback to body repositories
-    const repositoriesWithUrls = workspace.repositories || (body.repositories || []).map(repo => ({
-      ...repo,
-      urls: {
-        vscode: workspace.vscodeUrl,
-        terminal: workspace.terminalUrl,
-        claude: workspace.claudeTerminalUrl,
-      }
-    }));
+    // Get repositories with URLs from the workspace creation
+    const repositoriesWithUrls = workspace.repositories || [];
     
-    const workspaceData = {
-      id: workspace.sandboxId,
-      sandboxId: workspace.sandboxId,
-      name: body.workspaceName || 'AgentsOS Workspace',
-      repositories: repositoriesWithUrls,
-      status: 'running' as const,
-      createdAt: admin.firestore.Timestamp.now(),
-      lastAccessedAt: admin.firestore.Timestamp.now(),
+    // Use WorkspaceCreator to create proper UserWorkspace structure
+    const workspaceCreator = new WorkspaceCreator(process.env.DAYTONA_API_KEY!);
+    const userWorkspace = workspaceCreator.createUserWorkspace(workspace.sandboxId, repositoriesWithUrls);
+    
+    // Convert to Firebase format (with Timestamps)
+    const workspaceData: FirebaseUserWorkspace = {
+      ...userWorkspace,
+      createdAt: admin.firestore.Timestamp.fromDate(userWorkspace.createdAt),
+      updatedAt: admin.firestore.Timestamp.fromDate(userWorkspace.updatedAt),
     };
 
-    await userService.createOrUpdateWorkspace(userId, workspaceData);
+    await userService.createOrUpdateWorkspace(userId, workspaceData as unknown as UserWorkspace);
 
-    // Return the complete workspace data with all repositories for AgentsOS
+    // Return workspace data with repositories
     return NextResponse.json({
       sandboxId: workspace.sandboxId,
       message: workspace.message,
-      repositories: repositoriesWithUrls,
-      // Legacy compatibility fields
-      terminalUrl: workspace.terminalUrl,
-      claudeTerminalUrl: workspace.claudeTerminalUrl,
-      vscodeUrl: workspace.vscodeUrl
+      repositories: repositoriesWithUrls
     });
 
   } catch (error) {

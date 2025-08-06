@@ -1,16 +1,9 @@
 import { Sandbox } from '@daytonaio/sdk';
 import { SandboxState } from '@daytonaio/api-client';
-import type { CreateWorkspaceResponse } from '@/types/workspace';
+import type { CreateWorkspaceResponse, Repository } from '@/types/workspace';
 import { WorkspaceManager } from './workspace-manager';
 import { WorkspaceCreator } from './workspace-creator';
 import { WorkspaceOrchestrator } from './workspace-orchestrator';
-
-interface Repository {
-  url: string;
-  name: string;
-  description?: string;
-  tech?: string;
-}
 
 interface WorkspaceSetupOptions {
   repositories?: Repository[];

@@ -34,12 +34,9 @@ export interface RepositoryWithUrls {
 
 export interface CreateWorkspaceResponse {
   sandboxId: string;
-  terminalUrl: string;
-  claudeTerminalUrl: string;
-  vscodeUrl: string;
   message: string;
+  repositories: RepositoryWithUrls[];
   error?: string;
-  repositories?: RepositoryWithUrls[];
 }
 
 export interface WorkspaceStatusResponse {

@@ -1,23 +1,12 @@
-import type { CreateWorkspaceResponse, RepositoryWithUrls } from '@/types/workspace';
+import type { CreateWorkspaceResponse, RepositoryWithUrls, Repository, UserWorkspace } from '@/types/workspace';
 import { logger, type WorkspaceLogData, type ErrorLogData } from './logger';
 import { WorkspaceManager } from './workspace-manager';
 import { WorkspaceInstaller } from './workspace-installer';
 import { WorkspaceServices } from './workspace-services';
 import { WorkspaceOrchestrator } from './workspace-orchestrator';
+import { PortManager } from './port-manager';
 import { trackWorkspaceCreated } from './analytics';
 import { Sandbox } from '@daytonaio/sdk';
-
-interface Repository {
-  url: string;
-  name: string;
-  description?: string;
-  tech?: string;
-  urls?: {
-    vscode: string;
-    terminal: string;
-    claude: string;
-  };
-}
 
 interface WorkspaceSetupOptions {
   repositories?: Repository[];
@@ -79,29 +68,14 @@ export class WorkspaceCreator {
       if (options.repositories && options.repositories.length > 0) {
         repositoriesWithUrls = await this.services.setupRepositoryServices(sandbox, rootDir, options.repositories);
       } else {
-        // Fallback to old method if no repositories specified
-        await this.services.setupServices(sandbox, rootDir, projectDir);
+        // Create default workspace repository
+        const defaultRepo = PortManager.createDefaultRepository();
         
-        // Get service URLs for legacy mode
-        const [terminalInfo, claudeTerminalInfo, vscodeInfo] = await Promise.all([
-          sandbox.getPreviewLink(9999),
-          sandbox.getPreviewLink(9998),
-          sandbox.getPreviewLink(8080)
-        ]);
-        
-        // Create a default repository entry
-        repositoriesWithUrls = [{
-          url: '',
-          name: 'Default',
-          urls: {
-            vscode: vscodeInfo.url,
-            terminal: terminalInfo.url,
-            claude: claudeTerminalInfo.url
-          }
-        }];
+        // Set up services for default repository
+        repositoriesWithUrls = await this.services.setupRepositoryServices(sandbox, rootDir, [defaultRepo]);
       }
       
-      // Use the primary repository's URLs for legacy compatibility
+      // Use the primary repository's URLs
       const primaryRepo = repositoriesWithUrls[0];
       
       if (!primaryRepo?.urls) {
@@ -125,9 +99,6 @@ export class WorkspaceCreator {
       
       return {
         sandboxId: sandbox.id,
-        terminalUrl: primaryRepo.urls.terminal,
-        claudeTerminalUrl: primaryRepo.urls.claude,
-        vscodeUrl: primaryRepo.urls.vscode,
         message: `🚀 Services ready for ${repositoriesWithUrls.length} repositories!`,
         repositories: repositoriesWithUrls
       };
@@ -146,11 +117,43 @@ export class WorkspaceCreator {
     }
   }
 
+  /**
+   * Create UserWorkspace structure from repositories with URLs
+   * This helps with Firebase integration and new data structure
+   */
+  createUserWorkspace(sandboxId: string, repositoriesWithUrls: RepositoryWithUrls[]): UserWorkspace {
+    // Convert RepositoryWithUrls to Repository with ports
+    const repositories: Repository[] = repositoriesWithUrls.map((repo, index) => ({
+      id: repo.url ? `repo-${Date.now()}-${index}` : 'default-workspace',
+      url: repo.url || '',
+      name: repo.name,
+      description: repo.description,
+      sourceType: repo.url ? 'github' : 'default',
+      ports: PortManager.getPortsForSlot(index)
+    }));
+
+    return {
+      id: `workspace-${Date.now()}`,
+      sandboxId,
+      repositories,
+      status: 'running',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  }
+
   private async cloneRepositories(sandbox: Sandbox, projectDir: string, repositories: Repository[]): Promise<void> {
     try {
       const clonedRepos: string[] = [];
       
       for (const repository of repositories) {
+        // Skip repositories without URLs (default, manual workspaces)
+        if (!repository.url || repository.sourceType === 'default' || repository.sourceType === 'manual') {
+          this.logger.workspace.creating(`Skipping ${repository.sourceType} repository: ${repository.name}`);
+          clonedRepos.push(repository.name); // Count as processed
+          continue;
+        }
+        
         this.logger.workspace.creating(`Cloning repository: ${repository.name}`);
         
         // Clone the repository into the project directory  
@@ -175,7 +178,7 @@ export class WorkspaceCreator {
         throw new Error('Failed to clone any repositories');
       }
       
-      // Clean up any existing symlinks (legacy cleanup)
+      // Clean up any existing symlinks
       await sandbox.process.executeCommand(`rm -f "${projectDir}/project"`, projectDir).catch(() => {
         // Ignore errors if symlink doesn't exist
       });
