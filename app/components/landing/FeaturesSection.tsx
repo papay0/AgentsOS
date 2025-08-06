@@ -11,18 +11,16 @@ const agentsOSFeatures: BentoItem[] = [
     meta: "",
     description: "Windows, dock, apps. Like your local machine.",
     icon: <Monitor className="w-6 h-6 text-blue-600" />,
-    status: "Live",
     tags: [],
     colSpan: 2,
     hasPersistentHover: true,
     showArchitecture: false,
   },
   {
-    title: "Claude Code",
+    title: "AI Tools Built-in",
     meta: "",
-    description: "AI terminal built-in.",
+    description: "Claude Code, AI agents, and more. Ready to use.",
     icon: <Brain className="w-6 h-6 text-purple-600" />,
-    status: "Ready",
     tags: [],
   },
   {
@@ -38,7 +36,6 @@ const agentsOSFeatures: BentoItem[] = [
     meta: "",
     description: "Full dev power on your phone.",
     icon: <Smartphone className="w-6 h-6 text-orange-600" />,
-    status: "Beta",
     tags: [],
   },
 ];

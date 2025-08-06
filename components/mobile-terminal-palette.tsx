@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, KeyboardEvent } from 'react';
 import type { TTYDTerminalRef } from './ttyd-terminal';
 
 interface MobileTerminalPaletteProps {
@@ -29,9 +29,45 @@ export default function MobileTerminalPalette({
   isConnected,
   className = ""
 }: MobileTerminalPaletteProps) {
+  const [commandText, setCommandText] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const sendKey = (key: string) => {
     if (terminalRef.current && isConnected) {
       terminalRef.current.sendKey(key);
+    }
+  };
+
+  const sendCommand = () => {
+    if (commandText.trim() && terminalRef.current && isConnected) {
+      // First send Enter to ensure we're on a new line
+      terminalRef.current.sendKey('Enter');
+      
+      // Small delay between operations
+      setTimeout(() => {
+        if (terminalRef.current) {
+          // Send the command
+          terminalRef.current.sendCommand(commandText, false);
+          
+          // Another small delay before final Enter
+          setTimeout(() => {
+            if (terminalRef.current) {
+              // Send Enter to execute
+              terminalRef.current.sendKey('Enter');
+              setCommandText('');
+              // Keep focus on input for continuous typing
+              inputRef.current?.focus();
+            }
+          }, 50);
+        }
+      }, 100);
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendCommand();
     }
   };
 
@@ -69,7 +105,43 @@ export default function MobileTerminalPalette({
   ];
 
   return (
-    <div className={`${className} bg-gray-800 border-t border-gray-700`}>
+    <div className={`mobile-terminal-palette ${className} bg-gray-800 border-t border-gray-700`}>
+      {/* Command input field */}
+      <div className="flex items-center gap-2 px-2 py-2 border-b border-gray-700">
+        <input
+          ref={inputRef}
+          type="text"
+          value={commandText}
+          onChange={(e) => setCommandText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type command..."
+          disabled={!isConnected}
+          autoComplete="on"
+          autoCorrect="on"
+          autoCapitalize="off"
+          spellCheck="true"
+          className={`
+            flex-1 px-3 py-2 bg-gray-700 text-white rounded-lg text-base
+            placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500
+            disabled:opacity-50 disabled:cursor-not-allowed
+          `}
+          style={{ fontSize: '16px' }}
+        />
+        <button
+          onClick={sendCommand}
+          disabled={!isConnected || !commandText.trim()}
+          className={`
+            px-4 py-2 rounded-lg text-white text-sm font-medium
+            transition-all duration-150 active:scale-95
+            ${commandText.trim() && isConnected 
+              ? 'bg-blue-600 hover:bg-blue-700' 
+              : 'bg-gray-600 opacity-50 cursor-not-allowed'}
+          `}
+        >
+          Send
+        </button>
+      </div>
+
       {/* Thin horizontal scrollable toolbar */}
       <div className="flex overflow-x-auto scrollbar-hide py-1.5 px-2 gap-1.5">
         {toolbarButtons.map((button) => (
