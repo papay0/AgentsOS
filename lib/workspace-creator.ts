@@ -58,6 +58,7 @@ export class WorkspaceCreator {
       
       // Install all required packages
       await this.installer.installSystemPackages(sandbox, rootDir);
+      await this.installer.installGitHubCLI(sandbox, rootDir);
       await this.installer.installTtyd(sandbox, rootDir);
       await this.installer.installCodeServer(sandbox, rootDir);
       await this.installer.installClaudeCode(sandbox, rootDir);
