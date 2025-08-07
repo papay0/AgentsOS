@@ -67,6 +67,7 @@ export default function Workspace() {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUserData | null>(null);
   const [isFirebaseLoading, setIsFirebaseLoading] = useState(true);
   const [showBootScreen, setShowBootScreen] = useState(true);
+  const [shouldShowSetup, setShouldShowSetup] = useState(false);
   
   const [globalSnapState, setGlobalSnapState] = useState<{
     activeZone: { 
@@ -94,7 +95,22 @@ export default function Workspace() {
           // Firebase real-time update received
           setFirebaseUser(userData);
           
-          // Initialize workspace if we have data
+          // Check if setup is complete
+          const hasCompletedSetup = userData?.agentsOS?.preferences?.setupDone === true;
+          console.log('🔧 Setup status check:', { 
+            hasCompletedSetup, 
+            setupDone: userData?.agentsOS?.preferences?.setupDone,
+            agentsOS: userData?.agentsOS 
+          });
+          
+          if (!hasCompletedSetup) {
+            // Just mark that we should show setup - don't mess with workspaces!
+            setShouldShowSetup(true);
+          } else {
+            setShouldShowSetup(false);
+          }
+          
+          // Initialize workspace if we have data (regardless of setup status)
           const workspace = userData?.agentsOS?.workspace;
           if (workspace?.repositories && workspace.sandboxId) {
             // Initializing workspace from Firebase data
@@ -118,6 +134,37 @@ export default function Workspace() {
 
     return () => unsubscribe();
   }, [userId, workspaces.length, initializeWorkspaces, setSandboxId]);
+
+  // Open setup app when needed
+  useEffect(() => {
+    console.log('🔧 Setup effect:', { shouldShowSetup, workspacesLength: workspaces.length, firstWorkspaceId: workspaces[0]?.id });
+    if (shouldShowSetup && workspaces.length > 0 && workspaces[0]?.id) {
+      const { addWindow, getActiveWorkspace } = useWorkspaceStore.getState();
+      const activeWorkspace = getActiveWorkspace();
+      console.log('🔧 Opening setup window for workspace:', workspaces[0].id);
+      
+      if (activeWorkspace) {
+        // Check if setup window is already open
+        const existingSetupWindow = activeWorkspace.windows.find(w => w.type === 'setup');
+        if (!existingSetupWindow) {
+          setTimeout(() => {
+            addWindow({
+              type: 'setup',
+              title: 'Welcome to AgentsOS',
+              position: { x: 50, y: 50 },
+              size: { width: 1200, height: 800 },
+              minimized: false,
+              maximized: true,
+              focused: true,
+              repositoryName: activeWorkspace.name,
+              repositoryUrl: ''
+            });
+            console.log('🔧 Setup window opened');
+          }, 100);
+        }
+      }
+    }
+  }, [shouldShowSetup, workspaces]);
 
   // Listen for snap zone changes from any window
   useEffect(() => {

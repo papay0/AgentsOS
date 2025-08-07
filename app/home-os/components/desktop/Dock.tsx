@@ -164,7 +164,7 @@ export default function Dock() {
     }
   });
 
-  const handleAppClick = (type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal') => {
+  const handleAppClick = (type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup') => {
     // Only work with the active workspace
     if (!activeWorkspace) return;
     
@@ -282,7 +282,7 @@ export default function Dock() {
             {getAllApps().map((app) => (
               <MacTooltip key={app.metadata.id} text={app.metadata.name}>
                 <GlassDockIcon
-                  onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal')}
+                  onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup')}
                   className={`${app.metadata.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
                   title="" // Remove default tooltip since we have custom one
                   dataAttribute={app.metadata.id}

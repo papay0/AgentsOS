@@ -4,7 +4,7 @@ import { WINDOW_Z_INDEX_BASE, WINDOW_Z_INDEX_MAX } from '../constants/layout';
 
 export interface Window {
   id: string;
-  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal';
+  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup';
   title: string;
   position: { x: number; y: number };
   size: { width: number; height: number };

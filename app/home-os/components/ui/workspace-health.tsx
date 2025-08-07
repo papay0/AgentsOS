@@ -41,7 +41,6 @@ interface HealthCheckResponse {
 export function WorkspaceHealth() {
   // Health check configuration
   const AUTO_HEALTH_CHECK_ENABLED = true;  // Always check health periodically
-  const AUTO_RESTART_ENABLED = false;      // Don't auto-restart, only manual restart
   
   const { activeWorkspaceId, workspaces, sandboxId } = useWorkspaceStore();
   const [healthData, setHealthData] = useState<HealthCheckResponse | null>(null);

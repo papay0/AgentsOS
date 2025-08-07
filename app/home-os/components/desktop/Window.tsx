@@ -303,6 +303,10 @@ const WindowContent = memo(function WindowContent({ window }: { window: WindowTy
         const Component = DesktopContent as React.ComponentType<Record<string, never>>;
         return <Component />;
       }
+      case 'setup': {
+        const Component = DesktopContent as React.ComponentType<Record<string, never>>;
+        return <Component />;
+      }
     }
   };
   
