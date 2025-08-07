@@ -39,33 +39,52 @@ interface HealthCheckResponse {
 }
 
 export function WorkspaceHealth() {
+  // Auto-restart configuration
+  const AUTO_RESTART_ENABLED = false; // Toggle to enable/disable automatic health checks and restarts
+  
   const { activeWorkspaceId, workspaces, sandboxId } = useWorkspaceStore();
   const [healthData, setHealthData] = useState<HealthCheckResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start as loading
+  const [isLoading, setIsLoading] = useState(AUTO_RESTART_ENABLED); // Only start as loading if auto-restart is enabled
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
+  const [restartStartTime, setRestartStartTime] = useState<number | null>(null);
 
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
 
-  const checkHealth = React.useCallback(async () => {
+  const checkHealth = React.useCallback(async (skipLoadingState = false) => {
     if (!sandboxId) return;
     
-    setIsLoading(true);
+    if (!skipLoadingState) {
+      setIsLoading(true);
+    }
     setError(null);
     
     try {
+      // Only call debug-services when AUTO_RESTART_ENABLED or user manually requests it
       const response = await fetch(`/api/debug-services/${sandboxId}`);
       if (!response.ok) {
         throw new Error('Failed to check health');
       }
       const data = await response.json();
       setHealthData(data);
+      
+      // If we were restarting and services are now healthy, clear restart state
+      if (isRestarting && data.summary.healthy) {
+        setIsRestarting(false);
+        setRestartStartTime(null);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check health');
+      // During restart, don't show errors immediately - services are expected to be down
+      if (!isRestarting) {
+        setError(err instanceof Error ? err.message : 'Failed to check health');
+      }
     } finally {
-      setIsLoading(false);
+      if (!skipLoadingState) {
+        setIsLoading(false);
+      }
     }
-  }, [sandboxId]);
+  }, [sandboxId, isRestarting]);
 
   // Consolidated health checking effects
   useEffect(() => {
@@ -77,21 +96,29 @@ export function WorkspaceHealth() {
       return;
     }
 
-    // Initial check after workspace loads (with delay)
+    // Skip automatic health checks if auto-restart is disabled
+    if (!AUTO_RESTART_ENABLED) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Initial check after workspace loads (with delay, longer if restarting)
+    const delay = isRestarting ? 8000 : 2000;
     const initialTimer = setTimeout(() => {
       checkHealth();
-    }, 2000);
+    }, delay);
 
-    // Periodic health checking every 100 seconds
+    // Periodic health checking - more frequent during restart
+    const interval = isRestarting ? 5000 : 100000;
     const healthInterval = setInterval(() => {
-      checkHealth();
-    }, 100000);
+      checkHealth(true); // Skip loading state for background checks
+    }, interval);
 
     return () => {
       clearTimeout(initialTimer);
       clearInterval(healthInterval);
     };
-  }, [sandboxId, activeWorkspaceId, checkHealth]);
+  }, [sandboxId, activeWorkspaceId, checkHealth, isRestarting, AUTO_RESTART_ENABLED]);
 
   // Check health when opening the popover (on-demand)
   useEffect(() => {
@@ -105,7 +132,7 @@ export function WorkspaceHealth() {
       return <Activity className="h-4 w-4 text-gray-400" />;
     }
     
-    if (isLoading) {
+    if (isRestarting || isLoading) {
       return <RefreshCw className="h-4 w-4 animate-spin text-blue-400" />;
     }
     
@@ -129,6 +156,11 @@ export function WorkspaceHealth() {
   const getHealthText = () => {
     if (!sandboxId) {
       return <span className="text-xs">Health</span>;
+    }
+    
+    if (isRestarting) {
+      const elapsed = restartStartTime ? Math.floor((Date.now() - restartStartTime) / 1000) : 0;
+      return <span className="text-xs text-blue-300">Restarting... ({elapsed}s)</span>;
     }
     
     if (isLoading) {
@@ -158,21 +190,31 @@ export function WorkspaceHealth() {
   };
 
   const fixServices = async () => {
-    if (!sandboxId) return;
+    if (!sandboxId || isRestarting) return;
     
+    setIsRestarting(true);
+    setRestartStartTime(Date.now());
+    setError(null);
     setIsLoading(true);
+    
     try {
       const response = await fetch(`/api/fix-services/${sandboxId}`, { method: 'POST' });
       const data = await response.json();
       
-      if (data.success) {
-        // Refresh health data
-        await checkHealth();
+      if (response.ok && data.success) {
+        // Wait a bit longer before first health check after restart
+        setTimeout(() => {
+          checkHealth();
+        }, 3000);
       } else {
-        setError(data.message || 'Failed to fix services');
+        setError(data.error || data.message || 'Failed to restart services');
+        setIsRestarting(false);
+        setRestartStartTime(null);
       }
     } catch {
-      setError('Failed to fix services');
+      setError('Failed to restart services');
+      setIsRestarting(false);
+      setRestartStartTime(null);
     } finally {
       setIsLoading(false);
     }
@@ -200,14 +242,21 @@ export function WorkspaceHealth() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={checkHealth}
+              onClick={() => checkHealth()}
               disabled={isLoading}
             >
               <RefreshCw className={cn("h-3 w-3", isLoading && "animate-spin")} />
             </Button>
           </div>
           
-          {error && (
+          {isRestarting && (
+            <div className="text-xs text-blue-600 bg-blue-50 dark:bg-blue-950 p-2 rounded flex items-center gap-2">
+              <RefreshCw className="h-3 w-3 animate-spin" />
+              Restarting services... This may take 15-20 seconds.
+            </div>
+          )}
+          
+          {error && !isRestarting && (
             <div className="text-xs text-red-500 bg-red-50 dark:bg-red-950 p-2 rounded">
               {error}
             </div>
@@ -241,9 +290,16 @@ export function WorkspaceHealth() {
                   size="sm"
                   className="w-full"
                   onClick={fixServices}
-                  disabled={isLoading}
+                  disabled={isLoading || isRestarting}
                 >
-                  Fix Services
+                  {isRestarting ? (
+                    <>
+                      <RefreshCw className="h-3 w-3 animate-spin mr-2" />
+                      Restarting...
+                    </>
+                  ) : (
+                    'Restart Services'
+                  )}
                 </Button>
               )}
               

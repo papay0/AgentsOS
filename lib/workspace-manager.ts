@@ -1,6 +1,6 @@
 import { Daytona, Sandbox } from '@daytonaio/sdk';
 import { SandboxState } from '@daytonaio/api-client';
-import { logger, type ErrorLogData } from './logger';
+import { logger } from './logger';
 
 // Handles basic workspace lifecycle operations (start, stop, list, get status)
 export class WorkspaceManager {
@@ -60,7 +60,7 @@ export class WorkspaceManager {
         };
 
       } catch (serviceError) {
-        const errorData: ErrorLogData = {
+        const errorData= {
           error: serviceError instanceof Error ? serviceError : String(serviceError),
           code: 'SERVICE_CHECK_FAILED'
         };
@@ -73,7 +73,7 @@ export class WorkspaceManager {
       }
 
     } catch (error) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: error instanceof Error ? error : String(error),
         code: 'WORKSPACE_STATUS_CHECK_FAILED',
         details: { sandboxId }
@@ -120,7 +120,7 @@ export class WorkspaceManager {
         return bDate - aDate;
       });
     } catch (error) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: error instanceof Error ? error : String(error),
         code: 'WORKSPACE_LIST_FAILED'
       };
@@ -144,7 +144,7 @@ export class WorkspaceManager {
       
       this.logger.success(`Workspace ${sandboxId} stopped successfully`);
     } catch (error) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: error instanceof Error ? error : String(error),
         code: 'WORKSPACE_STOP_FAILED',
         details: { sandboxId }
@@ -163,7 +163,7 @@ export class WorkspaceManager {
       
       this.logger.success(`Workspace ${sandboxId} deleted successfully`);
     } catch (error) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: error instanceof Error ? error : String(error),
         code: 'WORKSPACE_DELETE_FAILED',
         details: { sandboxId }
@@ -212,7 +212,7 @@ export class WorkspaceManager {
         vscodeUrl: vscodeInfo.url
       };
     } catch (error) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: error instanceof Error ? error : String(error),
         code: 'GET_URLS_FAILED',
         details: { sandboxId }

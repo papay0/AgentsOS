@@ -48,7 +48,7 @@ This document outlines the implementation of dynamic multi-repository support fo
 - API endpoint updates, UI simplification, testing & migration
 
 ## Current State
-- Fixed support for 2 repositories (AgentsPod, Pettitude)
+- Fixed support for multiple repositories with dynamic port allocation
 - Hardcoded port allocation:
   - Repo 1: VSCode 8080, Terminal 9999, Claude 9998
   - Repo 2: VSCode 8081, Terminal 9989, Claude 9988

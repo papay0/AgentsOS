@@ -1,5 +1,5 @@
 import { Sandbox } from '@daytonaio/sdk';
-import { logger, type ErrorLogData } from './logger';
+import { logger } from './logger';
 
 export class WorkspaceInstaller {
   private logger = logger;
@@ -14,7 +14,7 @@ export class WorkspaceInstaller {
     );
     
     if (result.exitCode !== 0) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: result.result,
         code: 'SYSTEM_PACKAGES_INSTALL_FAILED',
         details: { exitCode: result.exitCode }
@@ -43,7 +43,7 @@ export class WorkspaceInstaller {
     );
     
     if (result.exitCode !== 0) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: result.result,
         code: 'TTYD_INSTALL_FAILED',
         details: { exitCode: result.exitCode }
@@ -63,7 +63,7 @@ export class WorkspaceInstaller {
     );
     
     if (result.exitCode !== 0) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: result.result,
         code: 'CODE_SERVER_INSTALL_FAILED',
         details: { exitCode: result.exitCode }
@@ -83,7 +83,7 @@ export class WorkspaceInstaller {
     );
     
     if (result.exitCode !== 0) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: result.result,
         code: 'CLAUDE_CLI_INSTALL_FAILED',
         details: { exitCode: result.exitCode, optional: true }
@@ -109,7 +109,7 @@ export class WorkspaceInstaller {
     );
     
     if (result.exitCode !== 0) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: result.result,
         code: 'OH_MY_ZSH_INSTALL_FAILED',
         details: { exitCode: result.exitCode }
