@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAgentsOSUser } from '@/hooks/use-agentsos-user';
 
 import { StepGithubRepos } from './steps/StepGithubRepos';
+import { StepGithubAuth } from './steps/StepGithubAuth';
 import { StepWallpaper } from './steps/StepWallpaper';
 import { StepTheme } from './steps/StepTheme';
 import { StepComplete } from './steps/StepComplete';
@@ -23,6 +24,14 @@ export interface SetupData {
   theme: 'light' | 'dark' | 'system';
 }
 
+interface BaseStepProps {
+  setupData: SetupData;
+  updateSetupData: (updates: Partial<SetupData>) => void;
+  isMobile: boolean;
+  onNext: () => void;
+  onComplete: () => void;
+}
+
 export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   console.log('🚀 SetupWizard rendering with props:', { isMobile });
   const [currentStep, setCurrentStep] = useState(0);
@@ -37,32 +46,58 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   
   const { updateUserPreferences } = useAgentsOSUser();
 
-  const steps = [
-    {
-      id: 'github',
-      title: 'Connect GitHub',
-      description: 'Do you want to connect your GitHub account?',
-      component: StepGithubRepos
-    },
-    {
-      id: 'wallpaper',
-      title: 'Choose Wallpaper',
-      description: 'Pick a wallpaper that inspires your coding',
-      component: StepWallpaper
-    },
-    {
-      id: 'theme',
-      title: 'Select Theme',
-      description: 'Choose your preferred theme',
-      component: StepTheme
-    },
-    {
-      id: 'complete',
-      title: 'Setup Complete',
-      description: 'Ready to start coding!',
-      component: StepComplete
+  // Dynamic steps based on GitHub selection
+  const getSteps = () => {
+    const baseSteps: Array<{
+      id: string;
+      title: string;
+      description: string;
+      component: React.ComponentType<BaseStepProps>;
+    }> = [
+      {
+        id: 'github',
+        title: 'Connect GitHub',
+        description: 'Do you want to connect your GitHub account?',
+        component: StepGithubRepos
+      }
+    ];
+
+    // Add GitHub authentication step if user selected "Yes"
+    if (setupData.githubRepos.enabled === true) {
+      baseSteps.push({
+        id: 'github-auth',
+        title: 'GitHub Authentication',
+        description: 'Sign in to your GitHub account',
+        component: StepGithubAuth
+      });
     }
-  ];
+
+    // Add remaining steps
+    baseSteps.push(
+      {
+        id: 'wallpaper',
+        title: 'Choose Wallpaper',
+        description: 'Pick a wallpaper that inspires your coding',
+        component: StepWallpaper
+      },
+      {
+        id: 'theme',
+        title: 'Select Theme',
+        description: 'Choose your preferred theme',
+        component: StepTheme
+      },
+      {
+        id: 'complete',
+        title: 'Setup Complete',
+        description: 'Ready to start coding!',
+        component: StepComplete
+      }
+    );
+
+    return baseSteps;
+  };
+
+  const steps = getSteps();
 
   const currentStepData = steps[currentStep];
   const CurrentStepComponent = currentStepData.component;
@@ -139,7 +174,16 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   };
 
   const updateSetupData = (updates: Partial<SetupData>) => {
-    setSetupData(prev => ({ ...prev, ...updates }));
+    setSetupData(prev => {
+      const newData = { ...prev, ...updates };
+      
+      // If GitHub preference changed, reset to step 0 if we're beyond the first step
+      if (updates.githubRepos && updates.githubRepos.enabled !== prev.githubRepos.enabled && currentStep > 0) {
+        setCurrentStep(0);
+      }
+      
+      return newData;
+    });
   };
 
   const isLastStep = currentStep === steps.length - 1;
