@@ -10,10 +10,9 @@ import Image from 'next/image'
 
 export interface OnboardingProps {
   onComplete: (workspaceData?: CreateWorkspaceResponse) => void
-  onSkip?: () => void
 }
 
-export function Onboarding({ onComplete, onSkip }: OnboardingProps) {
+export function Onboarding({ onComplete }: OnboardingProps) {
   const { clerkUser, userProfile, isLoading: isUserLoading } = useAgentsOSUser()
   const [isCreating, setIsCreating] = useState(false)
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0)

@@ -1,5 +1,5 @@
 import type { CreateWorkspaceResponse, RepositoryWithUrls, Repository, UserWorkspace } from '@/types/workspace';
-import { logger, type WorkspaceLogData, type ErrorLogData } from './logger';
+import { logger, type WorkspaceLogData } from './logger';
 import { WorkspaceManager } from './workspace-manager';
 import { WorkspaceInstaller } from './workspace-installer';
 import { WorkspaceServices } from './workspace-services';
@@ -107,7 +107,7 @@ export class WorkspaceCreator {
         repositories: repositoriesWithUrls
       };
     } catch (error) {
-      const errorData: ErrorLogData = {
+      const errorData = {
         error: error instanceof Error ? error : String(error),
         code: 'WORKSPACE_CREATION_FAILED',
         details: {

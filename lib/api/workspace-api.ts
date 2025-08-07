@@ -118,7 +118,7 @@ export class WorkspaceApi {
   }
 
   async restartWorkspace(sandboxId: string): Promise<{ success: boolean; message: string; urls?: WorkspaceUrls }> {
-    const response = await fetch(`${this.baseUrl}/api/workspace-restart/${sandboxId}`, {
+    const response = await fetch(`${this.baseUrl}/api/fix-services/${sandboxId}`, {
       method: 'POST',
     });
 

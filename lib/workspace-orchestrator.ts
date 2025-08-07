@@ -1,5 +1,5 @@
 import { Sandbox } from '@daytonaio/sdk';
-import { logger, type ErrorLogData } from './logger';
+import { logger } from './logger';
 import { WorkspaceServices } from './workspace-services';
 
 // Handles complex workspace orchestration (starting services, health checks, restarts)
@@ -85,7 +85,7 @@ export class WorkspaceOrchestrator {
       };
 
     } catch (error) {
-      const errorData: ErrorLogData = {
+      const errorData= {
         error: error instanceof Error ? error : String(error),
         code: 'WORKSPACE_START_FAILED',
         details: { sandboxId: sandbox.id }

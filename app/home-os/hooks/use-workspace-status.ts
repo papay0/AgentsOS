@@ -14,6 +14,9 @@ export function useWorkspaceStatus({
   enabled = true, 
   pollingInterval = 60000 // 60 seconds (reduced frequency)
 }: UseWorkspaceStatusOptions) {
+  // Auto-restart configuration
+  const AUTO_RESTART_ENABLED = false; // Toggle to enable/disable automatic workspace status checks
+  
   const [status, setStatus] = useState<WorkspaceStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
@@ -26,6 +29,7 @@ export function useWorkspaceStatus({
     setError(null);
 
     try {
+      // Use workspace-status (lightweight) instead of debug-services (heavy)
       const response = await fetch(`/api/workspace-status/${sandboxId}`);
       const statusData: WorkspaceStatusResponse = await response.json();
       
@@ -56,7 +60,7 @@ export function useWorkspaceStatus({
     setError(null);
 
     try {
-      const response = await fetch(`/api/workspace-restart/${sandboxId}`, {
+      const response = await fetch(`/api/fix-services/${sandboxId}`, {
         method: 'POST'
       });
       
@@ -86,7 +90,7 @@ export function useWorkspaceStatus({
     }
   }, [sandboxId, checkStatus]);
 
-  // Initial status check
+  // Initial status check (ALWAYS needed to show restart UI)
   useEffect(() => {
     if (enabled && sandboxId) {
       checkStatus();
@@ -95,11 +99,11 @@ export function useWorkspaceStatus({
 
   // Polling for status updates
   useEffect(() => {
-    if (!enabled || !sandboxId || pollingInterval <= 0) return;
+    if (!enabled || !sandboxId || pollingInterval <= 0 || !AUTO_RESTART_ENABLED) return;
 
     const interval = setInterval(checkStatus, pollingInterval);
     return () => clearInterval(interval);
-  }, [checkStatus, enabled, sandboxId, pollingInterval]);
+  }, [checkStatus, enabled, sandboxId, pollingInterval, AUTO_RESTART_ENABLED]);
 
   // Computed properties
   const isWorkspaceHealthy = status?.status === 'started' && status?.servicesHealthy;
