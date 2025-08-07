@@ -93,6 +93,34 @@ export class WorkspaceInstaller {
     }
   }
 
+  async installGitHubCLI(sandbox: Sandbox, rootDir: string): Promise<void> {
+    this.logger.workspace.installing('GitHub CLI (gh)');
+    const result = await sandbox.process.executeCommand(
+      `(type -p wget >/dev/null || (apt update && apt install wget -y)) && 
+       mkdir -p -m 755 /etc/apt/keyrings && 
+       out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg && 
+       cat $out | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null && 
+       chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && 
+       mkdir -p -m 755 /etc/apt/sources.list.d && 
+       echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && 
+       apt update && 
+       apt install gh -y`,
+      rootDir,
+      undefined,
+      180000
+    );
+    
+    if (result.exitCode !== 0) {
+      const errorData = {
+        error: result.result,
+        code: 'GITHUB_CLI_INSTALL_FAILED',
+        details: { exitCode: result.exitCode }
+      };
+      this.logger.logError('GitHub CLI installation failed', errorData);
+      throw new Error(`GitHub CLI installation failed: ${result.result}`);
+    }
+  }
+
   async installOhMyZsh(sandbox: Sandbox, rootDir: string): Promise<void> {
     this.logger.workspace.installing('Oh My Zsh');
     const result = await sandbox.process.executeCommand(
