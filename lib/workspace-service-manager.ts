@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
 import type { UserWorkspace, Repository } from '@/types/workspace';
 import { Logger } from '@/lib/logger';
+import { TTYD_THEME } from '@/lib/workspace-constants';
 
 export interface ServiceStatus {
   service: string;
@@ -346,28 +347,15 @@ export class WorkspaceServiceManager {
       const scriptPromises = [
         // Terminal script
         sandbox.process.executeCommand(
-          `cat > "${terminalScript}" << 'EOF'
-#!/bin/bash
-cd "${repoPath}"
-exec zsh
-EOF`,
+          `echo '#!/bin/bash\ncd ${repoPath}\nexec zsh' > "${terminalScript}" && chmod +x "${terminalScript}"`,
           rootDir
-        ).then(() => sandbox.process.executeCommand(`chmod +x "${terminalScript}"`, rootDir)),
+        ),
         
         // Claude script  
         sandbox.process.executeCommand(
-          `cat > "${claudeScript}" << 'EOF'
-#!/bin/bash
-cd "${repoPath}"
-if command -v claude > /dev/null 2>&1; then
-  exec claude
-else
-  echo "Claude CLI not found. Please run: npm install -g @claude-ai/cli"
-  exec zsh
-fi
-EOF`,
+          `echo '#!/bin/bash\ncd ${repoPath}\nclaude' > "${claudeScript}" && chmod +x "${claudeScript}"`,
           rootDir
-        ).then(() => sandbox.process.executeCommand(`chmod +x "${claudeScript}"`, rootDir))
+        )
       ];
       
       await this.logger.time(`Script Creation (${repo.name})`, async () => {
@@ -384,13 +372,13 @@ EOF`,
         
         // Terminal
         sandbox.process.executeCommand(
-          `nohup ttyd -p ${repo.ports.terminal} "${terminalScript}" > /tmp/terminal-${repo.name}-${repo.ports.terminal}.log 2>&1 &`,
+          `nohup ttyd --port ${repo.ports.terminal} --writable -t 'theme=${TTYD_THEME}' "${terminalScript}" > /tmp/terminal-${repo.name}-${repo.ports.terminal}.log 2>&1 &`,
           rootDir
         ),
         
         // Claude
         sandbox.process.executeCommand(
-          `nohup ttyd -p ${repo.ports.claude} "${claudeScript}" > /tmp/claude-${repo.name}-${repo.ports.claude}.log 2>&1 &`,
+          `nohup ttyd --port ${repo.ports.claude} --writable -t 'theme=${TTYD_THEME}' "${claudeScript}" > /tmp/claude-${repo.name}-${repo.ports.claude}.log 2>&1 &`,
           rootDir
         )
       ];
