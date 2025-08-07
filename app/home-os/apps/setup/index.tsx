@@ -8,7 +8,7 @@ export const SetupApp = createApp<'setup'>({
     name: 'Setup',
     description: 'Multi-step workspace setup and configuration wizard',
     version: '1.0.0',
-    author: 'AgentsPod',
+    author: 'AgentsOS',
     category: 'system',
     icon: {
       emoji: '🚀',
@@ -21,8 +21,8 @@ export const SetupApp = createApp<'setup'>({
     }
   },
   window: {
-    defaultSize: { width: 700, height: 600 },
-    minSize: { width: 500, height: 400 },
+    defaultSize: { width: 1200, height: 800 },
+    minSize: { width: 800, height: 600 },
     resizable: true,
     position: 'center'
   },

@@ -5,6 +5,7 @@ import { ClaudeApp } from './ClaudeApp';
 import { DiffApp } from './DiffApp';
 import { SettingsApp } from './SettingsApp';
 import { TerminalApp } from './TerminalApp';
+import { SetupApp } from './setup';
 
 // Strongly typed app store - each app must match its declared type
 export const AppStore: AppRegistry = {
@@ -13,6 +14,7 @@ export const AppStore: AppRegistry = {
   diff: DiffApp,
   settings: SettingsApp,
   terminal: TerminalApp,
+  setup: SetupApp,
 } as const;
 
 // Validate all apps at startup (development only)
@@ -26,6 +28,7 @@ if (process.env.NODE_ENV === 'development') {
         case 'vscode': return validateApp(app as BaseApp<'vscode'>);
         case 'settings': return validateApp(app as BaseApp<'settings'>);
         case 'diff': return validateApp(app as BaseApp<'diff'>);
+        case 'setup': return validateApp(app as BaseApp<'setup'>);
         default: throw new Error(`Unknown app id: ${id}`);
       }
     })();
@@ -66,6 +69,7 @@ export type {
   VSCodeAppProps,
   SettingsAppProps,
   DiffAppProps,
+  SetupAppProps,
   AppRegistry
 } from './BaseApp';
 export { createApp, validateApp } from './BaseApp';

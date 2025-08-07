@@ -100,6 +100,23 @@ export function useAgentsOSUser() {
     }
   }, [getFirebaseUid, userService]);
 
+  /**
+   * Update user preferences
+   */
+  const updateUserPreferences = useCallback(async (preferences: any) => {
+    const uid = getFirebaseUid();
+    if (!uid) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      await userService.updateUserPreferences(uid, preferences);
+    } catch (error) {
+      console.error('Error updating user preferences:', error);
+      throw error;
+    }
+  }, [getFirebaseUid, userService]);
+
 
   // Load workspace when Firebase user changes or onboarding status changes
   useEffect(() => {
@@ -144,6 +161,7 @@ export function useAgentsOSUser() {
     completeOnboarding,
     createOrUpdateWorkspace,
     updateWorkspaceStatus,
+    updateUserPreferences,
     refreshUserData: () => {
       const uid = getFirebaseUid();
       if (uid) {

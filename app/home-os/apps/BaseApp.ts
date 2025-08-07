@@ -22,6 +22,9 @@ export type SettingsAppProps = NoProps;
 // Diff app doesn't need any props
 export type DiffAppProps = NoProps;
 
+// Setup app doesn't need any props
+export type SetupAppProps = NoProps;
+
 // Map app types to their prop types
 export interface AppPropsMap {
   terminal: TerminalAppProps;
@@ -29,6 +32,7 @@ export interface AppPropsMap {
   vscode: VSCodeAppProps;
   settings: SettingsAppProps;
   diff: DiffAppProps;
+  setup: SetupAppProps;
 }
 
 export type AppType = keyof AppPropsMap;
