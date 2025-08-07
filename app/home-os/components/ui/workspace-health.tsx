@@ -39,12 +39,13 @@ interface HealthCheckResponse {
 }
 
 export function WorkspaceHealth() {
-  // Auto-restart configuration
-  const AUTO_RESTART_ENABLED = false; // Toggle to enable/disable automatic health checks and restarts
+  // Health check configuration
+  const AUTO_HEALTH_CHECK_ENABLED = true;  // Always check health periodically
+  const AUTO_RESTART_ENABLED = false;      // Don't auto-restart, only manual restart
   
   const { activeWorkspaceId, workspaces, sandboxId } = useWorkspaceStore();
   const [healthData, setHealthData] = useState<HealthCheckResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(AUTO_RESTART_ENABLED); // Only start as loading if auto-restart is enabled
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
@@ -96,8 +97,8 @@ export function WorkspaceHealth() {
       return;
     }
 
-    // Skip automatic health checks if auto-restart is disabled
-    if (!AUTO_RESTART_ENABLED) {
+    // Skip automatic health checks if disabled
+    if (!AUTO_HEALTH_CHECK_ENABLED) {
       setIsLoading(false);
       return;
     }
@@ -108,8 +109,8 @@ export function WorkspaceHealth() {
       checkHealth();
     }, delay);
 
-    // Periodic health checking - more frequent during restart
-    const interval = isRestarting ? 5000 : 100000;
+    // Periodic health checking - more frequent during restart, every 2 minutes normally
+    const interval = isRestarting ? 5000 : 120000;
     const healthInterval = setInterval(() => {
       checkHealth(true); // Skip loading state for background checks
     }, interval);
@@ -118,7 +119,7 @@ export function WorkspaceHealth() {
       clearTimeout(initialTimer);
       clearInterval(healthInterval);
     };
-  }, [sandboxId, activeWorkspaceId, checkHealth, isRestarting, AUTO_RESTART_ENABLED]);
+  }, [sandboxId, activeWorkspaceId, checkHealth, isRestarting, AUTO_HEALTH_CHECK_ENABLED]);
 
   // Check health when opening the popover (on-demand)
   useEffect(() => {
