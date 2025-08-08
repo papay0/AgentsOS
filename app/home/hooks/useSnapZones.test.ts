@@ -47,7 +47,6 @@ Object.defineProperty(window, 'innerHeight', {
 describe('useSnapZones Hook', () => {
   const mockOnSnapStart = vi.fn()
   const mockOnSnapEnd = vi.fn()
-  const windowId = 'test-window'
 
   beforeEach(() => {
     vi.clearAllMocks()

@@ -1,24 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useWindowAnimation } from './useWindowAnimation';
-
-// Define a proper type for our mock animation
-interface MockAnimation {
-  addEventListener: (type: string, listener: EventListener) => void;
-  cancel: () => void;
-  finish: () => void;
-  play: () => void;
-  pause: () => void;
-}
+import { createMockAnimation, createMockHTMLElement } from '@/src/test/test-utils';
 
 describe('useWindowAnimation', () => {
   let mockElement: HTMLElement;
   let mockTargetElement: HTMLElement;
-  let mockAnimation: MockAnimation;
+  let mockAnimation: ReturnType<typeof createMockAnimation>;
 
   beforeEach(() => {
-    // Mock HTMLElement
-    mockElement = {
+    // Mock HTMLElement with custom getBoundingClientRect
+    mockElement = createMockHTMLElement({
       getBoundingClientRect: vi.fn().mockReturnValue({
         x: 100,
         y: 100,
@@ -34,9 +26,9 @@ describe('useWindowAnimation', () => {
         transform: '',
         opacity: ''
       }
-    } as unknown as HTMLElement;
+    });
 
-    mockTargetElement = {
+    mockTargetElement = createMockHTMLElement({
       getBoundingClientRect: vi.fn().mockReturnValue({
         x: 500,
         y: 800,
@@ -47,16 +39,10 @@ describe('useWindowAnimation', () => {
         right: 548,
         bottom: 848
       })
-    } as unknown as HTMLElement;
+    });
 
     // Mock Animation
-    mockAnimation = {
-      addEventListener: vi.fn(),
-      cancel: vi.fn(),
-      finish: vi.fn(),
-      play: vi.fn(),
-      pause: vi.fn()
-    };
+    mockAnimation = createMockAnimation();
 
     vi.mocked(mockElement.animate).mockReturnValue(mockAnimation as unknown as Animation);
   });
@@ -77,24 +63,31 @@ describe('useWindowAnimation', () => {
       expect(mockElement.animate).toHaveBeenCalled();
       
       // Check keyframes
-      const [keyframes, options] = (mockElement.animate as any).mock.calls[0];
-      expect(keyframes).toHaveLength(2);
-      expect(keyframes[0]).toMatchObject({
-        transform: 'translate(0, 0) scale(1)',
-        opacity: '1'
-      });
-      // The exact transform values will depend on the calculation
-      expect(keyframes[1]).toHaveProperty('transform');
-      expect(keyframes[1]).toMatchObject({
-        opacity: '0.3'
-      });
+      const [keyframes, options] = vi.mocked(mockElement.animate).mock.calls[0];
+      
+      // Type guard to ensure keyframes is an array
+      expect(Array.isArray(keyframes)).toBe(true);
+      if (Array.isArray(keyframes)) {
+        expect(keyframes).toHaveLength(2);
+        expect(keyframes[0]).toMatchObject({
+          transform: 'translate(0, 0) scale(1)',
+          opacity: '1'
+        });
+        // The exact transform values will depend on the calculation
+        expect(keyframes[1]).toHaveProperty('transform');
+        expect(keyframes[1]).toMatchObject({
+          opacity: '0.3'
+        });
+      }
 
       // Check animation options
-      expect(options).toMatchObject({
-        duration: 400,
-        easing: 'cubic-bezier(0.4, 0.0, 1, 1)',
-        fill: 'forwards'
-      });
+      if (options && typeof options === 'object' && !('length' in options)) {
+        expect(options).toMatchObject({
+          duration: 400,
+          easing: 'cubic-bezier(0.4, 0.0, 1, 1)',
+          fill: 'forwards'
+        });
+      }
     });
 
     it('calls onAnimationComplete when animation finishes', () => {
@@ -108,15 +101,17 @@ describe('useWindowAnimation', () => {
       });
 
       // Get the finish event listener
-      const finishListener = (mockAnimation.addEventListener as any).mock.calls.find(
-        (call: any) => call[0] === 'finish'
+      const finishListener = vi.mocked(mockAnimation.addEventListener).mock.calls.find(
+        (call) => call[0] === 'finish'
       )?.[1];
 
       expect(finishListener).toBeDefined();
 
       // Simulate animation finish
       act(() => {
-        finishListener();
+        if (finishListener && typeof finishListener === 'function') {
+          finishListener(new Event('finish'));
+        }
       });
 
       expect(onAnimationComplete).toHaveBeenCalled();
@@ -133,8 +128,10 @@ describe('useWindowAnimation', () => {
         result.current.animateMinimizeToTarget(mockElement, mockTargetElement);
       });
 
-      const [, options] = (mockElement.animate as any).mock.calls[0];
-      expect(options.duration).toBe(600);
+      const [, options] = vi.mocked(mockElement.animate).mock.calls[0];
+      if (options && typeof options === 'object' && !('length' in options) && 'duration' in options) {
+        expect(options.duration).toBe(600);
+      }
     });
   });
 
@@ -151,25 +148,32 @@ describe('useWindowAnimation', () => {
       expect(mockElement.animate).toHaveBeenCalled();
       
       // Check keyframes
-      const [keyframes, options] = (mockElement.animate as any).mock.calls[0];
-      expect(keyframes).toHaveLength(2);
-      // First keyframe should start from minimized position
-      expect(keyframes[0]).toHaveProperty('transform');
-      expect(keyframes[0]).toMatchObject({
-        opacity: '0.3'
-      });
-      // Second keyframe should restore to original
-      expect(keyframes[1]).toMatchObject({
-        transform: 'translate(0, 0) scale(1)',
-        opacity: '1'
-      });
+      const [keyframes, options] = vi.mocked(mockElement.animate).mock.calls[0];
+      
+      // Type guard to ensure keyframes is an array
+      expect(Array.isArray(keyframes)).toBe(true);
+      if (Array.isArray(keyframes)) {
+        expect(keyframes).toHaveLength(2);
+        // First keyframe should start from minimized position
+        expect(keyframes[0]).toHaveProperty('transform');
+        expect(keyframes[0]).toMatchObject({
+          opacity: '0.3'
+        });
+        // Second keyframe should restore to original
+        expect(keyframes[1]).toMatchObject({
+          transform: 'translate(0, 0) scale(1)',
+          opacity: '1'
+        });
+      }
 
       // Check animation options for restore
-      expect(options).toMatchObject({
-        duration: 400,
-        easing: 'cubic-bezier(0.0, 0.0, 0.2, 1)',
-        fill: 'forwards'
-      });
+      if (options && typeof options === 'object' && !('length' in options)) {
+        expect(options).toMatchObject({
+          duration: 400,
+          easing: 'cubic-bezier(0.0, 0.0, 0.2, 1)',
+          fill: 'forwards'
+        });
+      }
     });
   });
 

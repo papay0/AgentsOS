@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@/src/test/utils'
+import { NodeEnvManager } from '@/src/test/test-utils'
 
 // Unmock the SnapZoneOverlay component to test the real implementation
 vi.unmock('@/app/home/components/desktop/SnapZoneOverlay')
@@ -12,7 +13,7 @@ Object.defineProperty(window, 'innerHeight', { value: 800, writable: true })
 Object.defineProperty(window, 'innerWidth', { value: 1200, writable: true })
 
 // Mock environment variable
-const originalNodeEnv = process.env.NODE_ENV
+const nodeEnvManager = new NodeEnvManager()
 
 interface SnapZone {
   id: 'left' | 'right' | 'top'
@@ -43,7 +44,7 @@ describe('SnapZoneOverlay Component', () => {
   })
 
   afterEach(() => {
-    (process.env as any).NODE_ENV = originalNodeEnv
+    nodeEnvManager.reset()
   })
 
   describe('Basic Rendering', () => {
@@ -197,7 +198,7 @@ describe('SnapZoneOverlay Component', () => {
 
   describe('Development Mode Debug Zones', () => {
     it('shows debug zones in development mode', async () => {
-      (process.env as any).NODE_ENV = 'development'
+      nodeEnvManager.set('development')
       
       const leftZone = createMockSnapZone('left')
       const { container } = render(
@@ -211,7 +212,7 @@ describe('SnapZoneOverlay Component', () => {
     })
 
     it('does not show debug zones in production mode', async () => {
-      (process.env as any).NODE_ENV = 'production'
+      nodeEnvManager.set('production')
       
       const rightZone = createMockSnapZone('right')
       const { container } = render(
@@ -225,7 +226,7 @@ describe('SnapZoneOverlay Component', () => {
     })
 
     it('positions debug zones correctly', async () => {
-      (process.env as any).NODE_ENV = 'development'
+      nodeEnvManager.set('development')
       
       const topZone = createMockSnapZone('top')
       const { container } = render(

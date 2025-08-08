@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { createMockPointerEvent, createMockHTMLElement } from '@/src/test/test-utils'
 import { useDrag } from './useDrag'
 import { createRef } from 'react'
+
 
 // Mock requestAnimationFrame and cancelAnimationFrame
 const mockRequestAnimationFrame = vi.fn()
@@ -29,12 +31,12 @@ describe('useDrag Hook', () => {
     vi.clearAllMocks()
     
     // Create mock element with pointer capture methods
-    mockElement = {
+    mockElement = createMockHTMLElement({
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       setPointerCapture: vi.fn(),
       releasePointerCapture: vi.fn(),
-    } as unknown as HTMLElement
+    })
 
     elementRef = createRef<HTMLElement>() as React.RefObject<HTMLElement>
     Object.defineProperty(elementRef, 'current', {
@@ -107,15 +109,15 @@ describe('useDrag Hook', () => {
         .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
       // Simulate pointer down event
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         clientX: 100,
         clientY: 200,
         pointerId: 1,
-      } as unknown as PointerEvent
+      })
 
       act(() => {
-        pointerDownHandler(mockEvent as any)
+        pointerDownHandler(mockEvent)
       })
 
       expect(result.current.isDragging).toBe(true)
@@ -133,16 +135,16 @@ describe('useDrag Hook', () => {
       const pointerDownHandler = vi.mocked(mockElement.addEventListener).mock.calls
         .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         clientX: 100,
         clientY: 200,
         pointerId: 1,
-      } as unknown as PointerEvent
+      })
 
       expect(() => {
         act(() => {
-          pointerDownHandler(mockEvent as any)
+          pointerDownHandler(mockEvent)
         })
       }).not.toThrow()
 
@@ -235,12 +237,12 @@ describe('useDrag Hook', () => {
         .find((call) => call[0] === 'pointerdown')?.[1] as EventListener
 
       act(() => {
-        pointerDownHandler({
+        pointerDownHandler(createMockPointerEvent({
           preventDefault: vi.fn(),
           clientX: 100,
           clientY: 200,
           pointerId: 1,
-        } as unknown as PointerEvent)
+        }))
       })
 
       expect(mockElement.setPointerCapture).toHaveBeenCalledWith(1)
@@ -307,12 +309,12 @@ describe('useDrag Hook', () => {
 
       expect(() => {
         act(() => {
-          pointerDownHandler({
+          pointerDownHandler(createMockPointerEvent({
             preventDefault: vi.fn(),
             clientX: 100,
             clientY: 200,
             pointerId: 1,
-          } as unknown as PointerEvent)
+          }))
         })
       }).not.toThrow()
 
@@ -331,12 +333,12 @@ describe('useDrag Hook', () => {
 
       // First drag start
       act(() => {
-        pointerDownHandler({
+        pointerDownHandler(createMockPointerEvent({
           preventDefault: vi.fn(),
           clientX: 100,
           clientY: 200,
           pointerId: 1,
-        } as unknown as PointerEvent)
+        }))
       })
 
       expect(result.current.isDragging).toBe(true)
@@ -349,12 +351,12 @@ describe('useDrag Hook', () => {
 
       // Second drag start
       act(() => {
-        pointerDownHandler({
+        pointerDownHandler(createMockPointerEvent({
           preventDefault: vi.fn(),
           clientX: 200,
           clientY: 300,
           pointerId: 2,
-        } as unknown as PointerEvent)
+        }))
       })
 
       expect(mockOnDragStart).toHaveBeenCalledTimes(2)

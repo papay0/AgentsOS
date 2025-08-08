@@ -1,20 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { createMockPointerEvent, createMockHTMLElement } from '@/src/test/test-utils'
 import { useResize } from './useResize'
 import { createRef } from 'react'
 
-// Define a proper type for our mock pointer events
-interface MockPointerEvent {
-  preventDefault: () => void
-  stopPropagation: () => void
-  clientX: number
-  clientY: number
-  pointerId: number
-  target: {
-    setPointerCapture: (pointerId: number) => void
-    releasePointerCapture: (pointerId: number) => void
-  }
-}
 
 // Mock requestAnimationFrame and cancelAnimationFrame
 const mockRequestAnimationFrame = vi.fn()
@@ -52,7 +41,7 @@ describe('useResize Hook', () => {
     vi.clearAllMocks()
     
     // Create mock element
-    mockElement = {
+    mockElement = createMockHTMLElement({
       getBoundingClientRect: vi.fn().mockReturnValue({
         width: 400,
         height: 300,
@@ -62,7 +51,7 @@ describe('useResize Hook', () => {
         bottom: 450,
       }),
       style: {},
-    } as unknown as HTMLElement
+    })
 
     windowRef = createRef<HTMLElement>() as React.RefObject<HTMLElement>
     Object.defineProperty(windowRef, 'current', {
@@ -124,17 +113,17 @@ describe('useResize Hook', () => {
         onResizeStart: mockOnResizeStart,
       }))
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(mockEvent as any, 'se')
+        result.current.handleResizeStart(mockEvent, 'se')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -149,17 +138,17 @@ describe('useResize Hook', () => {
         onResize: mockOnResize,
       }))
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(mockEvent as any, 'ne')
+        result.current.handleResizeStart(mockEvent, 'ne')
       })
 
       expect(document.body.style.cursor).toBe('ne-resize')
@@ -172,18 +161,18 @@ describe('useResize Hook', () => {
         onResize: mockOnResize,
       }))
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       expect(() => {
         act(() => {
-          result.current.handleResizeStart(mockEvent as any, 'e')
+          result.current.handleResizeStart(mockEvent, 'e')
         })
       }).not.toThrow()
 
@@ -199,17 +188,17 @@ describe('useResize Hook', () => {
         onResizeStart: mockOnResizeStart,
       }))
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(mockEvent as any, 'se')
+        result.current.handleResizeStart(mockEvent, 'se')
       })
 
       expect(result.current.isResizing).toBe(false)
@@ -236,17 +225,17 @@ describe('useResize Hook', () => {
         onResizeStart: mockOnResizeStart,
       }))
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(mockEvent as any, 'e')
+        result.current.handleResizeStart(mockEvent, 'e')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -259,17 +248,17 @@ describe('useResize Hook', () => {
         onResize: mockOnResize,
       }))
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(mockEvent as any, 's')
+        result.current.handleResizeStart(mockEvent, 's')
       })
 
       // This tests the resize direction logic internally
@@ -282,17 +271,17 @@ describe('useResize Hook', () => {
         onResize: mockOnResize,
       }))
 
-      const mockEvent = {
+      const mockEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(mockEvent as any, 'nw')
+        result.current.handleResizeStart(mockEvent, 'nw')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -336,17 +325,17 @@ describe('useResize Hook', () => {
         onResizeEnd: mockOnResizeEnd,
       }))
 
-      const startEvent = {
+      const startEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(startEvent as any, 'se')
+        result.current.handleResizeStart(startEvent, 'se')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -360,17 +349,17 @@ describe('useResize Hook', () => {
         onResize: mockOnResize,
       }))
 
-      const startEvent = {
+      const startEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(startEvent as any, 'e')
+        result.current.handleResizeStart(startEvent, 'e')
       })
 
       expect(document.body.style.cursor).toBe('e-resize')
@@ -396,17 +385,17 @@ describe('useResize Hook', () => {
         onResize: mockOnResize,
       }))
 
-      const startEvent = {
+      const startEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(startEvent as any, 'n')
+        result.current.handleResizeStart(startEvent, 'n')
       })
 
       expect(documentAddEventListener).toHaveBeenCalledWith('pointermove', expect.any(Function), )
@@ -444,17 +433,17 @@ describe('useResize Hook', () => {
 
       expect(result.current.isResizing).toBe(false)
 
-      const startEvent = {
+      const startEvent = createMockPointerEvent({
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
-      } as unknown as MockPointerEvent
+        target: createMockHTMLElement({ setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() }),
+      })
 
       act(() => {
-        result.current.handleResizeStart(startEvent as any, 'sw')
+        result.current.handleResizeStart(startEvent, 'sw')
       })
 
       expect(result.current.isResizing).toBe(true)

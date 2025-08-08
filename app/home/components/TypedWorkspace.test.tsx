@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@/src/test/utils'
 import { useWindowStore } from '../stores/windowStore'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -8,15 +8,16 @@ import { useWorkspaceStore } from '../stores/workspaceStore'
 import Workspace from './Workspace'
 import { createMockWindowStore } from '../stores/windowStore.mock'
 import { onSnapshot, doc, type DocumentReference } from 'firebase/firestore'
+import type { FirebaseUserData } from '@/lib/firebase-auth'
 
 // Type the mocked modules
-const mockedUseWindowStore = vi.mocked(useWindowStore as unknown as Mock)
-const mockedUseIsMobile = vi.mocked(useIsMobile as unknown as Mock)
-const mockedUseAuth = vi.mocked(useAuth as unknown as Mock)
-const mockedUseAgentsOSUser = vi.mocked(useAgentsOSUser as unknown as Mock)
-const mockedUseWorkspaceStore = vi.mocked(useWorkspaceStore as unknown as Mock)
-const mockedOnSnapshot = vi.mocked(onSnapshot as unknown as Mock)
-const mockedDoc = vi.mocked(doc as unknown as Mock)
+const mockedUseWindowStore = vi.mocked(useWindowStore)
+const mockedUseIsMobile = vi.mocked(useIsMobile)
+const mockedUseAuth = vi.mocked(useAuth)
+const mockedUseAgentsOSUser = vi.mocked(useAgentsOSUser)
+const mockedUseWorkspaceStore = vi.mocked(useWorkspaceStore)
+const mockedOnSnapshot = vi.mocked(onSnapshot)
+const mockedDoc = vi.mocked(doc)
 
 // Mock Firebase
 vi.mock('firebase/firestore', () => ({
@@ -52,7 +53,11 @@ describe('Workspace - Strongly Typed Tests', () => {
     
     // Set up default mock implementation for the store selector
     mockedUseWindowStore.mockImplementation((selector) => {
-      const mockStore = createMockWindowStore()
+      const mockStore = {
+        ...createMockWindowStore(),
+        workspaceData: null,
+        setWorkspaceData: vi.fn()
+      }
       // If a selector is provided, call it with the mock store
       if (typeof selector === 'function') {
         return selector(mockStore)
@@ -61,7 +66,7 @@ describe('Workspace - Strongly Typed Tests', () => {
     })
     
     // Mock workspace store with complete interface
-    const mockWorkspaceStore = {
+    const mockWorkspaceStoreState = {
       workspaces: [{
         id: 'test-workspace',
         name: 'Test Workspace',
@@ -121,38 +126,123 @@ describe('Workspace - Strongly Typed Tests', () => {
       reset: vi.fn()
     }
     
-    mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStore)
+    mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStoreState)
     
-    // Mock getState to return the same mock store
-    ;(mockedUseWorkspaceStore as any).getState = vi.fn(() => mockWorkspaceStore)
+    // Mock getState to return the same mock store state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(useWorkspaceStore as any).getState = () => mockWorkspaceStoreState
     
-    // Mock auth
+    // Mock auth with complete UseAuthReturn interface
     mockedUseAuth.mockReturnValue({
       userId: 'test-user',
       isSignedIn: true,
-    })
+      isLoaded: true,
+      sessionId: 'test-session',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sessionClaims: {} as any,
+      actor: null,
+      orgId: null,
+      orgRole: null,
+      orgSlug: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      has: vi.fn() as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      signOut: vi.fn() as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getToken: vi.fn() as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
     
     // Mock AgentsOS user with completed onboarding
     mockedUseAgentsOSUser.mockReturnValue({
-      clerkUser: { id: 'test-user', fullName: 'Test User' },
-      userProfile: { id: 'test-user', email: 'test@example.com', name: 'Test User' },
+      // Authentication state
+      isAuthenticated: true,
+      isReady: true,
       isLoading: false,
+      error: null,
+      
+      // User data
+      clerkUser: {
+        id: 'test-user',
+        fullName: 'Test User',
+        firstName: 'Test',
+        lastName: 'User',
+        emailAddresses: [],
+        phoneNumbers: [],
+        externalAccounts: [],
+        organizationMemberships: [],
+        primaryEmailAddressId: null,
+        primaryPhoneNumberId: null,
+        primaryEmailAddress: null,
+        primaryPhoneNumber: null,
+        externalId: null,
+        username: null,
+        profileImageUrl: '',
+        imageUrl: '',
+        hasImage: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastSignInAt: null,
+        twoFactorEnabled: false,
+        totpEnabled: false,
+        backupCodeEnabled: false,
+        publicMetadata: {},
+        privateMetadata: {},
+        unsafeMetadata: {},
+        passwordEnabled: true
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      userProfile: {
+        uid: 'test-user',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        firstName: 'Test',
+        lastName: 'User',
+        username: 'testuser',
+        profileImageUrl: '',
+        clerkUserId: 'test-user',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as FirebaseUserData,
+      workspace: null,
+      
+      // Computed state
       hasCompletedOnboarding: true,
-      workspaces: [],
+      needsOnboarding: false,
+      
+      // Actions
       completeOnboarding: vi.fn(),
-      addWorkspace: vi.fn(),
-      updateWorkspaceStatus: vi.fn(),
       createOrUpdateWorkspace: vi.fn(),
+      updateWorkspaceStatus: vi.fn(),
+      updateUserPreferences: vi.fn(),
+      refreshUserData: vi.fn(),
+      
+      // Utils
+      getFirebaseUid: vi.fn(() => 'test-firebase-uid'),
+      firebaseUser: {
+        uid: 'test-user',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        firstName: 'Test',
+        lastName: 'User',
+        username: 'testuser',
+        profileImageUrl: '',
+        clerkUserId: 'test-user',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as FirebaseUserData
     })
     
     mockedUseIsMobile.mockReturnValue(false)
     
     // Mock Firebase onSnapshot to return completed onboarding user
-    mockedDoc.mockReturnValue({} as unknown as DocumentReference)
-    mockedOnSnapshot.mockImplementation((docRef, onNext) => {
+    mockedDoc.mockReturnValue({} as DocumentReference)
+    mockedOnSnapshot.mockImplementation((_docRef, onNext) => {
       // Simulate Firebase returning user data with completed onboarding
       setTimeout(() => {
-        onNext({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const callback = onNext as (snapshot: any) => void
+        callback({
           exists: () => true,
           data: () => ({
             agentsOS: {
@@ -256,7 +346,7 @@ describe('Workspace - Strongly Typed Tests', () => {
         workspaceId: 'test-workspace'
       }
       
-      const mockWorkspaceStoreWithWindow = {
+      const mockWorkspaceStoreStateWithWindow = {
         workspaces: [{
           id: 'test-workspace',
           name: 'Test Workspace',
@@ -316,8 +406,9 @@ describe('Workspace - Strongly Typed Tests', () => {
         reset: vi.fn()
       }
       
-      mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStoreWithWindow)
-      ;(mockedUseWorkspaceStore as any).getState = vi.fn(() => mockWorkspaceStoreWithWindow)
+      mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStoreStateWithWindow)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(useWorkspaceStore as any).getState = () => mockWorkspaceStoreStateWithWindow
       
       mockedUseIsMobile.mockReturnValue(false)
       render(<Workspace />)
