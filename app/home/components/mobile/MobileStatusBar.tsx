@@ -3,6 +3,7 @@
 import { SignedIn, UserButton } from '@clerk/nextjs';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { MobileHealthIcon } from './MobileHealthIcon';
+import { PortShortcutIcon } from '../ui/PortShortcutIcon';
 
 export function MobileStatusBar() {
   const { workspaces, activeWorkspaceId } = useWorkspaceStore();
@@ -38,8 +39,9 @@ export function MobileStatusBar() {
         )}
       </div>
 
-      {/* Right - Health indicator same size as profile */}
-      <div className="w-6 flex justify-end">
+      {/* Right - Port shortcut and health indicator */}
+      <div className="flex items-center gap-2">
+        <PortShortcutIcon />
         <MobileHealthIcon />
       </div>
     </div>

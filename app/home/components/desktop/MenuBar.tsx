@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { WorkspaceSwitcher } from '../ui/workspace-switcher';
 import { WorkspaceHealth } from '../ui/workspace-health';
+import { PortShortcutIcon } from '../ui/PortShortcutIcon';
 
 // Custom theme toggle for the menubar with proper colors
 function MenuBarThemeToggle() {
@@ -103,6 +104,9 @@ export default function MenuBar() {
 
       {/* Right side - System status */}
       <div className="flex items-center space-x-3">
+        {/* Port shortcut */}
+        <PortShortcutIcon />
+        
         {/* Theme switcher */}
         <MenuBarThemeToggle />
 
