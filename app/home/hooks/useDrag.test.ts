@@ -34,9 +34,9 @@ describe('useDrag Hook', () => {
       removeEventListener: vi.fn(),
       setPointerCapture: vi.fn(),
       releasePointerCapture: vi.fn(),
-    } as HTMLElement
+    } as unknown as HTMLElement
 
-    elementRef = createRef<HTMLElement>()
+    elementRef = createRef<HTMLElement>() as React.RefObject<HTMLElement>
     Object.defineProperty(elementRef, 'current', {
       writable: true,
       value: mockElement
@@ -112,10 +112,10 @@ describe('useDrag Hook', () => {
         clientX: 100,
         clientY: 200,
         pointerId: 1,
-      }
+      } as unknown as PointerEvent
 
       act(() => {
-        pointerDownHandler(mockEvent)
+        pointerDownHandler(mockEvent as any)
       })
 
       expect(result.current.isDragging).toBe(true)
@@ -138,11 +138,11 @@ describe('useDrag Hook', () => {
         clientX: 100,
         clientY: 200,
         pointerId: 1,
-      }
+      } as unknown as PointerEvent
 
       expect(() => {
         act(() => {
-          pointerDownHandler(mockEvent)
+          pointerDownHandler(mockEvent as any)
         })
       }).not.toThrow()
 
@@ -240,7 +240,7 @@ describe('useDrag Hook', () => {
           clientX: 100,
           clientY: 200,
           pointerId: 1,
-        })
+        } as unknown as PointerEvent)
       })
 
       expect(mockElement.setPointerCapture).toHaveBeenCalledWith(1)
@@ -312,7 +312,7 @@ describe('useDrag Hook', () => {
             clientX: 100,
             clientY: 200,
             pointerId: 1,
-          })
+          } as unknown as PointerEvent)
         })
       }).not.toThrow()
 
@@ -336,7 +336,7 @@ describe('useDrag Hook', () => {
           clientX: 100,
           clientY: 200,
           pointerId: 1,
-        })
+        } as unknown as PointerEvent)
       })
 
       expect(result.current.isDragging).toBe(true)
@@ -354,7 +354,7 @@ describe('useDrag Hook', () => {
           clientX: 200,
           clientY: 300,
           pointerId: 2,
-        })
+        } as unknown as PointerEvent)
       })
 
       expect(mockOnDragStart).toHaveBeenCalledTimes(2)

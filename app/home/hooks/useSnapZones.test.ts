@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useSnapZones } from './useSnapZones'
 
@@ -61,7 +61,6 @@ describe('useSnapZones Hook', () => {
   describe('Hook Initialization', () => {
     it('initializes with correct default state', () => {
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
         onSnapEnd: mockOnSnapEnd,
       }))
@@ -174,7 +173,6 @@ describe('useSnapZones Hook', () => {
       vi.useFakeTimers()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -197,7 +195,6 @@ describe('useSnapZones Hook', () => {
       vi.useFakeTimers()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -219,7 +216,6 @@ describe('useSnapZones Hook', () => {
       vi.useFakeTimers()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -239,7 +235,6 @@ describe('useSnapZones Hook', () => {
 
     it('returns null when outside snap zones', () => {
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapEnd: mockOnSnapEnd,
       }))
 
@@ -275,7 +270,6 @@ describe('useSnapZones Hook', () => {
     it('handles zone transitions correctly', () => {
       vi.useFakeTimers()
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
         onSnapEnd: mockOnSnapEnd,
       }))
@@ -310,7 +304,6 @@ describe('useSnapZones Hook', () => {
       vi.useFakeTimers()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
         onSnapEnd: mockOnSnapEnd,
       }))
@@ -341,7 +334,6 @@ describe('useSnapZones Hook', () => {
       vi.useFakeTimers()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -367,7 +359,6 @@ describe('useSnapZones Hook', () => {
       vi.useFakeTimers()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -394,7 +385,6 @@ describe('useSnapZones Hook', () => {
   describe('Snap Performance', () => {
     it('performs snap correctly for left zone', () => {
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
         onSnapEnd: mockOnSnapEnd,
       }))
@@ -410,7 +400,6 @@ describe('useSnapZones Hook', () => {
 
     it('performs snap correctly for top zone (maximize)', () => {
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -424,7 +413,6 @@ describe('useSnapZones Hook', () => {
 
     it('does not snap when ending drag outside zones', () => {
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapEnd: mockOnSnapEnd,
       }))
 
@@ -459,7 +447,6 @@ describe('useSnapZones Hook', () => {
       vi.clearAllMocks()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapEnd: mockOnSnapEnd,
       }))
 
@@ -526,7 +513,6 @@ describe('useSnapZones Hook', () => {
       const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')
       
       const { result, unmount } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -544,7 +530,6 @@ describe('useSnapZones Hook', () => {
       const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
       }))
 
@@ -630,7 +615,6 @@ describe('useSnapZones Hook', () => {
       vi.clearAllMocks()
       
       const { result } = renderHook(() => useSnapZones({
-        windowId,
         onSnapStart: mockOnSnapStart,
         onSnapEnd: mockOnSnapEnd,
       }))

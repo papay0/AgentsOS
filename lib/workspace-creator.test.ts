@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import { WorkspaceCreator } from './workspace-creator'
 import { WorkspaceManager } from './workspace-manager'
 import { WorkspaceInstaller } from './workspace-installer'
@@ -65,7 +65,7 @@ describe('WorkspaceCreator', () => {
 
     // Get the mocked logger
     const { logger } = await import('./logger')
-    mockLogger = logger
+    mockLogger = logger as unknown as typeof mockLogger
 
     // Create mock sandbox
     mockSandbox = {
@@ -100,10 +100,11 @@ describe('WorkspaceCreator', () => {
         {
           name: 'test-repo',
           url: 'https://github.com/test/repo',
+          description: 'Test repository',
           urls: {
-            vscodeUrl: 'http://localhost:8080',
-            terminalUrl: 'http://localhost:9999',
-            claudeTerminalUrl: 'http://localhost:9998',
+            vscode: 'http://localhost:8080',
+            terminal: 'http://localhost:9999',
+            claude: 'http://localhost:9998',
           },
         },
       ]),
@@ -136,7 +137,7 @@ describe('WorkspaceCreator', () => {
             ports: { vscode: 8080, terminal: 9999, claude: 9998 },
           },
         ],
-        resources: { cpu: 2, memory: 4 },
+        resources: { cpu: 2, memory: 4, disk: 10 },
       })
 
       // Verify GitHub CLI is installed in the correct order
@@ -155,10 +156,11 @@ describe('WorkspaceCreator', () => {
           {
             name: 'test-repo',
             url: 'https://github.com/test/repo',
+            description: 'Test repository',
             urls: {
-              vscodeUrl: 'http://localhost:8080',
-              terminalUrl: 'http://localhost:9999',
-              claudeTerminalUrl: 'http://localhost:9998',
+              vscode: 'http://localhost:8080',
+              terminal: 'http://localhost:9999',
+              claude: 'http://localhost:9998',
             },
           },
         ],
@@ -193,10 +195,10 @@ describe('WorkspaceCreator', () => {
 
       // Verify order by ensuring system packages come first, GitHub CLI second
       expect(mockWorkspaceInstaller.installSystemPackages).toHaveBeenCalledBefore(
-        mockWorkspaceInstaller.installGitHubCLI
+        mockWorkspaceInstaller.installGitHubCLI as Mock
       )
       expect(mockWorkspaceInstaller.installGitHubCLI).toHaveBeenCalledBefore(
-        mockWorkspaceInstaller.installTtyd
+        mockWorkspaceInstaller.installTtyd as Mock
       )
     })
 
@@ -218,8 +220,8 @@ describe('WorkspaceCreator', () => {
         error: gitHubError,
         code: 'WORKSPACE_CREATION_FAILED',
         details: {
-          cpu: 2,
-          memory: 4,
+          cpu: 4,
+          memory: 8,
           image: 'node:20',
         },
       })
@@ -238,7 +240,7 @@ describe('WorkspaceCreator', () => {
           },
         ],
         workspaceName: 'Test Workspace',
-        resources: { cpu: 4, memory: 8 },
+        resources: { cpu: 4, memory: 8, disk: 10 },
       }
 
       const result = await workspaceCreator.createWorkspace(options)
@@ -275,7 +277,7 @@ describe('WorkspaceCreator', () => {
     it('does not break existing workspace creation flow', async () => {
       const result = await workspaceCreator.createWorkspace({
         repositories: [],
-        resources: { cpu: 2, memory: 4 },
+        resources: { cpu: 2, memory: 4, disk: 10 },
       })
 
       // Verify core workflow still works
@@ -305,9 +307,9 @@ describe('WorkspaceCreator', () => {
           url: 'https://github.com/test/repo',
           description: 'Test',
           urls: {
-            vscodeUrl: 'http://localhost:8080',
-            terminalUrl: 'http://localhost:9999',
-            claudeTerminalUrl: 'http://localhost:9998',
+            vscode: 'http://localhost:8080',
+            terminal: 'http://localhost:9999',
+            claude: 'http://localhost:9998',
           },
         },
       ]

@@ -4,14 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npm run test:run && npm run lint && next build",
+    "build": "npm run test:run && npm run type-check && npm run lint && next build",
     "build:skip-tests": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
     "test:run": "NODE_ENV=test vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.28.1",

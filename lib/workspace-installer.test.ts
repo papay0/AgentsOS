@@ -26,7 +26,7 @@ describe('WorkspaceInstaller', () => {
     
     // Get the mocked logger
     const { logger } = await import('./logger')
-    mockLogger = logger
+    mockLogger = logger as unknown as typeof mockLogger
     
     installer = new WorkspaceInstaller()
     

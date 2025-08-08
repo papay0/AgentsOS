@@ -62,9 +62,9 @@ describe('useResize Hook', () => {
         bottom: 450,
       }),
       style: {},
-    } as HTMLElement
+    } as unknown as HTMLElement
 
-    windowRef = createRef<HTMLElement>()
+    windowRef = createRef<HTMLElement>() as React.RefObject<HTMLElement>
     Object.defineProperty(windowRef, 'current', {
       writable: true,
       value: mockElement
@@ -130,11 +130,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(mockEvent, 'se')
+        result.current.handleResizeStart(mockEvent as any, 'se')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -155,11 +155,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(mockEvent, 'ne')
+        result.current.handleResizeStart(mockEvent as any, 'ne')
       })
 
       expect(document.body.style.cursor).toBe('ne-resize')
@@ -178,12 +178,12 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       expect(() => {
         act(() => {
-          result.current.handleResizeStart(mockEvent, 'e')
+          result.current.handleResizeStart(mockEvent as any, 'e')
         })
       }).not.toThrow()
 
@@ -205,11 +205,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(mockEvent, 'se')
+        result.current.handleResizeStart(mockEvent as any, 'se')
       })
 
       expect(result.current.isResizing).toBe(false)
@@ -242,11 +242,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(mockEvent, 'e')
+        result.current.handleResizeStart(mockEvent as any, 'e')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -265,11 +265,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(mockEvent, 's')
+        result.current.handleResizeStart(mockEvent as any, 's')
       })
 
       // This tests the resize direction logic internally
@@ -288,11 +288,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(mockEvent, 'nw')
+        result.current.handleResizeStart(mockEvent as any, 'nw')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -342,11 +342,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(startEvent, 'se')
+        result.current.handleResizeStart(startEvent as any, 'se')
       })
 
       expect(result.current.isResizing).toBe(true)
@@ -366,11 +366,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(startEvent, 'e')
+        result.current.handleResizeStart(startEvent as any, 'e')
       })
 
       expect(document.body.style.cursor).toBe('e-resize')
@@ -402,11 +402,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(startEvent, 'n')
+        result.current.handleResizeStart(startEvent as any, 'n')
       })
 
       expect(documentAddEventListener).toHaveBeenCalledWith('pointermove', expect.any(Function), )
@@ -450,11 +450,11 @@ describe('useResize Hook', () => {
         clientX: 200,
         clientY: 250,
         pointerId: 1,
-        target: { setPointerCapture: vi.fn() },
-      } as MockPointerEvent
+        target: { setPointerCapture: vi.fn(), releasePointerCapture: vi.fn() },
+      } as unknown as MockPointerEvent
 
       act(() => {
-        result.current.handleResizeStart(startEvent, 'sw')
+        result.current.handleResizeStart(startEvent as any, 'sw')
       })
 
       expect(result.current.isResizing).toBe(true)

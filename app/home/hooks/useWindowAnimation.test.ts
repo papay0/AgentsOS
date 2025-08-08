@@ -34,7 +34,7 @@ describe('useWindowAnimation', () => {
         transform: '',
         opacity: ''
       }
-    } as HTMLElement;
+    } as unknown as HTMLElement;
 
     mockTargetElement = {
       getBoundingClientRect: vi.fn().mockReturnValue({
@@ -47,7 +47,7 @@ describe('useWindowAnimation', () => {
         right: 548,
         bottom: 848
       })
-    } as HTMLElement;
+    } as unknown as HTMLElement;
 
     // Mock Animation
     mockAnimation = {
@@ -77,7 +77,7 @@ describe('useWindowAnimation', () => {
       expect(mockElement.animate).toHaveBeenCalled();
       
       // Check keyframes
-      const [keyframes, options] = mockElement.animate.mock.calls[0];
+      const [keyframes, options] = (mockElement.animate as any).mock.calls[0];
       expect(keyframes).toHaveLength(2);
       expect(keyframes[0]).toMatchObject({
         transform: 'translate(0, 0) scale(1)',
@@ -108,8 +108,8 @@ describe('useWindowAnimation', () => {
       });
 
       // Get the finish event listener
-      const finishListener = mockAnimation.addEventListener.mock.calls.find(
-        call => call[0] === 'finish'
+      const finishListener = (mockAnimation.addEventListener as any).mock.calls.find(
+        (call: any) => call[0] === 'finish'
       )?.[1];
 
       expect(finishListener).toBeDefined();
@@ -133,7 +133,7 @@ describe('useWindowAnimation', () => {
         result.current.animateMinimizeToTarget(mockElement, mockTargetElement);
       });
 
-      const [, options] = mockElement.animate.mock.calls[0];
+      const [, options] = (mockElement.animate as any).mock.calls[0];
       expect(options.duration).toBe(600);
     });
   });
@@ -151,7 +151,7 @@ describe('useWindowAnimation', () => {
       expect(mockElement.animate).toHaveBeenCalled();
       
       // Check keyframes
-      const [keyframes, options] = mockElement.animate.mock.calls[0];
+      const [keyframes, options] = (mockElement.animate as any).mock.calls[0];
       expect(keyframes).toHaveLength(2);
       // First keyframe should start from minimized position
       expect(keyframes[0]).toHaveProperty('transform');

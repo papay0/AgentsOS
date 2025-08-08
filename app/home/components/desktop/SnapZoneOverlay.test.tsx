@@ -43,7 +43,7 @@ describe('SnapZoneOverlay Component', () => {
   })
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv
+    (process.env as any).NODE_ENV = originalNodeEnv
   })
 
   describe('Basic Rendering', () => {
@@ -197,7 +197,7 @@ describe('SnapZoneOverlay Component', () => {
 
   describe('Development Mode Debug Zones', () => {
     it('shows debug zones in development mode', async () => {
-      process.env.NODE_ENV = 'development'
+      (process.env as any).NODE_ENV = 'development'
       
       const leftZone = createMockSnapZone('left')
       const { container } = render(
@@ -211,7 +211,7 @@ describe('SnapZoneOverlay Component', () => {
     })
 
     it('does not show debug zones in production mode', async () => {
-      process.env.NODE_ENV = 'production'
+      (process.env as any).NODE_ENV = 'production'
       
       const rightZone = createMockSnapZone('right')
       const { container } = render(
@@ -225,7 +225,7 @@ describe('SnapZoneOverlay Component', () => {
     })
 
     it('positions debug zones correctly', async () => {
-      process.env.NODE_ENV = 'development'
+      (process.env as any).NODE_ENV = 'development'
       
       const topZone = createMockSnapZone('top')
       const { container } = render(

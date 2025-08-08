@@ -680,7 +680,7 @@ describe('WindowStore', () => {
     it('handles different window types', () => {
       const { result } = renderHook(() => useWindowStore())
       
-      const windowTypes: Array<Window['type']> = ['vscode', 'claude', 'file-manager', 'terminal', 'preview']
+      const windowTypes: Array<Window['type']> = ['vscode', 'claude', 'diff', 'settings', 'terminal']
 
       windowTypes.forEach((type, index) => {
         mockDateNow.mockReturnValue(1234567890 + index)

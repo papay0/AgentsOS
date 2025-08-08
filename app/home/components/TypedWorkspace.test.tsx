@@ -7,7 +7,7 @@ import { useAgentsOSUser } from '@/hooks/use-agentsos-user'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import Workspace from './Workspace'
 import { createMockWindowStore } from '../stores/windowStore.mock'
-import { onSnapshot, doc } from 'firebase/firestore'
+import { onSnapshot, doc, type DocumentReference } from 'firebase/firestore'
 
 // Type the mocked modules
 const mockedUseWindowStore = vi.mocked(useWindowStore as unknown as Mock)
@@ -124,7 +124,7 @@ describe('Workspace - Strongly Typed Tests', () => {
     mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStore)
     
     // Mock getState to return the same mock store
-    mockedUseWorkspaceStore.getState = vi.fn(() => mockWorkspaceStore)
+    ;(mockedUseWorkspaceStore as any).getState = vi.fn(() => mockWorkspaceStore)
     
     // Mock auth
     mockedUseAuth.mockReturnValue({
@@ -148,7 +148,7 @@ describe('Workspace - Strongly Typed Tests', () => {
     mockedUseIsMobile.mockReturnValue(false)
     
     // Mock Firebase onSnapshot to return completed onboarding user
-    mockedDoc.mockReturnValue({} as DocumentReference)
+    mockedDoc.mockReturnValue({} as unknown as DocumentReference)
     mockedOnSnapshot.mockImplementation((docRef, onNext) => {
       // Simulate Firebase returning user data with completed onboarding
       setTimeout(() => {
@@ -317,7 +317,7 @@ describe('Workspace - Strongly Typed Tests', () => {
       }
       
       mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStoreWithWindow)
-      mockedUseWorkspaceStore.getState = vi.fn(() => mockWorkspaceStoreWithWindow)
+      ;(mockedUseWorkspaceStore as any).getState = vi.fn(() => mockWorkspaceStoreWithWindow)
       
       mockedUseIsMobile.mockReturnValue(false)
       render(<Workspace />)
