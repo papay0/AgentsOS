@@ -35,7 +35,6 @@ interface BaseStepProps {
 }
 
 export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
-  console.log('🚀 SetupWizard rendering with props:', { isMobile });
   const [currentStepId, setCurrentStepId] = useState('github');
   const [setupData, setSetupData] = useState<SetupData>({
     githubRepos: {
@@ -210,7 +209,6 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
       }
 
       // Close setup and refresh workspace
-      console.log('Setup completed!', setupData);
       
       // Close the setup window
       if (typeof window !== 'undefined') {

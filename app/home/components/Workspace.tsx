@@ -75,11 +75,6 @@ export default function Workspace() {
           
           // Check if setup is complete
           const hasCompletedSetup = userData?.agentsOS?.preferences?.setupDone === true;
-          console.log('🔧 Setup status check:', { 
-            hasCompletedSetup, 
-            setupDone: userData?.agentsOS?.preferences?.setupDone,
-            agentsOS: userData?.agentsOS 
-          });
           
           if (!hasCompletedSetup) {
             // Just mark that we should show setup - don't mess with workspaces!
@@ -104,8 +99,7 @@ export default function Workspace() {
         }
         setIsFirebaseLoading(false);
       },
-      (error) => {
-        console.error('Firebase listener error:', error);
+      () => {
         setIsFirebaseLoading(false);
       }
     );
@@ -115,11 +109,9 @@ export default function Workspace() {
 
   // Open setup app when needed
   useEffect(() => {
-    console.log('🔧 Setup effect:', { shouldShowSetup, workspacesLength: workspaces.length, firstWorkspaceId: workspaces[0]?.id });
     if (shouldShowSetup && workspaces.length > 0 && workspaces[0]?.id) {
       const { addWindow, getActiveWorkspace } = useWorkspaceStore.getState();
       const activeWorkspace = getActiveWorkspace();
-      console.log('🔧 Opening setup window for workspace:', workspaces[0].id);
       
       if (activeWorkspace) {
         // Check if setup window is already open
@@ -137,7 +129,6 @@ export default function Workspace() {
               repositoryName: activeWorkspace.name,
               repositoryUrl: ''
             });
-            console.log('🔧 Setup window opened');
           }, 100);
         }
       }

@@ -31,7 +31,7 @@ export const SetupApp = createApp<'setup'>({
     mobile: SetupMobile
   },
   actions: {
-    onOpen: () => console.log('Setup wizard opened'),
-    onClose: () => console.log('Setup wizard closed')
+    onOpen: () => {},
+    onClose: () => {}
   }
 });

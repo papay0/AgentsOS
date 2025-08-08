@@ -32,7 +32,7 @@ export const TerminalApp = createApp<'terminal'>({
     mobile: TerminalMobile
   },
   actions: {
-    onOpen: () => console.log('Terminal opened'),
-    onClose: () => console.log('Terminal closed')
+    onOpen: () => {},
+    onClose: () => {}
   }
 });

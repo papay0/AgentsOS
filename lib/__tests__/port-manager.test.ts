@@ -56,7 +56,8 @@ describe('PortManager', () => {
       expect(defaultRepo).toEqual({
         id: 'default-workspace',
         url: '',
-        name: 'Default Workspace',
+        name: 'default',
+        description: 'Default workspace for new projects',
         sourceType: 'default',
         ports: {
           vscode: 8080,
@@ -88,7 +89,8 @@ describe('PortManager', () => {
         {
           id: 'default-workspace',
           url: '',
-          name: 'Default Workspace', 
+          name: 'default',
+          description: 'Default workspace for new projects',
           sourceType: 'default',
           ports: PortManager.getPortsForSlot(0),
         },
