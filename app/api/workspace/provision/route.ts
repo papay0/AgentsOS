@@ -5,6 +5,7 @@ import { WorkspaceProvisioner } from '@/lib/provisioning/workspace-provisioner';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
 import { PortManager } from '@/lib/port-manager';
 import { Logger } from '@/lib/logger';
+import { WorkspaceServiceManager } from '@/lib/workspace-service-manager';
 
 export interface ProvisioningConfig {
   sandboxId: string;
@@ -214,6 +215,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     // Add repositories to workspace (preserves existing + adds new ones)
     if (result.steps.repositories) {
       await addRepositoriesToWorkspace(userId, config.sandboxId, result.steps.repositories);
+    }
+    
+    // Auto-start services after successful provisioning
+    if (result.success) {
+      logger.info('Starting services for provisioned repositories');
+      try {
+        const serviceManager = WorkspaceServiceManager.getInstance();
+        
+        // Use the shared method for complete service restart
+        const serviceResult = await serviceManager.restartServicesComplete(config.sandboxId);
+        
+        logger.success('Services started automatically after provisioning', {
+          summary: serviceResult.summary
+        });
+      } catch (error) {
+        logger.warn('Failed to auto-start services - user can manually restart', error);
+      }
     }
     
     logger.success('Provisioning completed', { 
