@@ -7,6 +7,7 @@ import { useAgentsOSUser } from '@/hooks/use-agentsos-user';
 
 import { StepGithubRepos } from './steps/StepGithubRepos';
 import { StepGithubAuth } from './steps/StepGithubAuth';
+import { StepGithubRepoSelection } from './steps/StepGithubRepoSelection';
 import { StepWallpaper } from './steps/StepWallpaper';
 import { StepTheme } from './steps/StepTheme';
 import { StepComplete } from './steps/StepComplete';
@@ -71,6 +72,13 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
       shouldShow: () => setupData.githubRepos.enabled === true
     },
     {
+      id: 'github-repo-selection',
+      title: 'Select Repositories',
+      description: 'Choose repositories to work with',
+      component: StepGithubRepoSelection,
+      shouldShow: () => setupData.githubRepos.enabled === true && setupData.githubRepos.authenticated === true
+    },
+    {
       id: 'wallpaper',
       title: 'Choose Wallpaper',
       description: 'Pick a wallpaper that inspires your coding',
@@ -98,11 +106,18 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   const CurrentStepComponent = currentStepData?.component;
 
   // Define step flow order
-  const stepFlow = ['github', 'github-auth', 'wallpaper', 'theme', 'complete'];
+  const stepFlow = ['github', 'github-auth', 'github-repo-selection', 'wallpaper', 'theme', 'complete'];
   
   const nextStep = () => {
     if (currentStepId === 'github-auth') {
-      // From GitHub auth step → always go to wallpaper
+      // From GitHub auth step → go to repo selection if authenticated
+      if (setupData.githubRepos.authenticated) {
+        setCurrentStepId('github-repo-selection');
+      } else {
+        setCurrentStepId('wallpaper');
+      }
+    } else if (currentStepId === 'github-repo-selection') {
+      // From repo selection → go to wallpaper
       setCurrentStepId('wallpaper');
     } else if (currentStepId === 'wallpaper') {
       // From wallpaper → go to theme
@@ -122,13 +137,19 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
     if (currentStepId === 'github-auth') {
       // From GitHub auth → go back to GitHub repos
       setCurrentStepId('github');
+    } else if (currentStepId === 'github-repo-selection') {
+      // From repo selection → go back to GitHub auth
+      setCurrentStepId('github-auth');
     } else if (currentStepId === 'wallpaper') {
       // From wallpaper → go back based on GitHub choice
-      if (setupData.githubRepos.enabled === true) {
-        // User had chosen "Yes" → go back to GitHub auth
+      if (setupData.githubRepos.enabled === true && setupData.githubRepos.authenticated === true) {
+        // User authenticated → go back to repo selection
+        setCurrentStepId('github-repo-selection');
+      } else if (setupData.githubRepos.enabled === true) {
+        // User chose GitHub but didn't authenticate → go back to GitHub auth
         setCurrentStepId('github-auth');
       } else {
-        // User had chosen "No" → go back to GitHub repos
+        // User chose "No" → go back to GitHub repos
         setCurrentStepId('github');
       }
     } else if (currentStepId === 'theme') {
