@@ -105,8 +105,6 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   const currentStepData = allSteps.find(step => step.id === currentStepId);
   const CurrentStepComponent = currentStepData?.component;
 
-  // Define step flow order
-  const stepFlow = ['github', 'github-auth', 'github-repo-selection', 'wallpaper', 'theme', 'complete'];
   
   const nextStep = () => {
     if (currentStepId === 'github-auth') {
