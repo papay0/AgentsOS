@@ -190,7 +190,7 @@ export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, 
           onClick={handleContinue}
           disabled={selectedRepos.length === 0}
         >
-          Continue {selectedRepos.length > 0 && `(${selectedRepos.length})`}
+          Next {selectedRepos.length > 0 && `(${selectedRepos.length})`}
         </Button>
       </div>
     </div>
