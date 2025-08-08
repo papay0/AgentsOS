@@ -5,6 +5,20 @@ import type { UserWorkspace, Repository } from '@/types/workspace';
 import { Logger } from '@/lib/logger';
 import { TTYD_THEME } from '@/lib/workspace-constants';
 
+export interface ServiceRestartResult {
+  success: boolean;
+  sandboxId: string;
+  message: string;
+  summary: {
+    repositories: number;
+    totalServices: number;
+    successful: number;
+    failed: number;
+  };
+  results: ServiceResult[];
+  timestamp: string;
+}
+
 export interface ServiceStatus {
   service: string;
   port: number;
@@ -520,5 +534,53 @@ export class WorkspaceServiceManager {
     }, 'DEBUG');
     
     return processes;
+  }
+
+  /**
+   * Complete service restart operation with authentication and result formatting
+   * This method is shared by both the API route and provisioning
+   */
+  async restartServicesComplete(sandboxId: string): Promise<ServiceRestartResult> {
+    try {
+      this.logger.info('Starting complete service restart operation', { sandboxId });
+
+      // Authenticate and validate workspace access
+      const { userWorkspace, sandbox, rootDir } = await this.authenticateWorkspaceAccess(sandboxId);
+      
+      // Restart/fix services for all repositories
+      const results = await this.restartServices(
+        sandbox,
+        userWorkspace.repositories,
+        sandboxId,
+        rootDir
+      );
+      
+      // Summary
+      const reposWithServices = results.filter(repo => 'services' in repo);
+      const totalServices = reposWithServices.length * 3; // 3 services per repo
+      const successfulServices = reposWithServices.reduce((count, repo) => {
+        return count + Object.values(repo.services).filter(service => service.status === 'success').length;
+      }, 0);
+      
+      return {
+        success: true,
+        sandboxId,
+        message: `Services restart completed for ${userWorkspace.repositories.length} repositories`,
+        summary: {
+          repositories: userWorkspace.repositories.length,
+          totalServices,
+          successful: successfulServices,
+          failed: totalServices - successfulServices
+        },
+        results,
+        timestamp: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      this.logger.error('Complete service restart failed', error);
+      
+      // Re-throw for the caller to handle HTTP status codes
+      throw error;
+    }
   }
 }
