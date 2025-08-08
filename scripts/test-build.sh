@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AgentsPod Build and Test Verification Script
+# AgentsOS Build and Test Verification Script
 # This script ensures nothing breaks during the build process
 
 set -e  # Exit on any error

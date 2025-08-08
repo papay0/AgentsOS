@@ -146,7 +146,7 @@ See what Claude is doing in real-time:
 - Native GitHub icon and professional styling
 
 **Step 3: Repository Selection**
-- **AgentsPod** - AI-native development platform (Next.js, TypeScript, React)
+- **AgentsOS** - AI-native development platform (Next.js, TypeScript, React)
 - **Claude Templates** - Template collection for Claude Code CLI
 - Shows repository details and technology stack
 

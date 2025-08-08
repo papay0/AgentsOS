@@ -1,6 +1,6 @@
-# AgentsPod App System
+# AgentsOS App System
 
-This directory contains the app architecture for AgentsPod - a type-safe, modular system for creating window-based applications.
+This directory contains the app architecture for AgentsOS - a type-safe, modular system for creating window-based applications.
 
 ## Architecture Overview
 

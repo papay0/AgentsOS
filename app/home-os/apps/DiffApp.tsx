@@ -78,7 +78,7 @@ export const DiffApp = createApp<'diff'>({
     name: 'Code Diff',
     description: 'Professional visual diff tool for comparing code changes, files, and commits with syntax highlighting',
     version: '0.1.0',
-    author: 'AgentsPod',
+    author: 'AgentsOS',
     category: 'development',
     icon: {
       emoji: '📊',

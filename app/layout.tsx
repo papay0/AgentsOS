@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Your AI Coding Operating System",
     description: "Claude Coder + VSCode in your browser. Zero setup. Even works on your phone.",
-    url: "https://agentspod.dev",
+    url: "https://agentsos.app",
     siteName: "AgentsOS",
     images: [
       {
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     description: "Claude Code + VSCode in your browser. Zero setup. Even works on your phone.",
     images: ["/api/og"],
   },
-  metadataBase: new URL("https://agentspod.dev"),
+  metadataBase: new URL("https://agentsos.app"),
 };
 
 export default function RootLayout({
