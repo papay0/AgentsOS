@@ -60,8 +60,8 @@ describe('Workspace - Strongly Typed Tests', () => {
       return mockStore
     })
     
-    // Mock workspace store
-    mockedUseWorkspaceStore.mockReturnValue({
+    // Mock workspace store with complete interface
+    const mockWorkspaceStore = {
       workspaces: [{
         id: 'test-workspace',
         name: 'Test Workspace',
@@ -73,17 +73,58 @@ describe('Workspace - Strongly Typed Tests', () => {
             terminal: 'http://localhost:8082'
           }
         },
-        windows: []
+        windows: [],
+        nextZIndex: 100,
+        activeWindowId: null,
+        isInitialized: true
       }],
       activeWorkspaceId: 'test-workspace',
       sandboxId: 'test-sandbox',
-      initializeWorkspaces: vi.fn(),
-      setSandboxId: vi.fn(),
+      isLoading: false,
+      // Core methods
+      createWorkspace: vi.fn(),
       switchToWorkspace: vi.fn(),
-      addWorkspace: vi.fn(),
       removeWorkspace: vi.fn(),
-      updateWorkspace: vi.fn(),
-    })
+      getActiveWorkspace: vi.fn(() => ({
+        id: 'test-workspace',
+        name: 'Test Workspace',
+        repository: {
+          name: 'test-repo',
+          urls: {
+            vscode: 'http://localhost:8080',
+            claude: 'http://localhost:8081',
+            terminal: 'http://localhost:8082'
+          }
+        },
+        windows: [],
+        nextZIndex: 100,
+        activeWindowId: null,
+        isInitialized: true
+      })),
+      getWorkspace: vi.fn(),
+      setSandboxId: vi.fn(),
+      // Window management
+      addWindow: vi.fn(),
+      removeWindow: vi.fn(),
+      updateWindow: vi.fn(),
+      focusWindow: vi.fn(),
+      minimizeWindow: vi.fn(),
+      maximizeWindow: vi.fn(),
+      restoreWindow: vi.fn(),
+      moveWindow: vi.fn(),
+      resizeWindow: vi.fn(),
+      setWindowAnimating: vi.fn(),
+      // Workspace initialization
+      initializeWorkspaces: vi.fn(),
+      initializeWorkspaceWindows: vi.fn(),
+      updateWorkspaceUrls: vi.fn(),
+      reset: vi.fn()
+    }
+    
+    mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStore)
+    
+    // Mock getState to return the same mock store
+    mockedUseWorkspaceStore.getState = vi.fn(() => mockWorkspaceStore)
     
     // Mock auth
     mockedUseAuth.mockReturnValue({
@@ -215,7 +256,7 @@ describe('Workspace - Strongly Typed Tests', () => {
         workspaceId: 'test-workspace'
       }
       
-      mockedUseWorkspaceStore.mockReturnValue({
+      const mockWorkspaceStoreWithWindow = {
         workspaces: [{
           id: 'test-workspace',
           name: 'Test Workspace',
@@ -227,17 +268,56 @@ describe('Workspace - Strongly Typed Tests', () => {
               terminal: 'http://localhost:8082'
             }
           },
-          windows: [mockWindow]
+          windows: [mockWindow],
+          nextZIndex: 100,
+          activeWindowId: null,
+          isInitialized: true
         }],
         activeWorkspaceId: 'test-workspace',
         sandboxId: 'test-sandbox',
-        initializeWorkspaces: vi.fn(),
-        setSandboxId: vi.fn(),
+        isLoading: false,
+        // Core methods
+        createWorkspace: vi.fn(),
         switchToWorkspace: vi.fn(),
-        addWorkspace: vi.fn(),
         removeWorkspace: vi.fn(),
-        updateWorkspace: vi.fn(),
-      })
+        getActiveWorkspace: vi.fn(() => ({
+          id: 'test-workspace',
+          name: 'Test Workspace',
+          repository: {
+            name: 'test-repo',
+            urls: {
+              vscode: 'http://localhost:8080',
+              claude: 'http://localhost:8081',
+              terminal: 'http://localhost:8082'
+            }
+          },
+          windows: [mockWindow],
+          nextZIndex: 100,
+          activeWindowId: null,
+          isInitialized: true
+        })),
+        getWorkspace: vi.fn(),
+        setSandboxId: vi.fn(),
+        // Window management
+        addWindow: vi.fn(),
+        removeWindow: vi.fn(),
+        updateWindow: vi.fn(),
+        focusWindow: vi.fn(),
+        minimizeWindow: vi.fn(),
+        maximizeWindow: vi.fn(),
+        restoreWindow: vi.fn(),
+        moveWindow: vi.fn(),
+        resizeWindow: vi.fn(),
+        setWindowAnimating: vi.fn(),
+        // Workspace initialization
+        initializeWorkspaces: vi.fn(),
+        initializeWorkspaceWindows: vi.fn(),
+        updateWorkspaceUrls: vi.fn(),
+        reset: vi.fn()
+      }
+      
+      mockedUseWorkspaceStore.mockReturnValue(mockWorkspaceStoreWithWindow)
+      mockedUseWorkspaceStore.getState = vi.fn(() => mockWorkspaceStoreWithWindow)
       
       mockedUseIsMobile.mockReturnValue(false)
       render(<Workspace />)

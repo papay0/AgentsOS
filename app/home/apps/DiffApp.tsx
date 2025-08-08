@@ -102,6 +102,6 @@ export const DiffApp = createApp<'diff'>({
     mobile: DiffMobileContent
   },
   actions: {
-    onOpen: () => console.log('Code Diff opened (coming soon)')
+    onOpen: () => {}
   }
 });

@@ -642,7 +642,7 @@ export const SettingsApp = createApp<'settings'>({
     mobile: SettingsMobileContent
   },
   actions: {
-    onOpen: () => console.log('Settings opened'),
-    onClose: () => console.log('Settings closed')
+    onOpen: () => {},
+    onClose: () => {}
   }
 });

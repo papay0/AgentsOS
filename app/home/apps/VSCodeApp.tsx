@@ -32,7 +32,7 @@ export const VSCodeApp = createApp<'vscode'>({
     mobile: VSCodeMobile
   },
   actions: {
-    onOpen: () => console.log('VSCode opened'),
-    onClose: () => console.log('VSCode closed')
+    onOpen: () => {},
+    onClose: () => {}
   }
 });

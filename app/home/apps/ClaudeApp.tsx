@@ -32,7 +32,7 @@ export const ClaudeApp = createApp<'claude'>({
     mobile: ClaudeMobile
   },
   actions: {
-    onOpen: () => console.log('Claude Code opened'),
-    onClose: () => console.log('Claude Code closed')
+    onOpen: () => {},
+    onClose: () => {}
   }
 });
