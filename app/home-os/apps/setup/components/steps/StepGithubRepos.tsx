@@ -59,7 +59,6 @@ export const StepGithubRepos = ({
   };
 
   const isYesSelected = setupData.githubRepos.enabled === true;
-  const isNoSelected = setupData.githubRepos.enabled === false;
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">

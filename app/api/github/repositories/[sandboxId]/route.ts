@@ -35,7 +35,16 @@ export async function GET(
     }
     
     // Parse JSON response from GitHub CLI
-    const repositories: GitHubRepository[] = JSON.parse(repoListResult.result).map((repo: any) => ({
+    interface GitHubAPIResponse {
+      name: string;
+      nameWithOwner: string;
+      description: string | null;
+      isPrivate: boolean;
+      primaryLanguage: { name: string } | null;
+      updatedAt: string;
+    }
+    
+    const repositories: GitHubRepository[] = JSON.parse(repoListResult.result).map((repo: GitHubAPIResponse) => ({
       name: repo.name,
       fullName: repo.nameWithOwner,
       description: repo.description || null,

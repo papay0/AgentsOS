@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,9 +17,17 @@ interface GitHubRepository {
   updatedAt: string;
 }
 
+interface SetupData {
+  githubRepos: {
+    enabled: boolean | undefined;
+    authenticated: boolean;
+    repos: string[];
+  };
+}
+
 interface StepProps {
-  setupData: any;
-  updateSetupData: (data: any) => void;
+  setupData: SetupData;
+  updateSetupData: (data: Partial<SetupData>) => void;
   isMobile: boolean;
   onNext: () => void;
 }
@@ -33,22 +41,7 @@ export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (sandboxId) {
-      fetchRepositories();
-    }
-  }, [sandboxId]);
-
-  useEffect(() => {
-    const filtered = repositories.filter(repo => 
-      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      repo.language?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredRepos(filtered);
-  }, [searchQuery, repositories]);
-
-  const fetchRepositories = async () => {
+  const fetchRepositories = useCallback(async () => {
     if (!sandboxId) return;
     
     setIsLoading(true);
@@ -64,12 +57,27 @@ export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, 
       } else {
         setError(data.error || 'Failed to fetch repositories');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to connect to GitHub');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sandboxId]);
+
+  useEffect(() => {
+    if (sandboxId) {
+      fetchRepositories();
+    }
+  }, [sandboxId, fetchRepositories]);
+
+  useEffect(() => {
+    const filtered = repositories.filter(repo => 
+      repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      repo.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      repo.language?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredRepos(filtered);
+  }, [searchQuery, repositories]);
 
   const toggleRepo = (repoName: string) => {
     setSelectedRepos(prev => 
