@@ -66,6 +66,10 @@ export default function MobileApp({ app, onClose, theme, onThemeChange, isOpenin
         const Component = MobileContent as React.ComponentType<Record<string, never>>;
         return <Component />;
       }
+      case 'setup': {
+        const Component = MobileContent as React.ComponentType<Record<string, never>>;
+        return <Component />;
+      }
     }
   };
 

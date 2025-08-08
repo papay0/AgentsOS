@@ -278,7 +278,7 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
       </div>
 
       {/* Navigation */}
-      {!isLastStep && currentStepId !== 'github' && (
+      {!isLastStep && currentStepId !== 'github' && currentStepId !== 'github-repo-selection' && (
         <div className="flex-shrink-0 flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="ghost"
