@@ -16,26 +16,7 @@ import { Onboarding } from './desktop/Onboarding';
 import { MobileOnboarding } from './mobile/MobileOnboarding';
 import { WorkspaceStatusPanel } from './workspace-status';
 import { OSBootScreen } from './desktop/OSBootScreen';
-
-interface FirebaseUserData {
-  agentsOS?: {
-    onboardingCompleted: boolean;
-    workspace?: {
-      sandboxId: string;
-      repositories: Array<{
-        url: string;
-        name: string;
-        description?: string;
-        tech?: string;
-        urls?: {
-          vscode: string;
-          terminal: string;
-          claude: string;
-        };
-      }>;
-    };
-  };
-}
+import { FirebaseUserData } from '@/lib/firebase-auth';
 
 export default function Workspace() {
   const { 
@@ -88,7 +69,7 @@ export default function Workspace() {
       doc(db, 'users', userId),
       (snapshot) => {
         if (snapshot.exists()) {
-          const userData = snapshot.data();
+          const userData = snapshot.data() as FirebaseUserData;
           // Firebase real-time update received
           setFirebaseUser(userData);
           

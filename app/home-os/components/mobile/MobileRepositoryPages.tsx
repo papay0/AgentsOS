@@ -12,7 +12,7 @@ export interface MobileApp {
   name: string;
   icon: AppMetadata['icon'];
   color: string;
-  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal';
+  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup';
   comingSoon?: boolean;
   repositoryUrl?: string;
 }
