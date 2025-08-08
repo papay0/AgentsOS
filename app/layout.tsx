@@ -23,19 +23,19 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "AgentsPod - Vibe Code from Anywhere",
+  title: "AgentsOS - Your AI Coding Operating System",
   description: "Claude Code + VSCode in your browser. Zero setup. Even works on your phone.",
   openGraph: {
-    title: "Vibe Code from Anywhere",
+    title: "Your AI Coding Operating System",
     description: "Claude Coder + VSCode in your browser. Zero setup. Even works on your phone.",
     url: "https://agentspod.dev",
-    siteName: "AgentsPod",
+    siteName: "AgentsOS",
     images: [
       {
         url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "AgentsPod - Vibe Code from Anywhere",
+        alt: "AgentsOS - Your AI Coding Operating System",
       },
     ],
     locale: "en_US",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vibe Code from Anywhere",
+    title: "Your AI Coding Operating System",
     description: "Claude Code + VSCode in your browser. Zero setup. Even works on your phone.",
     images: ["/api/og"],
   },
@@ -63,7 +63,7 @@ export default function RootLayout({
         >
           <ThemeProvider
             defaultTheme="system"
-            storageKey="agentspod-ui-theme"
+            storageKey="agentsos-ui-theme"
           >
             {children}
             <Toaster />
