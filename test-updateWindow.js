@@ -1,5 +1,5 @@
 // Quick test script to isolate the updateWindow issue
-import { useWindowStore } from './app/home-os/stores/windowStore.js'
+import { useWindowStore } from './app/home/stores/windowStore.js'
 
 // Reset store
 useWindowStore.setState({

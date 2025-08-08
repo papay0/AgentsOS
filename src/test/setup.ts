@@ -175,7 +175,7 @@ vi.mock('@/hooks/use-mobile', () => ({
 }))
 
 // Mock workspace store
-vi.mock('@/app/home-os/stores/workspaceStore', () => ({
+vi.mock('@/app/home/stores/workspaceStore', () => ({
   useWorkspaceStore: () => ({
     workspaces: [{
       id: 'test-workspace',
@@ -202,11 +202,11 @@ vi.mock('@/app/home-os/stores/workspaceStore', () => ({
 
 // However, we need to provide a mock for other test files that import windowStore
 // This mock will be ignored by windowStore.test.ts since it imports the real store directly
-vi.mock('@/app/home-os/stores/windowStore', async () => {
+vi.mock('@/app/home/stores/windowStore', async () => {
   // Check if we're in windowStore.test.ts - if so, return the actual module
   const stack = new Error().stack || '';
   if (stack.includes('windowStore.test.ts')) {
-    const actual = await vi.importActual('@/app/home-os/stores/windowStore');
+    const actual = await vi.importActual('@/app/home/stores/windowStore');
     return actual;
   }
   
@@ -251,7 +251,7 @@ vi.mock('@/app/home-os/stores/windowStore', async () => {
 });
 
 // Mock getAllApps function
-vi.mock('@/app/home-os/apps', () => ({
+vi.mock('@/app/home/apps', () => ({
   getAllApps: () => [
     {
       metadata: {
@@ -291,32 +291,32 @@ vi.mock('@/app/home-os/apps', () => ({
 }))
 
 // Mock desktop components
-vi.mock('@/app/home-os/components/desktop/Window', () => ({
+vi.mock('@/app/home/components/desktop/Window', () => ({
   default: ({ window }: { window: { title: string } }) => 
     React.createElement('div', { 'data-testid': `window-${window.title}` }, window.title)
 }))
 
-vi.mock('@/app/home-os/components/desktop/Dock', () => ({
+vi.mock('@/app/home/components/desktop/Dock', () => ({
   default: () => React.createElement('div', { 'data-testid': 'dock' }, 'Dock')
 }))
 
-vi.mock('@/app/home-os/components/desktop/MenuBar', () => ({
+vi.mock('@/app/home/components/desktop/MenuBar', () => ({
   default: () => React.createElement('div', { 'data-testid': 'menu-bar' }, 'MenuBar')
 }))
 
-vi.mock('@/app/home-os/components/desktop/SnapZoneOverlay', () => ({
+vi.mock('@/app/home/components/desktop/SnapZoneOverlay', () => ({
   default: () => React.createElement('div', { 'data-testid': 'snap-zone-overlay' }, 'SnapZone')
 }))
 
 // Mock onboarding components
-vi.mock('@/app/home-os/components/desktop/Onboarding', () => ({
+vi.mock('@/app/home/components/desktop/Onboarding', () => ({
   Onboarding: ({ onComplete }: { onComplete: () => void }) => 
     React.createElement('div', { 'data-testid': 'desktop-onboarding' }, 
       React.createElement('button', { onClick: onComplete }, 'Complete Onboarding')
     )
 }))
 
-vi.mock('@/app/home-os/components/mobile/MobileOnboarding', () => ({
+vi.mock('@/app/home/components/mobile/MobileOnboarding', () => ({
   MobileOnboarding: ({ onComplete }: { onComplete: () => void }) => 
     React.createElement('div', { 'data-testid': 'mobile-onboarding' }, 
       React.createElement('button', { onClick: onComplete }, 'Complete Onboarding')
@@ -324,7 +324,7 @@ vi.mock('@/app/home-os/components/mobile/MobileOnboarding', () => ({
 }))
 
 // Mock mobile workspace with proper app rendering
-vi.mock('@/app/home-os/components/mobile/MobileWorkspace', () => ({
+vi.mock('@/app/home/components/mobile/MobileWorkspace', () => ({
   default: () => {
     const mockApps = ['VSCode', 'Claude Code', 'Terminal', 'Settings'];
     return React.createElement('div', { 'data-testid': 'mobile-workspace-content' },
@@ -353,7 +353,7 @@ vi.mock('@/app/home-os/components/mobile/MobileWorkspace', () => ({
 }))
 
 // Mock MobileRepositoryPages
-vi.mock('@/app/home-os/components/mobile/MobileRepositoryPages', () => ({
+vi.mock('@/app/home/components/mobile/MobileRepositoryPages', () => ({
   MobileRepositoryPages: ({ onAppOpen }: { onAppOpen: (app: { id: string; name: string; type: string }, element: HTMLElement) => void }) => {
     const mockApps = ['VSCode', 'Claude Code', 'Terminal'];
     return React.createElement('div', { 'data-testid': 'mobile-repository-pages' },
@@ -386,7 +386,7 @@ vi.mock('@/app/home-os/components/mobile/MobileRepositoryPages', () => ({
 }))
 
 // Mock MobileDock
-vi.mock('@/app/home-os/components/mobile/MobileDock', () => ({
+vi.mock('@/app/home/components/mobile/MobileDock', () => ({
   default: ({ apps, onAppOpen, onHomePress }: {
     apps: Array<{ id: string; name: string; type: string }>;
     onAppOpen: (app: { id: string; name: string; type: string }, element: HTMLElement) => void;
@@ -409,7 +409,7 @@ vi.mock('@/app/home-os/components/mobile/MobileDock', () => ({
 }))
 
 // Mock MobileApp
-vi.mock('@/app/home-os/components/mobile/MobileApp', () => ({
+vi.mock('@/app/home/components/mobile/MobileApp', () => ({
   default: ({ app, onClose }: {
     app: { id: string; name: string; type: string };
     onClose: () => void;
@@ -423,7 +423,7 @@ vi.mock('@/app/home-os/components/mobile/MobileApp', () => ({
 }))
 
 // Mock MobileStatusBar
-vi.mock('@/app/home-os/components/mobile/MobileStatusBar', () => ({
+vi.mock('@/app/home/components/mobile/MobileStatusBar', () => ({
   MobileStatusBar: () => React.createElement('div', { 'data-testid': 'mobile-status-bar' }, 'Status Bar')
 }))
 
@@ -556,7 +556,7 @@ vi.mock('@/components/terminal-command-palette', () => ({
 }))
 
 // Mock AppIcon component to render emoji directly
-vi.mock('@/app/home-os/components/ui/AppIcon', () => ({
+vi.mock('@/app/home/components/ui/AppIcon', () => ({
   default: ({ icon, className }: {
     icon: { icon?: React.ReactNode; url?: string; emoji?: string; fallback: string };
     className?: string;

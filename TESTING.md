@@ -20,7 +20,7 @@ src/test/
 ├── utils.tsx          # Test utilities and helpers
 └── ...
 
-app/home-os/
+app/home/
 ├── components/
 │   ├── desktop/
 │   │   └── Window.test.tsx

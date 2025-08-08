@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@/src/test/utils'
 import React from 'react'
 
 // Unmock the MenuBar component to test the real implementation
-vi.unmock('@/app/home-os/components/desktop/MenuBar')
+vi.unmock('@/app/home/components/desktop/MenuBar')
 
 // Import after unmocking
 import MenuBar from './MenuBar'

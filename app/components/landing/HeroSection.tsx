@@ -87,7 +87,7 @@ export function HeroSection({ shouldShowWaitlist }: HeroSectionProps) {
                 <Sparkles className="ml-2 h-5 w-5" />
               </Button>
             ) : (
-              <Link href="/home-os" className="w-full sm:w-auto">
+              <Link href="/home" className="w-full sm:w-auto">
                 <Button 
                   size="lg" 
                   className="w-full px-10 py-6 text-lg bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 border-0 shadow-lg hover:shadow-xl transition-all text-white"

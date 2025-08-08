@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Rocket, Loader2, CheckCircle, AlertCircle, GitBranch, Settings, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SetupData } from '../SetupWizard';
-import { useWorkspaceStore } from '@/app/home-os/stores/workspaceStore';
+import { useWorkspaceStore } from '@/app/home/stores/workspaceStore';
 
 interface StepCompleteProps {
   setupData: SetupData;
