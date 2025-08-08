@@ -127,6 +127,13 @@ export function WorkspaceHealth() {
     }
   }, [isOpen, sandboxId, checkHealth]);
 
+  // Auto-open popup when sandbox is not started
+  useEffect(() => {
+    if (healthData && healthData.sandboxState !== 'started' && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [healthData, isOpen]);
+
   const getHealthIcon = () => {
     if (!sandboxId) {
       return <Activity className="h-4 w-4 text-gray-400" />;
@@ -138,6 +145,11 @@ export function WorkspaceHealth() {
     
     if (error || !healthData) {
       return <AlertCircle className="h-4 w-4 text-amber-500" />;
+    }
+
+    // Check if sandbox is not started
+    if (healthData.sandboxState !== 'started') {
+      return <XCircle className="h-4 w-4 text-red-500" />;
     }
     
     const allHealthy = healthData.services.every(s => s.status === 'running');
@@ -169,6 +181,11 @@ export function WorkspaceHealth() {
     
     if (error || !healthData) {
       return <span className="text-xs">Health</span>;
+    }
+
+    // Check if sandbox is not started
+    if (healthData.sandboxState !== 'started') {
+      return <span className="text-xs text-red-300">Stopped</span>;
     }
     
     const allHealthy = healthData.services.every(s => s.status === 'running');
@@ -256,13 +273,23 @@ export function WorkspaceHealth() {
             </div>
           )}
           
+          {healthData && healthData.sandboxState !== 'started' && (
+            <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950 p-3 rounded flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-red-500" />
+              <div>
+                <p className="font-medium">Workspace is {healthData.sandboxState}</p>
+                <p className="text-xs text-red-500 mt-1">Start your workspace to access development services</p>
+              </div>
+            </div>
+          )}
+
           {error && !isRestarting && (
             <div className="text-xs text-red-500 bg-red-50 dark:bg-red-950 p-2 rounded">
               {error}
             </div>
           )}
           
-          {healthData && (
+          {healthData && healthData.sandboxState === 'started' && (
             <div className="space-y-2">
               <div className="text-xs font-medium text-gray-500">Services</div>
               {healthData.services.map((service, index) => (
@@ -305,6 +332,30 @@ export function WorkspaceHealth() {
               
               <details className="text-xs">
                 <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
+                  Debug Actions
+                </summary>
+                <div className="mt-2 space-y-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={fixServices}
+                    disabled={isLoading || isRestarting}
+                  >
+                    {isRestarting ? (
+                      <>
+                        <RefreshCw className="h-3 w-3 animate-spin mr-2" />
+                        Restarting...
+                      </>
+                    ) : (
+                      'Force Restart All Services'
+                    )}
+                  </Button>
+                </div>
+              </details>
+
+              <details className="text-xs">
+                <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
                   Running Processes ({healthData.processes.length})
                 </summary>
                 <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
@@ -316,6 +367,25 @@ export function WorkspaceHealth() {
                 </div>
               </details>
             </div>
+          )}
+
+          {healthData && healthData.sandboxState !== 'started' && (
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full bg-green-600 hover:bg-green-700"
+              onClick={fixServices}
+              disabled={isLoading || isRestarting}
+            >
+              {isRestarting ? (
+                <>
+                  <RefreshCw className="h-3 w-3 animate-spin mr-2" />
+                  Starting...
+                </>
+              ) : (
+                'Start Workspace'
+              )}
+            </Button>
           )}
           
           {!healthData && !error && !isLoading && (
