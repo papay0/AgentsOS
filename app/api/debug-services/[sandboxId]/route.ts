@@ -17,9 +17,16 @@ export async function GET(
       return NextResponse.json({
         sandboxId,
         sandboxState: sandbox.state,
+        summary: { running: 0, total: 0, healthy: false },
         services: [],
         processes: [],
-        message: `Sandbox is ${sandbox.state}. Services are not accessible when sandbox is not running.`
+        repositories: userWorkspace.repositories.map(repo => ({
+          name: repo.name,
+          sourceType: repo.sourceType,
+          ports: repo.ports
+        })),
+        message: `Sandbox is ${sandbox.state}. Services are not accessible when sandbox is not running.`,
+        timestamp: new Date().toISOString()
       });
     }
     

@@ -4,7 +4,6 @@ import { useWorkspaceStore } from '../stores/workspaceStore';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAgentsOSUser } from '@/hooks/use-agentsos-user';
-import { PortManager } from '@/lib/port-manager';
 import type { CreateWorkspaceResponse } from '@/types/workspace';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -50,8 +49,7 @@ export default function Workspace() {
   
   const { userId } = useAuth();
   const { 
-    completeOnboarding: completeAgentsOSOnboarding,
-    createOrUpdateWorkspace
+    completeOnboarding: completeAgentsOSOnboarding
   } = useAgentsOSUser();
   
   const isMobile = useIsMobile();
@@ -176,31 +174,15 @@ export default function Workspace() {
     return () => window.removeEventListener('snapZoneChange', handleSnapZoneChange as EventListener);
   }, []);
 
-  // ULTRA SIMPLE onboarding completion - save workspace to Firebase
-  const handleOnboardingComplete = async (workspaceData?: CreateWorkspaceResponse) => {
-    // Onboarding completed - saving to Firebase
+  // ULTRA SIMPLE onboarding completion
+  const handleOnboardingComplete = async () => {
+    // Onboarding completed
     
     // Mark onboarding as complete
     await completeAgentsOSOnboarding();
     
-    // Save workspace data to Firebase if we have it
-    if (workspaceData?.repositories && workspaceData.sandboxId) {
-      await createOrUpdateWorkspace({
-        id: workspaceData.sandboxId,
-        sandboxId: workspaceData.sandboxId,
-        repositories: workspaceData.repositories.map((repo, index) => ({
-          id: repo.url ? `repo-${Date.now()}-${index}` : 'default-workspace',
-          url: repo.url,
-          name: repo.name,
-          description: repo.description,
-          sourceType: repo.url ? ('github' as const) : ('default' as const),
-          ports: PortManager.getPortsForSlot(index),
-        })),
-        status: 'running' as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
+    // Note: Workspace data is now saved to Firebase by the backend during provisioning
+    // in /api/workspace/provision - no need to duplicate that here
     
     // Firebase listener will automatically show workspace when data is updated
   };
