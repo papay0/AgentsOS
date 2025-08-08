@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
-import type { Window } from '@/app/home-os/stores/windowStore'
-import type { MobileApp } from '@/app/home-os/components/mobile/MobileWorkspace'
-import type { AppMetadata } from '@/app/home-os/apps/BaseApp'
+import type { Window } from '@/app/home/stores/windowStore'
+import type { MobileApp } from '@/app/home/components/mobile/MobileWorkspace'
+import type { AppMetadata } from '@/app/home/apps/BaseApp'
 
 // Type for the window store mock
 export interface MockWindowStore {

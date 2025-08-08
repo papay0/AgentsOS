@@ -153,10 +153,10 @@ print_status "Final verification checks..."
 
 # Verify critical files exist
 CRITICAL_FILES=(
-    "app/home-os/components/Workspace.tsx"
-    "app/home-os/components/desktop/Window.tsx"
-    "app/home-os/components/mobile/MobileWorkspace.tsx"
-    "app/home-os/stores/windowStore.ts"
+    "app/home/components/Workspace.tsx"
+    "app/home/components/desktop/Window.tsx"
+    "app/home/components/mobile/MobileWorkspace.tsx"
+    "app/home/stores/windowStore.ts"
 )
 
 for file in "${CRITICAL_FILES[@]}"; do

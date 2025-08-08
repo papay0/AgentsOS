@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Search, GitBranch, Lock, Globe, Loader2 } from 'lucide-react';
-import { useWorkspaceStore } from '@/app/home-os/stores/workspaceStore';
+import { useWorkspaceStore } from '@/app/home/stores/workspaceStore';
 
 interface GitHubRepository {
   name: string;

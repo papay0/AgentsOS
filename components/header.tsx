@@ -15,7 +15,7 @@ export function Header() {
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         {/* Left side - Logo */}
         <SignedIn>
-          <Link href="/home-os" className="flex items-center space-x-2">
+          <Link href="/home" className="flex items-center space-x-2">
             <Terminal className="h-6 w-6" />
             <span className="font-bold">AgentsOS</span>
           </Link>

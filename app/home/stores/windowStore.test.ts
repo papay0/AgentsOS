@@ -3,7 +3,7 @@ import { renderHook, act } from '@testing-library/react'
 
 // Clear the mock before importing to ensure we get the real implementation
 beforeAll(() => {
-  vi.unmock('@/app/home-os/stores/windowStore')
+  vi.unmock('@/app/home/stores/windowStore')
 })
 
 import { useWindowStore, Window } from './windowStore'

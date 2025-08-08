@@ -1,14 +1,10 @@
-import { VSCodeEditor } from '@/app/home-os/components/ui/vscode-editor';
+import { VSCodeEditor } from '@/app/home/components/ui/vscode-editor';
 import { VSCodeAppProps } from '../BaseApp';
 
-export const VSCodeMobile = ({ repositoryUrl }: VSCodeAppProps) => {
+export const VSCodeDesktop = ({ repositoryUrl }: VSCodeAppProps) => {
   // If we have a repository URL, use the real VSCode editor
   if (repositoryUrl) {
-    return (
-      <div className="absolute inset-0 flex flex-col">
-        <VSCodeEditor key={repositoryUrl} url={repositoryUrl} className="flex-1 w-full" />
-      </div>
-    );
+    return <VSCodeEditor key={repositoryUrl} url={repositoryUrl} className="w-full h-full" />;
   }
 
   // Show error when no URL available

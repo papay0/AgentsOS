@@ -26,8 +26,8 @@ const customRender = (
 export * from '@testing-library/react'
 export { customRender as render }
 
-import type { Window } from '@/app/home-os/stores/windowStore'
-import type { MobileApp } from '@/app/home-os/components/mobile/MobileWorkspace'
+import type { Window } from '@/app/home/stores/windowStore'
+import type { MobileApp } from '@/app/home/components/mobile/MobileWorkspace'
 import type { TestWindowOptions, TestMobileAppOptions, TouchPoint } from './types'
 
 // Test utilities for window management

@@ -184,13 +184,13 @@ This document outlines the implementation of dynamic multi-repository support fo
 
 ### Phase 5: UI Component Updates
 
-#### 5.1 Simplify `/app/home-os/components/desktop/Onboarding.tsx`
+#### 5.1 Simplify `/app/home/components/desktop/Onboarding.tsx`
 - [ ] Remove multi-step wizard
 - [ ] Create single-screen explanation of AgentsOS
 - [ ] Single "Launch Workspace" button
 - [ ] Remove hardcoded repository selection
 
-#### 5.2 Simplify `/app/home-os/components/mobile/Onboarding.tsx`
+#### 5.2 Simplify `/app/home/components/mobile/Onboarding.tsx`
 - [ ] Mirror desktop simplification
 - [ ] Ensure mobile-optimized single screen
 

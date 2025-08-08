@@ -20,7 +20,7 @@ AgentsOS is a cloud development environment platform that enables instant worksp
 - `npm run test:run` - Run all tests once (CI mode)
 - `npm run test:ui` - Open Vitest UI for visual test debugging
 - `npm run test:coverage` - Generate test coverage report
-- Test files: `*.test.ts` or `*.test.tsx` in `/app/home-os/` directories
+- Test files: `*.test.ts` or `*.test.tsx` in `/app/home/` directories
 - Setup file: `/src/test/setup.ts` (mocks, React 19 compatibility fixes)
 
 ### Environment Setup
@@ -35,7 +35,7 @@ Copy `.env.example` to `.env.local` and add:
 Next.js 15.4.4 + React 19.1.0 application using App Router, TypeScript 5, and Tailwind CSS v4. The platform consists of two main experiences:
 
 1. **AgentsOS** (`/` and `/home/*`): Original workspace launcher
-2. **AgentsOS** (`/home-os`): New desktop/mobile OS-like environment with window management
+2. **AgentsOS** (`/home`): New desktop/mobile OS-like environment with window management
 
 ### Key Technologies
 - **Framework**: Next.js 15.4.4 with App Router + React 19.1.0
@@ -164,7 +164,7 @@ Next.js 15.4.4 + React 19.1.0 application using App Router, TypeScript 5, and Ta
 - Write tests AFTER successfully implementing features
 - Use Vitest + React Testing Library (v16.3.0 for React 19 support)
 - Mock complex UI components to prevent timeout issues
-- Test pattern: `/app/home-os/**/*.test.{ts,tsx}`
+- Test pattern: `/app/home/**/*.test.{ts,tsx}`
 - Run `npm run test:run` before committing
 - Never use `.skip()` - implement fully or don't include
 
@@ -182,7 +182,7 @@ The project uses React 19.1.0 with special test setup:
 - `workspace-services.ts` - Service management (VSCode, ttyd, Claude CLI)
 - `workspace-installer.ts` - Package installation logic
 
-#### AgentsOS Components (`/app/home-os`)
+#### AgentsOS Components (`/app/home`)
 - **Window Management**: Draggable, resizable windows with snap zones
 - **State Management**: Zustand stores (`windowStore`, `workspaceStore`)
 - **App System**: Modular apps (VSCode, Claude, Terminal, Settings)
@@ -203,7 +203,7 @@ The project uses React 19.1.0 with special test setup:
 
 ## AgentsOS Window Management
 
-The `/home-os` route provides a desktop OS experience with:
+The `/home` route provides a desktop OS experience with:
 - **Desktop Mode**: Draggable/resizable windows, snap zones, dock, menu bar
 - **Mobile Mode**: Native app launcher, swipe navigation, optimized touch UI
 - **Apps**: VSCode, Claude Code, Terminal, Settings (more coming)

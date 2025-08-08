@@ -4,7 +4,7 @@ import { useWorkspaceStore } from '../../stores/workspaceStore'
 import { createMockWindow } from '@/src/test/utils'
 
 // Unmock the Window component to test the real implementation
-vi.unmock('@/app/home-os/components/desktop/Window')
+vi.unmock('@/app/home/components/desktop/Window')
 
 // Import after unmocking
 import Window from './Window'

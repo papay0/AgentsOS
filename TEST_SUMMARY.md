@@ -15,7 +15,7 @@ src/test/
 ├── types.ts       # TypeScript types for test utilities
 └── utils.tsx      # Strongly typed test helpers
 
-app/home-os/
+app/home/
 ├── components/
 │   └── TypedWorkspace.test.tsx  # Working workspace tests
 ├── stores/
@@ -33,7 +33,7 @@ app/home-os/
 #### Proper React Mocking
 ```typescript
 // Correctly mocked React components
-vi.mock('@/app/home-os/components/desktop/Window', () => ({
+vi.mock('@/app/home/components/desktop/Window', () => ({
   default: ({ window }: { window: { title: string } }) => 
     React.createElement('div', { 'data-testid': `window-${window.title}` }, window.title)
 }))

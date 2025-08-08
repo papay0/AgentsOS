@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useWorkspaceStore } from '../app/home-os/stores/workspaceStore';
+import { useWorkspaceStore } from '../app/home/stores/workspaceStore';
 import type { HealthCheckResponse } from '../types/health';
 
 export interface WorkspaceHealthConfig {

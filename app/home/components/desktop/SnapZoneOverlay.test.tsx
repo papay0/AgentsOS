@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@/src/test/utils'
 
 // Unmock the SnapZoneOverlay component to test the real implementation
-vi.unmock('@/app/home-os/components/desktop/SnapZoneOverlay')
+vi.unmock('@/app/home/components/desktop/SnapZoneOverlay')
 
 // Import after unmocking
 import SnapZoneOverlay from './SnapZoneOverlay'

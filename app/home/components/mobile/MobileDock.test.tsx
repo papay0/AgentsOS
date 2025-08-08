@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent } from '@/src/test/utils'
 
 // Unmock the MobileDock component to test the real implementation
-vi.unmock('@/app/home-os/components/mobile/MobileDock')
+vi.unmock('@/app/home/components/mobile/MobileDock')
 
 // Import after unmocking
 import MobileDock from './MobileDock'
