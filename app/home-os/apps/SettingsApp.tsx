@@ -253,7 +253,7 @@ const SettingsDesktopContent = () => {
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <h2 className="text-lg font-semibold mb-4">About</h2>
             <div className="space-y-2 text-sm">
-              <div><strong>AgentsPod:</strong> v1.0.0</div>
+              <div><strong>AgentsOS:</strong> v1.0.0</div>
               <div><strong>Platform:</strong> Web</div>
               <div className="flex items-center">
                 <span className="w-4 h-4 mr-2">🐙</span>
@@ -532,7 +532,7 @@ const SettingsMobileContent = () => {
         <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
           <h3 className="font-medium mb-3">About</h3>
           <div className="space-y-1 text-sm">
-            <div>AgentsPod v1.0.0</div>
+            <div>AgentsOS v1.0.0</div>
             <div className="text-gray-500">Web Platform</div>
           </div>
         </div>
@@ -619,7 +619,7 @@ export const SettingsApp = createApp<'settings'>({
     name: 'Settings',
     description: 'Application settings, user profile management, and system configuration options',
     version: '1.0.0',
-    author: 'AgentsPod',
+    author: 'AgentsOS',
     category: 'system',
     icon: {
       emoji: '⚙️',

@@ -1,6 +1,6 @@
 # VSCode Web Integration with code-server
 
-This document outlines the implementation plan for integrating VSCode web interface into AgentsPod using [code-server](https://github.com/coder/code-server).
+This document outlines the implementation plan for integrating VSCode web interface into AgentsOS using [code-server](https://github.com/coder/code-server).
 
 ## Overview
 
@@ -8,16 +8,16 @@ code-server is VS Code running on a remote server, accessible through the browse
 
 ## Architecture Integration
 
-### Current AgentsPod Structure
+### Current AgentsOS Structure
 ```
-AgentsPod Layout:
+AgentsOS Layout:
 ├── Left Panel (60%) - Future VSCode area
 └── Right Panel (40%) - Terminal tabs
 ```
 
 ### Proposed Integration
 ```
-AgentsPod with VSCode:
+AgentsOS with VSCode:
 ├── Left Panel (60%) - code-server iframe
 └── Right Panel (40%) - Terminal tabs (existing)
 ```
@@ -250,7 +250,7 @@ await sandbox.process.executeCommand(
 - IntelliSense, debugging, Git integration
 - Extension marketplace access
 
-#### Integration with AgentsPod
+#### Integration with AgentsOS
 - Seamless workflow between VSCode and Claude terminal
 - Shared file system and project context
 - No need to switch between applications
@@ -287,7 +287,7 @@ await sandbox.process.executeCommand(
 - May need to provide curated extension list
 
 ### Theme Synchronization
-- AgentsPod theme switching should ideally sync with VSCode theme
+- AgentsOS theme switching should ideally sync with VSCode theme
 - Requires additional configuration and API calls
 
 ## Success Metrics
@@ -301,12 +301,12 @@ await sandbox.process.executeCommand(
 
 ## Future Enhancements
 
-- **Theme synchronization** between AgentsPod and VSCode
-- **Extension management** UI within AgentsPod
+- **Theme synchronization** between AgentsOS and VSCode
+- **Extension management** UI within AgentsOS
 - **Multi-user collaboration** features
-- **Custom keybindings** for AgentsPod integration
+- **Custom keybindings** for AgentsOS integration
 - **File tree synchronization** with terminal operations
 
 ---
 
-This implementation will transform AgentsPod from a terminal-focused tool into a full-featured cloud development environment combining the power of VSCode with AI-powered development through Claude.
+This implementation will transform AgentsOS from a terminal-focused tool into a full-featured cloud development environment combining the power of VSCode with AI-powered development through Claude.

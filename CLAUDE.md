@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AgentsPod is a cloud development environment platform that enables instant workspace creation with VSCode and Claude Code CLI pre-installed. The platform provides a browser-based development environment accessible from any device, including mobile.
+AgentsOS is a cloud development environment platform that enables instant workspace creation with VSCode and Claude Code CLI pre-installed. The platform provides a browser-based development environment accessible from any device, including mobile.
 
 ## Commands
 
@@ -34,7 +34,7 @@ Copy `.env.example` to `.env.local` and add:
 
 Next.js 15.4.4 + React 19.1.0 application using App Router, TypeScript 5, and Tailwind CSS v4. The platform consists of two main experiences:
 
-1. **AgentsPod** (`/` and `/home/*`): Original workspace launcher
+1. **AgentsOS** (`/` and `/home/*`): Original workspace launcher
 2. **AgentsOS** (`/home-os`): New desktop/mobile OS-like environment with window management
 
 ### Key Technologies

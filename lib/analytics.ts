@@ -1,7 +1,7 @@
 import { analytics } from './firebase';
 import { logEvent } from 'firebase/analytics';
 
-// Analytics tracking utilities for AgentsPod
+// Analytics tracking utilities for AgentsOS
 export const trackEvent = (eventName: string, parameters?: Record<string, string | number | boolean>) => {
   if (analytics && typeof window !== 'undefined') {
     logEvent(analytics, eventName, parameters);

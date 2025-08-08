@@ -9,7 +9,7 @@ export const TerminalApp = createApp<'terminal'>({
     name: 'Terminal',
     description: 'Command line interface for system operations, development tasks, and file management',
     version: '1.0.0',
-    author: 'AgentsPod',
+    author: 'AgentsOS',
     category: 'development',
     icon: {
       icon: <Terminal className="w-full h-full" />,

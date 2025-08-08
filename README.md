@@ -1,5 +1,5 @@
 <div align="center">
-    <h1>AgentsPod</h1>
+    <h1>AgentsOS</h1>
 </div>
 
 <p align="center">
@@ -13,13 +13,13 @@
 
 ### Desktop Experience
 <div align="center">
-    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/desktop-workspace.png" alt="AgentsPod Desktop - VSCode and Terminal" width="800">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/desktop-workspace.png" alt="AgentsOS Desktop - VSCode and Terminal" width="800">
     <p><em>Split-screen layout with VSCode editor and multi-tab terminal featuring Claude Code CLI</em></p>
 </div>
 
 ### Mobile Experience
 <div align="center">
-    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-claude.png" alt="AgentsPod Mobile Terminal" width="250" style="margin: 0 20px;">
+    <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-claude.png" alt="AgentsOS Mobile Terminal" width="250" style="margin: 0 20px;">
     <img src="https://raw.githubusercontent.com/papay0/agentspod/main/public/screenshots/mobile-homescreen.png" alt="AgentsOS Mobile Homescreen" width="250" style="margin: 0 20px;">
     <p><em>Full terminal and Claude Code experience on mobile devices</em></p>
 </div>
@@ -142,7 +142,7 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 
 ### Authentication Setup (Clerk)
 
-AgentsPod uses Clerk for user authentication:
+AgentsOS uses Clerk for user authentication:
 
 1. Create a Clerk application at [Clerk Dashboard](https://dashboard.clerk.com/)
 2. Go to API Keys in your Clerk dashboard
@@ -152,7 +152,7 @@ AgentsPod uses Clerk for user authentication:
 
 ### Firebase Setup
 
-AgentsPod uses Firebase for analytics and waitlist functionality:
+AgentsOS uses Firebase for analytics and waitlist functionality:
 
 1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
 2. Enable Analytics and Firestore

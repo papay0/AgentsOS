@@ -1,6 +1,6 @@
-# AgentsPod Testing Guide
+# AgentsOS Testing Guide
 
-This document outlines the comprehensive testing strategy for AgentsPod's workspace components, ensuring robust functionality across desktop and mobile platforms.
+This document outlines the comprehensive testing strategy for AgentsOS's workspace components, ensuring robust functionality across desktop and mobile platforms.
 
 ## 🧪 Testing Philosophy
 
@@ -345,4 +345,4 @@ npm run test:ui
 npm run test:coverage
 ```
 
-This comprehensive testing strategy ensures that AgentsPod's workspace remains robust, performant, and reliable as we continue to build and enhance features.
+This comprehensive testing strategy ensures that AgentsOS's workspace remains robust, performant, and reliable as we continue to build and enhance features.
