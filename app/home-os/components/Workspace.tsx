@@ -4,7 +4,6 @@ import { useWorkspaceStore } from '../stores/workspaceStore';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAgentsOSUser } from '@/hooks/use-agentsos-user';
-import type { CreateWorkspaceResponse } from '@/types/workspace';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@clerk/nextjs';

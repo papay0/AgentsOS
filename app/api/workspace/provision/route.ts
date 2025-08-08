@@ -49,7 +49,7 @@ export interface ProvisioningResult {
   timestamp: string;
 }
 
-async function saveWorkspaceToFirebase(
+async function addRepositoriesToWorkspace(
   userId: string, 
   sandboxId: string, 
   repositoryResults: {
@@ -63,43 +63,81 @@ async function saveWorkspaceToFirebase(
   const logger = Logger.create('WorkspaceFirebase');
   
   try {
-    // Convert provisioning results into repositories format
-    const repositories = repositoryResults.details
-      .filter((detail: RepositoryProvisionDetail) => detail.status === 'cloned' || detail.status === 'skipped')
-      .map((detail: RepositoryProvisionDetail, index: number) => {
-        const repoName = detail.repository.split('/').pop() || detail.repository;
-        const ports = PortManager.getPortsForSlot(index);
-        
-        return {
-          id: `repo-${Date.now()}-${index}`,
-          url: detail.repository,
-          name: repoName,
-          description: `Repository: ${detail.repository}`,
-          sourceType: 'github' as const,
-          ports,
-          tech: 'GitHub'
-        };
-      });
-
-    // Save to Firebase using UserServiceAdmin
     const userService = UserServiceAdmin.getInstance();
+    
+    // Get existing workspace
+    const existingWorkspace = await userService.getUserWorkspace(userId);
+    
+    let repositories = [];
+    
+    if (existingWorkspace?.repositories) {
+      // Keep existing repositories
+      repositories = [...existingWorkspace.repositories];
+      logger.info('Found existing workspace with repositories', { 
+        existing: repositories.length,
+        repoNames: repositories.map(r => r.name)
+      });
+    } else {
+      // No existing workspace - create default repository as slot 0
+      const defaultPorts = PortManager.getPortsForSlot(0);
+      repositories.push({
+        id: 'repo-default',
+        url: '',
+        name: 'Default',
+        description: 'Default workspace for new projects',
+        sourceType: 'default' as const,
+        ports: defaultPorts,
+        tech: 'Default'
+      });
+      logger.info('Created new workspace with default repository');
+    }
+
+    // Add new cloned repositories
+    if (repositoryResults.details.length > 0) {
+      const clonedRepos = repositoryResults.details
+        .filter((detail: RepositoryProvisionDetail) => detail.status === 'cloned' || detail.status === 'skipped')
+        .map((detail: RepositoryProvisionDetail, index: number) => {
+          const repoName = detail.repository.split('/').pop() || detail.repository;
+          const nextSlot = repositories.length + index; // Use next available slot
+          const ports = PortManager.getPortsForSlot(nextSlot);
+          
+          return {
+            id: `repo-${Date.now()}-${nextSlot}`,
+            url: detail.repository,
+            name: repoName,
+            description: `Repository: ${detail.repository}`,
+            sourceType: 'github' as const,
+            ports,
+            tech: 'GitHub'
+          };
+        });
+      
+      repositories.push(...clonedRepos);
+      logger.info('Added new repositories', { 
+        added: clonedRepos.length,
+        newRepoNames: clonedRepos.map(r => r.name)
+      });
+    }
+
+    // Save updated workspace to Firebase
     await userService.createOrUpdateWorkspace(userId, {
-      id: sandboxId,
+      id: existingWorkspace?.id || sandboxId,
       sandboxId: sandboxId,
       repositories,
       status: 'running' as const,
-      createdAt: new Date(),
+      createdAt: existingWorkspace?.createdAt || new Date(),
       updatedAt: new Date(),
     });
 
-    logger.success('Workspace saved to Firebase', { 
+    logger.success('Workspace updated in Firebase', { 
       userId, 
       sandboxId, 
-      repositories: repositories.length 
+      totalRepositories: repositories.length,
+      allRepoNames: repositories.map(r => r.name)
     });
     
   } catch (error) {
-    logger.error('Failed to save workspace to Firebase', error);
+    logger.error('Failed to add repositories to workspace', error);
     throw error;
   }
 }
@@ -173,9 +211,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       logger.info('AI agent provisioning not yet implemented', { agents: config.aiAgents });
     }
     
-    // Save workspace with provisioned repositories to Firebase
-    if (result.steps.repositories && result.success) {
-      await saveWorkspaceToFirebase(userId, config.sandboxId, result.steps.repositories);
+    // Add repositories to workspace (preserves existing + adds new ones)
+    if (result.steps.repositories) {
+      await addRepositoriesToWorkspace(userId, config.sandboxId, result.steps.repositories);
     }
     
     logger.success('Provisioning completed', { 
