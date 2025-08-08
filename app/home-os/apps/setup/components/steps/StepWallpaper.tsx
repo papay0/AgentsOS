@@ -50,8 +50,7 @@ export const StepWallpaper = ({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-
+    <div className="max-w-4xl mx-auto">
       {/* Wallpaper Grid */}
       <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {wallpapers.map((wallpaper) => (

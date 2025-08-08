@@ -18,6 +18,7 @@ interface SetupWizardProps {
 export interface SetupData {
   githubRepos: {
     enabled: boolean | undefined;
+    authenticated: boolean;
     repos: string[];
   };
   wallpaper: string;
@@ -34,10 +35,11 @@ interface BaseStepProps {
 
 export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   console.log('🚀 SetupWizard rendering with props:', { isMobile });
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStepId, setCurrentStepId] = useState('github');
   const [setupData, setSetupData] = useState<SetupData>({
     githubRepos: {
       enabled: undefined, // No selection initially
+      authenticated: false,
       repos: []
     },
     wallpaper: 'wallpaper-1',
@@ -46,73 +48,103 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   
   const { updateUserPreferences } = useAgentsOSUser();
 
-  // Dynamic steps based on GitHub selection
-  const getSteps = () => {
-    const baseSteps: Array<{
-      id: string;
-      title: string;
-      description: string;
-      component: React.ComponentType<BaseStepProps>;
-    }> = [
-      {
-        id: 'github',
-        title: 'Connect GitHub',
-        description: 'Do you want to connect your GitHub account?',
-        component: StepGithubRepos
-      }
-    ];
-
-    // Add GitHub authentication step if user selected "Yes"
-    if (setupData.githubRepos.enabled === true) {
-      baseSteps.push({
-        id: 'github-auth',
-        title: 'GitHub Authentication',
-        description: 'Sign in to your GitHub account',
-        component: StepGithubAuth
-      });
+  // Static steps - no dynamic generation to avoid index issues
+  const allSteps: Array<{
+    id: string;
+    title: string;
+    description: string;
+    component: React.ComponentType<BaseStepProps>;
+    shouldShow: () => boolean;
+  }> = [
+    {
+      id: 'github',
+      title: 'Connect GitHub',
+      description: 'Do you want to connect your GitHub account?',
+      component: StepGithubRepos,
+      shouldShow: () => true
+    },
+    {
+      id: 'github-auth',
+      title: 'GitHub Authentication',
+      description: 'Sign in to your GitHub account',
+      component: StepGithubAuth,
+      shouldShow: () => setupData.githubRepos.enabled === true
+    },
+    {
+      id: 'wallpaper',
+      title: 'Choose Wallpaper',
+      description: 'Pick a wallpaper that inspires your coding',
+      component: StepWallpaper,
+      shouldShow: () => true
+    },
+    {
+      id: 'theme',
+      title: 'Select Theme',
+      description: 'Choose your preferred theme',
+      component: StepTheme,
+      shouldShow: () => true
+    },
+    {
+      id: 'complete',
+      title: 'Setup Complete',
+      description: 'Ready to start coding!',
+      component: StepComplete,
+      shouldShow: () => true
     }
+  ];
 
-    // Add remaining steps
-    baseSteps.push(
-      {
-        id: 'wallpaper',
-        title: 'Choose Wallpaper',
-        description: 'Pick a wallpaper that inspires your coding',
-        component: StepWallpaper
-      },
-      {
-        id: 'theme',
-        title: 'Select Theme',
-        description: 'Choose your preferred theme',
-        component: StepTheme
-      },
-      {
-        id: 'complete',
-        title: 'Setup Complete',
-        description: 'Ready to start coding!',
-        component: StepComplete
-      }
-    );
+  // Find current step data by ID
+  const currentStepData = allSteps.find(step => step.id === currentStepId);
+  const CurrentStepComponent = currentStepData?.component;
 
-    return baseSteps;
-  };
-
-  const steps = getSteps();
-
-  const currentStepData = steps[currentStep];
-  const CurrentStepComponent = currentStepData.component;
-
+  // Define step flow order
+  const stepFlow = ['github', 'github-auth', 'wallpaper', 'theme', 'complete'];
+  
   const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+    if (currentStepId === 'github-auth') {
+      // From GitHub auth step → always go to wallpaper
+      setCurrentStepId('wallpaper');
+    } else if (currentStepId === 'wallpaper') {
+      // From wallpaper → go to theme
+      setCurrentStepId('theme');
+    } else if (currentStepId === 'theme') {
+      // From theme → go to complete
+      setCurrentStepId('complete');
     }
+    // GitHub step has its own navigation logic below
   };
+
+  // Direct navigation functions for GitHub step
+  const goToGithubAuth = () => setCurrentStepId('github-auth');
+  const goToWallpaper = () => setCurrentStepId('wallpaper');
 
   const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+    if (currentStepId === 'github-auth') {
+      // From GitHub auth → go back to GitHub repos
+      setCurrentStepId('github');
+    } else if (currentStepId === 'wallpaper') {
+      // From wallpaper → go back based on GitHub choice
+      if (setupData.githubRepos.enabled === true) {
+        // User had chosen "Yes" → go back to GitHub auth
+        setCurrentStepId('github-auth');
+      } else {
+        // User had chosen "No" → go back to GitHub repos
+        setCurrentStepId('github');
+      }
+    } else if (currentStepId === 'theme') {
+      // From theme → go back to wallpaper
+      setCurrentStepId('wallpaper');
+    } else if (currentStepId === 'complete') {
+      // From complete → go back to theme
+      setCurrentStepId('theme');
     }
   };
+
+  // Get visible steps for progress calculation
+  const visibleSteps = allSteps.filter(step => step.shouldShow());
+  const currentVisibleIndex = visibleSteps.findIndex(step => step.id === currentStepId);
+  const isLastStep = currentVisibleIndex === visibleSteps.length - 1;
+  const isFirstStep = currentVisibleIndex === 0;
 
   const completeSetup = async () => {
     try {
@@ -174,20 +206,12 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
   };
 
   const updateSetupData = (updates: Partial<SetupData>) => {
-    setSetupData(prev => {
-      const newData = { ...prev, ...updates };
-      
-      // If GitHub preference changed, reset to step 0 if we're beyond the first step
-      if (updates.githubRepos && updates.githubRepos.enabled !== prev.githubRepos.enabled && currentStep > 0) {
-        setCurrentStep(0);
-      }
-      
-      return newData;
-    });
+    setSetupData(prev => ({ ...prev, ...updates }));
   };
 
-  const isLastStep = currentStep === steps.length - 1;
-  const isFirstStep = currentStep === 0;
+  // Check if current step is GitHub auth and user is not authenticated
+  const isGithubAuthStep = currentStepId === 'github-auth';
+  const isGithubAuthIncomplete = isGithubAuthStep && !setupData.githubRepos.authenticated;
 
   return (
     <div className={`w-full h-full bg-white dark:bg-gray-800 flex flex-col ${isMobile ? 'p-4' : 'p-6'}`}>
@@ -196,14 +220,14 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className={`font-bold text-gray-900 dark:text-white ${isMobile ? 'text-xl' : 'text-2xl'}`}>
-              {currentStepData.title}
+              {currentStepData?.title}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {currentStepData.description}
+              {currentStepData?.description}
             </p>
           </div>
           <div className="text-sm text-gray-400">
-            {currentStep + 1} of {steps.length}
+            {currentVisibleIndex + 1} of {visibleSteps.length}
           </div>
         </div>
 
@@ -211,25 +235,31 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div 
             className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out"
-            style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+            style={{ width: `${((currentVisibleIndex + 1) / visibleSteps.length) * 100}%` }}
           />
         </div>
 
       </div>
 
       {/* Step Content */}
-      <div className="flex-1 overflow-y-auto">
-        <CurrentStepComponent 
-          setupData={setupData}
-          updateSetupData={updateSetupData}
-          isMobile={isMobile}
-          onNext={nextStep}
-          onComplete={completeSetup}
-        />
+      <div className="flex-1 overflow-y-auto pt-2">
+        {CurrentStepComponent && (
+          <CurrentStepComponent 
+            setupData={setupData}
+            updateSetupData={updateSetupData}
+            isMobile={isMobile}
+            onNext={nextStep}
+            onComplete={completeSetup}
+            {...(currentStepId === 'github' ? {
+              onGoToGithubAuth: goToGithubAuth,
+              onGoToWallpaper: goToWallpaper
+            } : {})}
+          />
+        )}
       </div>
 
       {/* Navigation */}
-      {!isLastStep && (
+      {!isLastStep && currentStepId !== 'github' && (
         <div className="flex-shrink-0 flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="ghost"
@@ -242,10 +272,23 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
           </Button>
           
           <Button
-            onClick={nextStep}
+            onClick={() => {
+              if (isGithubAuthIncomplete) {
+                // Skip GitHub integration
+                updateSetupData({
+                  githubRepos: {
+                    enabled: false,
+                    authenticated: false,
+                    repos: []
+                  }
+                });
+              }
+              nextStep();
+            }}
+            disabled={currentStepId === 'github' && setupData.githubRepos.enabled === undefined}
             className="flex items-center gap-2"
           >
-            Next
+            {isGithubAuthIncomplete ? 'Skip' : 'Next'}
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

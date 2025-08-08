@@ -10,29 +10,52 @@ interface StepGithubReposProps {
   isMobile: boolean;
   onNext: () => void;
   onComplete?: () => void;
+  onGoToGithubAuth?: () => void;
+  onGoToWallpaper?: () => void;
 }
 
 export const StepGithubRepos = ({ 
   setupData,
-  updateSetupData
-}: Omit<StepGithubReposProps, 'isMobile' | 'onNext'>) => {
+  updateSetupData,
+  onNext,
+  onGoToGithubAuth,
+  onGoToWallpaper
+}: StepGithubReposProps) => {
 
   const handleYesClick = () => {
     updateSetupData({
       githubRepos: {
         enabled: true,
+        authenticated: false, // Not authenticated yet
         repos: []
       }
     });
+    // Auto-advance to GitHub authentication
+    setTimeout(() => {
+      if (onGoToGithubAuth) {
+        onGoToGithubAuth();
+      } else {
+        onNext(); // Fallback
+      }
+    }, 300);
   };
 
   const handleNoClick = () => {
     updateSetupData({
       githubRepos: {
         enabled: false,
+        authenticated: false,
         repos: []
       }
     });
+    // Auto-advance to wallpaper (skip GitHub auth)
+    setTimeout(() => {
+      if (onGoToWallpaper) {
+        onGoToWallpaper();
+      } else {
+        onNext(); // Fallback
+      }
+    }, 300);
   };
 
   const isYesSelected = setupData.githubRepos.enabled === true;
@@ -64,10 +87,8 @@ export const StepGithubRepos = ({
         <Button
           onClick={handleNoClick}
           size="lg"
-          variant={isNoSelected ? "default" : "outline"}
-          className={`h-16 px-8 text-lg font-semibold min-w-[180px] ${
-            isNoSelected ? 'bg-gray-500 hover:bg-gray-600' : ''
-          }`}
+          variant="outline"
+          className="h-16 px-8 text-lg font-semibold min-w-[180px] hover:bg-gray-50 dark:hover:bg-gray-800"
         >
           <X className="w-6 h-6 mr-3" />
           No, Skip
