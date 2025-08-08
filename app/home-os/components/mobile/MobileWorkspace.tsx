@@ -6,9 +6,13 @@ import MobileApp from './MobileApp';
 import { MobileRepositoryPages } from './MobileRepositoryPages';
 import { MobileStatusBar } from './MobileStatusBar';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
-import { getAllApps } from '../../apps';
+import { getAllApps, getApp } from '../../apps';
 import { AppMetadata, AppType } from '../../apps/BaseApp';
 import { WorkspaceStatusPanel } from '../workspace-status';
+import { useAuth } from '@clerk/nextjs';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { FirebaseUserData } from '@/lib/firebase-auth';
 
 export interface MobileApp {
   id: string;
@@ -49,6 +53,8 @@ export default function MobileWorkspace() {
   const { workspaces, activeWorkspaceId, sandboxId } = useWorkspaceStore();
   const [animationOriginRect, setAnimationOriginRect] = useState<DOMRect | null>(null);
   const [animationState, setAnimationState] = useState<'idle' | 'opening' | 'open' | 'closing'>('idle');
+  const [shouldShowSetup, setShouldShowSetup] = useState(false);
+  const { userId } = useAuth();
   
   // Refs to store timeout IDs for cleanup
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -78,6 +84,65 @@ export default function MobileWorkspace() {
       }
     }
   }, [theme]);
+
+  // Firebase listener for setup status
+  useEffect(() => {
+    if (!userId || !db) {
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      doc(db, 'users', userId),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.data() as FirebaseUserData;
+          const hasCompletedSetup = userData?.agentsOS?.preferences?.setupDone === true;
+          setShouldShowSetup(!hasCompletedSetup);
+        }
+      },
+      (error) => {
+        console.error('Firebase listener error:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Auto-open Setup app on mobile when needed
+  useEffect(() => {
+    if (shouldShowSetup && workspaces.length > 0) {
+      // Create a Setup mobile app
+      const setupApp = getApp('setup');
+      const setupMobileApp: MobileApp = {
+        id: 'setup-mobile',
+        name: setupApp.metadata.name,
+        icon: setupApp.metadata.icon,
+        color: 'bg-blue-500', // Use blue color for setup
+        type: 'setup' as AppType,
+        comingSoon: false
+      };
+
+      // Auto-open the setup app after a short delay
+      setTimeout(() => {
+        // Create a virtual element for animation origin (center of screen)
+        const rect = new DOMRect(
+          window.innerWidth / 2 - 28, // Center - half icon width (56px / 2)
+          window.innerHeight / 2 - 28, // Center - half icon height
+          56, // Icon width
+          56  // Icon height
+        );
+        
+        setAnimationOriginRect(rect);
+        setLoadedApps(prev => new Map(prev.set(setupMobileApp.id, setupMobileApp)));
+        setActiveAppId(setupMobileApp.id);
+        setAnimationState('opening');
+        
+        openTimeoutRef.current = setTimeout(() => {
+          setAnimationState('open');
+        }, 50);
+      }, 500); // Small delay to let the workspace render first
+    }
+  }, [shouldShowSetup, workspaces.length]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {

@@ -5,6 +5,9 @@ import { useUser } from '@clerk/nextjs';
 import { useFirebaseAuth } from './use-firebase-auth';
 import { UserService } from '@/lib/user-service';
 import type { UserWorkspace } from '@/types/workspace';
+import type { FirebaseUserData } from '@/lib/firebase-auth';
+
+type UserPreferences = NonNullable<FirebaseUserData['agentsOS']>['preferences'];
 
 /**
  * Hook for managing AgentsOS user state and operations
@@ -103,7 +106,7 @@ export function useAgentsOSUser() {
   /**
    * Update user preferences
    */
-  const updateUserPreferences = useCallback(async (preferences: any) => {
+  const updateUserPreferences = useCallback(async (preferences: Partial<UserPreferences>) => {
     const uid = getFirebaseUid();
     if (!uid) {
       throw new Error('User not authenticated');

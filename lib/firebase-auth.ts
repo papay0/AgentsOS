@@ -40,6 +40,10 @@ export interface FirebaseUserData {
     };
     preferences: {
       theme: 'light' | 'dark' | 'system';
+      setupDone?: boolean;
+      githubReposEnabled?: boolean;
+      githubRepos?: string[];
+      wallpaper?: string;
     };
     createdAt: unknown;
     lastAccessedAt: unknown;
