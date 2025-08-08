@@ -180,13 +180,15 @@ export class WorkspaceManager {
   async createSandbox(options: {
     cpu: number;
     memory: number;
+    disk: number;
   }): Promise<Sandbox> {
     return await this.daytona.create({
       public: true,
       image: "node:20",
       resources: {
         cpu: options.cpu,
-        memory: options.memory
+        memory: options.memory,
+        disk: options.disk
       }
     });
   }

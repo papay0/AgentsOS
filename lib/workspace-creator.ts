@@ -7,6 +7,7 @@ import { WorkspaceOrchestrator } from './workspace-orchestrator';
 import { PortManager } from './port-manager';
 import { trackWorkspaceCreated } from './analytics';
 import { Sandbox } from '@daytonaio/sdk';
+import { DEFAULT_WORKSPACE_RESOURCES } from './workspace-defaults';
 
 interface WorkspaceSetupOptions {
   repositories?: Repository[];
@@ -14,6 +15,7 @@ interface WorkspaceSetupOptions {
   resources?: {
     cpu: number;
     memory: number;
+    disk: number;
   };
 }
 
@@ -38,8 +40,9 @@ export class WorkspaceCreator {
       
       // Create sandbox with specified resources
       const sandbox = await this.manager.createSandbox({
-        cpu: options.resources?.cpu || 2,
-        memory: options.resources?.memory || 4
+        cpu: options.resources?.cpu || DEFAULT_WORKSPACE_RESOURCES.cpu,
+        memory: options.resources?.memory || DEFAULT_WORKSPACE_RESOURCES.memory,
+        disk: options.resources?.disk || DEFAULT_WORKSPACE_RESOURCES.disk
       });
       
       const rootDir = await sandbox.getUserRootDir();
@@ -91,8 +94,8 @@ export class WorkspaceCreator {
         sandboxId: sandbox.id,
         image: 'node:20',
         resources: {
-          cpu: options.resources?.cpu || 2,
-          memory: options.resources?.memory || 4
+          cpu: options.resources?.cpu || DEFAULT_WORKSPACE_RESOURCES.cpu,
+          memory: options.resources?.memory || DEFAULT_WORKSPACE_RESOURCES.memory
         },
         urls: primaryRepo.urls
       };
@@ -112,8 +115,8 @@ export class WorkspaceCreator {
         error: error instanceof Error ? error : String(error),
         code: 'WORKSPACE_CREATION_FAILED',
         details: {
-          cpu: options.resources?.cpu || 2,
-          memory: options.resources?.memory || 4,
+          cpu: options.resources?.cpu || DEFAULT_WORKSPACE_RESOURCES.cpu,
+          memory: options.resources?.memory || DEFAULT_WORKSPACE_RESOURCES.memory,
           image: 'node:20'
         }
       };

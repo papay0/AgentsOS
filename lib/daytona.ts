@@ -11,6 +11,7 @@ interface WorkspaceSetupOptions {
   resources?: {
     cpu: number;
     memory: number;
+    disk: number;
   };
 }
 

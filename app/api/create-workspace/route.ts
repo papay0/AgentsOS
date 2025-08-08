@@ -5,6 +5,7 @@ import { WorkspaceCreator } from '@/lib/workspace-creator';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
 import admin from 'firebase-admin';
 import type { CreateWorkspaceResponse, UserWorkspace, Repository } from '@/types/workspace';
+import { DEFAULT_WORKSPACE_RESOURCES } from '@/lib/workspace-defaults';
 
 // Firebase-compatible workspace type
 type FirebaseUserWorkspace = Omit<UserWorkspace, 'createdAt' | 'updatedAt'> & {
@@ -18,6 +19,7 @@ interface CreateWorkspaceRequest {
   resources?: {
     cpu: number;
     memory: number;
+    disk: number;
   };
 }
 
@@ -50,10 +52,7 @@ export async function POST(request: Request): Promise<NextResponse<CreateWorkspa
     const workspace = await daytonaClient.createWorkspace({
       repositories: body.repositories,
       workspaceName: body.workspaceName,
-      resources: body.resources || {
-        cpu: 2,
-        memory: 4
-      }
+      resources: body.resources || DEFAULT_WORKSPACE_RESOURCES
     });
 
     // Save workspace data to Firebase user profile
