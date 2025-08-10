@@ -85,6 +85,18 @@ export default function MobileWorkspace() {
     }
   }, [theme]);
 
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (openTimeoutRef.current) {
+        clearTimeout(openTimeoutRef.current);
+      }
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Firebase listener for setup status
   useEffect(() => {
     if (!userId || !db) {
@@ -163,6 +175,11 @@ export default function MobileWorkspace() {
       return;
     }
     
+    // Clear any existing timeout before setting new one
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+    }
+    
     // Get the icon position for animation
     const rect = element.getBoundingClientRect();
     setAnimationOriginRect(rect);
@@ -181,6 +198,11 @@ export default function MobileWorkspace() {
   };
 
   const handleAppClose = () => {
+    // Clear any existing timeout before setting new one
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    
     // Start closing animation
     setAnimationState('closing');
     
