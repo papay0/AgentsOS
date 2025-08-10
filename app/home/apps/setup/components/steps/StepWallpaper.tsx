@@ -72,12 +72,7 @@ export const StepWallpaper = ({
               />
               
               {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-              
-              {/* Name */}
-              <div className="absolute bottom-3 left-3 text-white font-medium text-sm">
-                {wallpaper.name}
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
               
               {/* Selected Indicator */}
               {setupData.wallpaper === wallpaper.id && (

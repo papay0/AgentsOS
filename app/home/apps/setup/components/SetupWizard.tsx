@@ -271,6 +271,9 @@ export const SetupWizard = ({ isMobile = false }: SetupWizardProps) => {
               onGoToGithubAuth: goToGithubAuth,
               onGoToWallpaper: goToWallpaper
             } : {})}
+            {...(currentStepId === 'github-repo-selection' ? {
+              onPrevious: prevStep
+            } : {})}
           />
         )}
       </div>

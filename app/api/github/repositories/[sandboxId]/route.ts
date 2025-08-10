@@ -33,24 +33,48 @@ export async function GET(
       }, { status: 500 });
     }
     
-    // Parse JSON response from GitHub CLI
-    interface GitHubAPIResponse {
-      name: string;
-      nameWithOwner: string;
-      description: string | null;
-      isPrivate: boolean;
-      primaryLanguage: { name: string } | null;
-      updatedAt: string;
+    // Check if the result is valid JSON (not an error message)
+    let repositories: GitHubRepository[] = [];
+    try {
+      // Parse JSON response from GitHub CLI
+      interface GitHubAPIResponse {
+        name: string;
+        nameWithOwner: string;
+        description: string | null;
+        isPrivate: boolean;
+        primaryLanguage: { name: string } | null;
+        updatedAt: string;
+      }
+      
+      const parsedResult = JSON.parse(repoListResult.result);
+      
+      // Ensure it's an array
+      if (!Array.isArray(parsedResult)) {
+        throw new Error('Expected array from GitHub CLI');
+      }
+      
+      repositories = parsedResult.map((repo: GitHubAPIResponse) => ({
+        name: repo.name,
+        fullName: repo.nameWithOwner,
+        description: repo.description || null,
+        isPrivate: repo.isPrivate,
+        language: repo.primaryLanguage?.name || null,
+        updatedAt: repo.updatedAt
+      }));
+    } catch (error) {
+      // If JSON parsing fails, it's likely an error message from gh CLI
+      const errorMessage = repoListResult.result.trim();
+      
+      console.error('GitHub CLI returned non-JSON response:', {
+        error: error instanceof Error ? error.message : String(error),
+        output: errorMessage.substring(0, 500)
+      });
+      
+      return NextResponse.json({ 
+        error: 'GitHub authentication required',
+        details: 'Please authenticate with GitHub CLI first using: gh auth login'
+      }, { status: 401 });
     }
-    
-    const repositories: GitHubRepository[] = JSON.parse(repoListResult.result).map((repo: GitHubAPIResponse) => ({
-      name: repo.name,
-      fullName: repo.nameWithOwner,
-      description: repo.description || null,
-      isPrivate: repo.isPrivate,
-      language: repo.primaryLanguage?.name || null,
-      updatedAt: repo.updatedAt
-    }));
     
     return NextResponse.json({
       success: true,

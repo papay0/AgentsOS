@@ -30,9 +30,10 @@ interface StepProps {
   updateSetupData: (data: Partial<SetupData>) => void;
   isMobile: boolean;
   onNext: () => void;
+  onPrevious?: () => void;
 }
 
-export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, onNext }: StepProps) {
+export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, onNext, onPrevious }: StepProps) {
   const { sandboxId } = useWorkspaceStore();
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [filteredRepos, setFilteredRepos] = useState<GitHubRepository[]>([]);
@@ -103,9 +104,9 @@ export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="h-full flex flex-col">
       {/* Search Bar */}
-      <div className="relative">
+      <div className="relative flex-shrink-0 mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           type="text"
@@ -117,7 +118,7 @@ export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, 
       </div>
 
       {/* Repository List */}
-      <div className={`space-y-2 ${isMobile ? 'max-h-96' : 'max-h-[400px]'} overflow-y-auto`}>
+      <div className="flex-1 space-y-2 overflow-y-auto mb-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -181,11 +182,18 @@ export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, 
         )}
       </div>
 
-      {/* Selection Summary */}
-      <div className="flex items-center justify-between pt-4 border-t">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {selectedRepos.length} {selectedRepos.length === 1 ? 'repository' : 'repositories'} selected
-        </p>
+      {/* Navigation */}
+      <div className="flex-shrink-0 flex items-center justify-between pt-4 border-t">
+        <div className="flex items-center gap-4">
+          {onPrevious && (
+            <Button variant="ghost" onClick={onPrevious}>
+              Previous
+            </Button>
+          )}
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {selectedRepos.length} {selectedRepos.length === 1 ? 'repository' : 'repositories'} selected
+          </p>
+        </div>
         <Button 
           onClick={handleContinue}
           disabled={selectedRepos.length === 0}
