@@ -33,7 +33,7 @@ interface StepProps {
   onPrevious?: () => void;
 }
 
-export function StepGithubRepoSelection({ setupData, updateSetupData, isMobile, onNext, onPrevious }: StepProps) {
+export function StepGithubRepoSelection({ setupData, updateSetupData, onNext, onPrevious }: StepProps) {
   const { sandboxId } = useWorkspaceStore();
   const [repositories, setRepositories] = useState<GitHubRepository[]>([]);
   const [filteredRepos, setFilteredRepos] = useState<GitHubRepository[]>([]);

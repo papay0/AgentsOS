@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { WorkspaceServiceManager } from '@/lib/workspace-service-manager';
+import { authenticateWorkspaceAccess, handleWorkspaceAuthError, WorkspaceAuthError } from '@/lib/auth/workspace-auth';
 
 export async function POST(
   request: Request,
@@ -7,32 +8,39 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     const { sandboxId } = await params;
-    const serviceManager = WorkspaceServiceManager.getInstance();
     
-    // Use the shared method for complete service restart
+    // Centralized auth & authorization
+    const { daytonaClient } = await authenticateWorkspaceAccess(sandboxId);
+
+    // For fix-services, we need to start the sandbox first if it's stopped
+    // Since the new auth doesn't auto-start sandboxes anymore
+    const startResult = await daytonaClient.startWorkspaceAndServices(sandboxId);
+    
+    if (!startResult.success) {
+      return NextResponse.json({ 
+        error: 'Failed to start workspace', 
+        details: startResult.message 
+      }, { status: 500 });
+    }
+    
+    // Now use the shared method for complete service restart (original functionality)
+    const serviceManager = WorkspaceServiceManager.getInstance();
     const result = await serviceManager.restartServicesComplete(sandboxId);
     
     return NextResponse.json(result);
     
   } catch (error) {
+    // Handle auth errors consistently
+    if (WorkspaceAuthError.isWorkspaceAuthError(error)) {
+      return handleWorkspaceAuthError(error);
+    }
+    
+    // Handle business logic errors
     console.error('Error fixing services:', error);
-    
-    // Handle known errors with appropriate status codes
-    const message = error instanceof Error ? error.message : String(error);
-    if (message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (message === 'Missing DAYTONA_API_KEY environment variable') {
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
-    if (message === 'Workspace not found or access denied') {
-      return NextResponse.json({ error: message }, { status: 404 });
-    }
-    
     return NextResponse.json(
       { 
         error: 'Failed to fix services',
-        details: message
+        details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );
