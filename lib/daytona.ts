@@ -61,6 +61,10 @@ export class DaytonaClient {
     return await this.manager.getWorkspaceUrls(sandboxId);
   }
 
+  async getSandbox(sandboxId: string): Promise<Sandbox> {
+    return await this.manager.getSandbox(sandboxId);
+  }
+
   // Workspace Orchestration
   async startWorkspaceAndServices(sandboxId: string): Promise<{
     success: boolean;

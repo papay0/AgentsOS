@@ -116,32 +116,14 @@ export class WorkspaceServiceManager {
     const sandbox = await daytona.get(sandboxId);
     this.logger.info(`Sandbox retrieved`, { sandboxId, state: sandbox.state }, 'DAYTONA');
     
-    // Start the sandbox if it's not started (needed to get rootDir)
-    if (sandbox.state !== 'started') {
-      const startTime = Date.now();
-      this.logger.warn(`Sandbox not started, starting now`, { 
-        sandboxId, 
-        currentState: sandbox.state 
-      }, 'DAYTONA');
-      
-      await sandbox.start();
-      
-      this.logger.debug(`Waiting for container to be ready...`, undefined, 'DAYTONA');
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      this.logger.success(`Sandbox started successfully`, { 
-        sandboxId, 
-        duration: `${elapsed}s` 
-      }, 'DAYTONA');
-    }
-    
+    // Get root directory (sandbox must be started by explicit start operations)
     this.logger.debug(`Getting root directory...`, { sandboxId }, 'DAYTONA');
     const rootDir = await sandbox.getUserRootDir();
     if (!rootDir) {
-      this.logger.error(`Unable to get sandbox root directory`, { 
-        details: { sandboxId } 
+      this.logger.error(`Unable to get sandbox root directory - sandbox may not be started`, { 
+        details: { sandboxId, sandboxState: sandbox.state } 
       }, 'DAYTONA');
-      throw new Error('Unable to get sandbox root directory');
+      throw new Error('Unable to get sandbox root directory - sandbox may not be started');
     }
     this.logger.success(`Root directory retrieved`, { sandboxId, rootDir }, 'DAYTONA');
 

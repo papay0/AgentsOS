@@ -244,7 +244,6 @@ vi.mock('@/app/home/stores/windowStore', async () => {
       setWindowAnimating: vi.fn(),
       initializeWindows: vi.fn(),
       completeOnboarding: vi.fn(),
-      checkExistingWorkspaces: vi.fn(),
       setWorkspaceData: vi.fn(),
     })
   };

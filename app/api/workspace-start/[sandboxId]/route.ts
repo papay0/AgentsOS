@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { DaytonaClient } from '@/lib/daytona';
+import { authenticateWorkspaceAccess, handleWorkspaceAuthError, WorkspaceAuthError } from '@/lib/auth/workspace-auth';
 
 export async function POST(
   request: Request,
@@ -8,17 +8,10 @@ export async function POST(
   try {
     const { sandboxId } = await params;
     
-    // Validate environment
-    const apiKey = process.env.DAYTONA_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'Missing DAYTONA_API_KEY environment variable' },
-        { status: 500 }
-      );
-    }
+    // Centralized auth & authorization
+    const { daytonaClient } = await authenticateWorkspaceAccess(sandboxId);
 
-    // Start workspace and services
-    const daytonaClient = new DaytonaClient(apiKey);
+    // Business logic only
     const result = await daytonaClient.startWorkspaceAndServices(sandboxId);
 
     if (result.success) {
@@ -38,6 +31,12 @@ export async function POST(
     }
 
   } catch (error) {
+    // Handle auth errors consistently
+    if (WorkspaceAuthError.isWorkspaceAuthError(error)) {
+      return handleWorkspaceAuthError(error);
+    }
+    
+    // Handle business logic errors
     console.error('Error starting workspace:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to start workspace';
     

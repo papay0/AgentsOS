@@ -7,7 +7,6 @@ export const createMockWindowStore = (windows: Window[] = []): MockWindowStore =
   nextZIndex: 100,
   activeWindowId: null,
   onboardingCompleted: true,
-  isCheckingWorkspaces: false,
   addWindow: vi.fn(),
   removeWindow: vi.fn(),
   updateWindow: vi.fn(),
@@ -21,5 +20,4 @@ export const createMockWindowStore = (windows: Window[] = []): MockWindowStore =
   closeWindow: vi.fn(),
   initializeWindows: vi.fn(),
   completeOnboarding: vi.fn(),
-  checkExistingWorkspaces: vi.fn().mockResolvedValue(undefined),
 })

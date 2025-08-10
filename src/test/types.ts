@@ -9,7 +9,6 @@ export interface MockWindowStore {
   nextZIndex: number
   activeWindowId: string | null
   onboardingCompleted: boolean
-  isCheckingWorkspaces: boolean
   addWindow: ReturnType<typeof vi.fn>
   removeWindow: ReturnType<typeof vi.fn>
   updateWindow: ReturnType<typeof vi.fn>
@@ -23,7 +22,6 @@ export interface MockWindowStore {
   closeWindow: ReturnType<typeof vi.fn>
   initializeWindows: ReturnType<typeof vi.fn>
   completeOnboarding: ReturnType<typeof vi.fn>
-  checkExistingWorkspaces: ReturnType<typeof vi.fn>
 }
 
 // Type for creating test windows

@@ -1,22 +1,14 @@
 import { NextResponse } from 'next/server';
-import { DaytonaClient } from '@/lib/daytona';
+import { authenticateWorkspaceAccess, handleWorkspaceAuthError, WorkspaceAuthError } from '@/lib/auth/workspace-auth';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ sandboxId: string }> }
 ) {
   try {
-    const apiKey = process.env.DAYTONA_API_KEY;
-    
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'DAYTONA_API_KEY not configured' },
-        { status: 500 }
-      );
-    }
-
     const { sandboxId } = await params;
     
+    // Validate sandbox ID
     if (!sandboxId) {
       return NextResponse.json(
         { error: 'Sandbox ID is required' },
@@ -24,8 +16,11 @@ export async function POST(
       );
     }
 
-    const client = new DaytonaClient(apiKey);
-    await client.deleteWorkspace(sandboxId);
+    // Centralized auth & authorization
+    const { daytonaClient } = await authenticateWorkspaceAccess(sandboxId);
+
+    // Business logic only
+    await daytonaClient.deleteWorkspace(sandboxId);
     
     return NextResponse.json({ 
       success: true,
@@ -33,6 +28,12 @@ export async function POST(
     });
 
   } catch (error) {
+    // Handle auth errors consistently
+    if (WorkspaceAuthError.isWorkspaceAuthError(error)) {
+      return handleWorkspaceAuthError(error);
+    }
+    
+    // Handle business logic errors
     console.error('Error deleting workspace:', error);
     return NextResponse.json(
       { 

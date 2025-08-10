@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { WorkspaceServiceManager } from '@/lib/workspace-service-manager';
+import { authenticateWorkspaceAccessWithSandbox, handleWorkspaceAuthError, WorkspaceAuthError } from '@/lib/auth/workspace-auth';
 
 export interface GitHubRepository {
   name: string;
@@ -16,10 +16,9 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const { sandboxId } = await params;
-    const serviceManager = WorkspaceServiceManager.getInstance();
     
-    // Authenticate and validate workspace access
-    const { sandbox, rootDir } = await serviceManager.authenticateWorkspaceAccess(sandboxId);
+    // Centralized auth & authorization with sandbox
+    const { sandbox, rootDir } = await authenticateWorkspaceAccessWithSandbox(sandboxId);
     
     // Execute gh repo list command
     const repoListResult = await sandbox.process.executeCommand(
@@ -62,15 +61,13 @@ export async function GET(
     });
     
   } catch (error) {
-    console.error('Error fetching GitHub repositories:', error);
-    
-    const message = error instanceof Error ? error.message : String(error);
-    
-    // Handle authentication errors
-    if (message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Handle auth errors consistently
+    if (WorkspaceAuthError.isWorkspaceAuthError(error)) {
+      return handleWorkspaceAuthError(error);
     }
     
+    // Handle GitHub CLI specific errors
+    const message = error instanceof Error ? error.message : String(error);
     if (message.includes('not logged into') || message.includes('authentication')) {
       return NextResponse.json({ 
         error: 'GitHub authentication required',
@@ -78,6 +75,8 @@ export async function GET(
       }, { status: 401 });
     }
     
+    // Handle business logic errors
+    console.error('Error fetching GitHub repositories:', error);
     return NextResponse.json({
       error: 'Failed to fetch GitHub repositories',
       details: message

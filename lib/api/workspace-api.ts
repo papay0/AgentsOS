@@ -1,5 +1,4 @@
 import type { CreateWorkspaceResponse } from '@/types/workspace';
-import type { SandboxListItem } from '@/types/sandbox';
 
 export interface Repository {
   url: string;
@@ -48,18 +47,6 @@ export class WorkspaceApi {
     return response.json();
   }
 
-  async listWorkspaces(): Promise<{ sandboxes: SandboxListItem[] }> {
-    const response = await fetch(`${this.baseUrl}/api/list-workspaces`, {
-      method: 'GET',
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Failed to list workspaces' }));
-      throw new Error(error.error || 'Failed to list workspaces');
-    }
-
-    return response.json();
-  }
 
   async getWorkspaceUrls(sandboxId: string): Promise<WorkspaceUrls> {
     const response = await fetch(`${this.baseUrl}/api/workspace-urls/${sandboxId}`, {

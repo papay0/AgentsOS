@@ -44,7 +44,6 @@ interface WindowStore {
   nextZIndex: number;
   activeWindowId: string | null;
   onboardingCompleted: boolean;
-  isCheckingWorkspaces: boolean;
   workspaceData: WorkspaceData | null;
   
   // Actions
@@ -60,7 +59,6 @@ interface WindowStore {
   setWindowAnimating: (id: string, isAnimating: boolean) => void;
   initializeWindows: (workspaceData?: WorkspaceData) => void;
   completeOnboarding: () => void;
-  checkExistingWorkspaces: () => Promise<void>;
   setWorkspaceData: (workspaceData: WorkspaceData | null) => void;
 }
 
@@ -70,7 +68,6 @@ export const useWindowStore = create<WindowStore>()(
     nextZIndex: WINDOW_Z_INDEX_BASE,
     activeWindowId: null,
     onboardingCompleted: false,
-    isCheckingWorkspaces: false,
     workspaceData: null,
 
     addWindow: (windowData) => set((state) => {
@@ -281,42 +278,6 @@ export const useWindowStore = create<WindowStore>()(
     completeOnboarding: () => set(() => ({
       onboardingCompleted: true,
     })),
-
-    checkExistingWorkspaces: async () => {
-      set({ isCheckingWorkspaces: true });
-      
-      try {
-        const response = await fetch('/api/list-workspaces');
-        
-        if (response.ok) {
-          const data = await response.json();
-          const hasWorkspaces = data.sandboxes && data.sandboxes.length > 0;
-          
-          set({ 
-            onboardingCompleted: hasWorkspaces,
-            isCheckingWorkspaces: false 
-          });
-          
-          // If user has existing workspaces, initialize them
-          if (hasWorkspaces) {
-            set(() => ({}));
-          }
-        } else {
-          // If API call fails, assume first time user and show onboarding
-          set({ 
-            onboardingCompleted: false,
-            isCheckingWorkspaces: false 
-          });
-        }
-      } catch (error) {
-        console.error('Failed to check existing workspaces:', error);
-        // On error, assume first time user and show onboarding
-        set({ 
-          onboardingCompleted: false,
-          isCheckingWorkspaces: false 
-        });
-      }
-    },
 
     setWorkspaceData: (workspaceData) => set(() => ({
       workspaceData,

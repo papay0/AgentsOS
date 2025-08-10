@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { DaytonaClient } from '@/lib/daytona';
+import { authenticateWorkspaceAccess, handleWorkspaceAuthError, WorkspaceAuthError } from '@/lib/auth/workspace-auth';
 
 export async function GET(
   request: Request,
@@ -8,22 +8,20 @@ export async function GET(
   try {
     const { sandboxId } = await params;
     
-    // Validate environment
-    const apiKey = process.env.DAYTONA_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'Missing DAYTONA_API_KEY environment variable' },
-        { status: 500 }
-      );
-    }
+    // Centralized auth & authorization
+    const { daytonaClient } = await authenticateWorkspaceAccess(sandboxId);
 
-    // Check workspace status
-    const daytonaClient = new DaytonaClient(apiKey);
+    // Business logic only
     const status = await daytonaClient.getWorkspaceStatus(sandboxId);
-
     return NextResponse.json(status);
 
   } catch (error) {
+    // Handle auth errors consistently
+    if (WorkspaceAuthError.isWorkspaceAuthError(error)) {
+      return handleWorkspaceAuthError(error);
+    }
+    
+    // Handle business logic errors
     console.error('Error checking workspace status:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to check workspace status';
     

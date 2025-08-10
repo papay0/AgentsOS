@@ -23,7 +23,6 @@ const resetStore = () => {
       nextZIndex: 10, // WINDOW_Z_INDEX_BASE
       activeWindowId: null,
       onboardingCompleted: false,
-      isCheckingWorkspaces: false,
       workspaceData: null,
     });
   });
