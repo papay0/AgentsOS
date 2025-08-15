@@ -89,12 +89,7 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 tmux start-server 2>/dev/null || true
 if tmux has-session -t main-${repoName} 2>/dev/null; then
-  CLIENT_COUNT=$(tmux list-clients -t main-${repoName} 2>/dev/null | wc -l)
-  if [ "$CLIENT_COUNT" -gt 0 ]; then
-    while true; do sleep 1; done
-  else
-    exec tmux attach-session -t main-${repoName}
-  fi
+  exec tmux attach-session -t main-${repoName}
 else
   exec tmux new-session -s main-${repoName} "cd ${repoPath} && exec zsh"
 fi' > /tmp/start-zsh-${repoName}.sh && chmod +x /tmp/start-zsh-${repoName}.sh`,

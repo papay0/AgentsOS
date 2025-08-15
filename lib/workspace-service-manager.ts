@@ -350,12 +350,7 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 tmux start-server 2>/dev/null || true
 if tmux has-session -t main-${repo.name} 2>/dev/null; then
-  CLIENT_COUNT=$(tmux list-clients -t main-${repo.name} 2>/dev/null | wc -l)
-  if [ "$CLIENT_COUNT" -gt 0 ]; then
-    while true; do sleep 1; done
-  else
-    exec tmux attach-session -t main-${repo.name}
-  fi
+  exec tmux attach-session -t main-${repo.name}
 else
   exec tmux new-session -s main-${repo.name} "cd ${repoPath} && exec zsh"
 fi' > "${terminalScript}" && chmod +x "${terminalScript}"`,
