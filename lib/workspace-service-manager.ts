@@ -4,6 +4,7 @@ import { UserServiceAdmin } from '@/lib/user-service-admin';
 import type { UserWorkspace, Repository } from '@/types/workspace';
 import { Logger } from '@/lib/logger';
 import { TTYD_THEME } from '@/lib/workspace-constants';
+import { WorkspaceInstaller } from '@/lib/workspace-installer';
 
 export interface ServiceRestartResult {
   success: boolean;
@@ -57,9 +58,11 @@ export interface WorkspaceAuthResult {
 export class WorkspaceServiceManager {
   private static instance: WorkspaceServiceManager;
   private logger: Logger;
+  private installer: WorkspaceInstaller;
   
   constructor() {
     this.logger = Logger.create('WorkspaceManager');
+    this.installer = new WorkspaceInstaller();
   }
   
   static getInstance(): WorkspaceServiceManager {
@@ -559,6 +562,10 @@ fi' > "${claudeScript}" && chmod +x "${claudeScript}"`,
 
       // Authenticate and validate workspace access (with sandbox starting for restart)
       const { userWorkspace, sandbox, rootDir } = await this.authenticateWorkspaceAccess(sandboxId, true);
+      
+      // Ensure critical system packages are installed (for workspaces created before tmux support)
+      this.logger.info('Ensuring critical system packages are present...');
+      await this.installer.ensureSystemPackages(sandbox, rootDir);
       
       // Restart/fix services for all repositories
       const results = await this.restartServices(

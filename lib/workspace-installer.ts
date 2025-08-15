@@ -4,10 +4,91 @@ import { logger } from './logger';
 export class WorkspaceInstaller {
   private logger = logger;
 
+  // Single source of truth for system packages
+  private static readonly SYSTEM_PACKAGES = {
+    // Core packages that need checking and are installable via apt
+    core: ['tmux', 'curl', 'wget', 'git', 'zsh'],
+    // Additional support packages (don't need checking)
+    additional: ['net-tools']
+  } as const;
+
+  /**
+   * Ensure critical system packages are installed (for existing workspaces)
+   * Only installs missing packages, doesn't update existing ones
+   */
+  async ensureSystemPackages(sandbox: Sandbox, rootDir: string): Promise<void> {
+    this.logger.info('Checking critical system packages...');
+    
+    // Check which packages are missing
+    const packagesToCheck = WorkspaceInstaller.SYSTEM_PACKAGES.core;
+    const missingPackages: string[] = [];
+    
+    for (const pkg of packagesToCheck) {
+      try {
+        const checkResult = await sandbox.process.executeCommand(
+          `which ${pkg}`,
+          rootDir,
+          undefined,
+          5000
+        );
+        
+        if (checkResult.exitCode === 0) {
+          this.logger.info(`✓ ${pkg} already installed`);
+        } else {
+          this.logger.info(`✗ ${pkg} missing, will install`);
+          missingPackages.push(pkg);
+        }
+      } catch {
+        this.logger.info(`✗ ${pkg} check failed, will install`);
+        missingPackages.push(pkg);
+      }
+    }
+    
+    // Install only missing packages
+    if (missingPackages.length > 0) {
+      this.logger.workspace.installing(`missing system packages: ${missingPackages.join(', ')}`);
+      
+      // Map package names to apt package names
+      const aptPackages = missingPackages.map(pkg => {
+        switch (pkg) {
+          case 'zsh': return 'zsh';
+          case 'tmux': return 'tmux';
+          case 'curl': return 'curl';
+          case 'wget': return 'wget';
+          case 'git': return 'git';
+          default: return pkg;
+        }
+      });
+      
+      const allPackages = [...aptPackages, ...WorkspaceInstaller.SYSTEM_PACKAGES.additional];
+      const result = await sandbox.process.executeCommand(
+        `apt-get update -qq && apt-get install -y -qq ${allPackages.join(' ')}`,
+        rootDir,
+        undefined,
+        60000
+      );
+      
+      if (result.exitCode !== 0) {
+        const errorData = {
+          error: result.result,
+          code: 'SYSTEM_PACKAGES_ENSURE_FAILED',
+          details: { exitCode: result.exitCode, missingPackages }
+        };
+        this.logger.logError('Critical system packages installation failed', errorData);
+        throw new Error(`Failed to install missing packages: ${result.result}`);
+      }
+      
+      this.logger.success(`Installed missing packages: ${missingPackages.join(', ')}`);
+    } else {
+      this.logger.success('All critical system packages already present');
+    }
+  }
+
   async installSystemPackages(sandbox: Sandbox, rootDir: string): Promise<void> {
-    this.logger.workspace.installing('system packages (curl, wget, git, zsh, tmux)');
+    const allPackages = [...WorkspaceInstaller.SYSTEM_PACKAGES.core, ...WorkspaceInstaller.SYSTEM_PACKAGES.additional];
+    this.logger.workspace.installing(`system packages (${WorkspaceInstaller.SYSTEM_PACKAGES.core.join(', ')})`);
     const result = await sandbox.process.executeCommand(
-      `apt-get update -qq && apt-get install -y -qq curl wget git net-tools zsh tmux`,
+      `apt-get update -qq && apt-get install -y -qq ${allPackages.join(' ')}`,
       rootDir,
       undefined,
       60000
