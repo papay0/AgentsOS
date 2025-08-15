@@ -152,10 +152,10 @@ describe('WorkspaceInstaller', () => {
       await installer.installSystemPackages(mockSandbox, rootDir)
 
       expect(mockLogger.workspace.installing).toHaveBeenCalledWith(
-        'system packages (curl, wget, git, zsh)'
+        'system packages (curl, wget, git, zsh, tmux)'
       )
       expect(mockSandbox.process.executeCommand).toHaveBeenCalledWith(
-        'apt-get update -qq && apt-get install -y -qq curl wget git net-tools zsh',
+        'apt-get update -qq && apt-get install -y -qq curl wget git net-tools zsh tmux',
         rootDir,
         undefined,
         60000
