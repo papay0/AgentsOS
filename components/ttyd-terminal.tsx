@@ -493,7 +493,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   useEffect(() => {
     if (!terminalRef.current || !terminal.current) return;
 
-    const handleWheel = (e: WheelEvent) => {
+    const handleWheel = () => {
       // Let the default tmux mouse handling take care of desktop scrolling
       // Don't preventDefault here - let it pass through to tmux
       return;
