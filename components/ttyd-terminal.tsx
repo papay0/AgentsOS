@@ -1,3 +1,44 @@
+/*
+ * MOBILE TMUX SCROLLING ATTEMPTS - DEBUGGING LOG
+ * 
+ * Problem: Mobile touch scrolling doesn't work properly with tmux sessions.
+ * When tmux mouse mode is enabled, desktop mouse wheel works but mobile touch doesn't.
+ * 
+ * Attempts made:
+ * 
+ * 1. ARROW KEYS APPROACH (Failed)
+ *    - Sent Up/Down arrow keys (\x1b[A, \x1b[B) 
+ *    - Problem: These interfere with command history navigation at shell prompt
+ *    - Result: Scrolling through command history instead of terminal buffer
+ * 
+ * 2. PAGE UP/DOWN APPROACH (Failed)  
+ *    - Sent Page Up/Down keys (\x1b[5~, \x1b[6~)
+ *    - Problem: Still keyboard events, not proper scrolling in tmux
+ *    - Result: Similar issues with command interference
+ * 
+ * 3. MOUSE WHEEL EVENTS APPROACH (Failed)
+ *    - Sent mouse wheel events (\x1b[M\x60, \x1b[M\x61)
+ *    - Problem: Incorrect mouse protocol format
+ *    - Result: Character "_" being inserted into terminal input
+ * 
+ * 4. TMUX COPY-MODE APPROACH (Working but slow)
+ *    - Enter copy-mode with Ctrl+B [, send arrows, exit with Escape
+ *    - Problem: Too slow, need to increase scroll speed
+ *    - Result: Works but scrolls too slowly for good UX
+ * 
+ * 5. FAST COPY-MODE APPROACH (Major UX issues)
+ *    - Same as #4 but with more arrows and Page Up/Down for large gestures
+ *    - Problems: 
+ *      - Always returns to bottom when exiting copy-mode
+ *      - Scroll direction is reversed (not intuitive for mobile)
+ *      - Feels broken compared to desktop experience
+ * 
+ * 6. PROPER SGR MOUSE PROTOCOL APPROACH (Current attempt)
+ *    - Try modern SGR mouse protocol that tmux supports
+ *    - Send proper wheel events with correct coordinates and encoding
+ *    - Should behave exactly like desktop mouse wheel
+ */
+
 'use client';
 
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
@@ -74,10 +115,11 @@ export interface TTYDTerminalRef {
 }
 
 /**
- * TTYDTerminal - A ttyd terminal component
+ * TTYDTerminal - A ttyd terminal component with mobile scroll support
  * 
  * Connects directly to ttyd servers using the correct WebSocket protocol.
  * Perfect for cloud development environments and remote terminal access.
+ * Enhanced with mobile touch scrolling support for tmux.
  */
 const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({ 
   wsUrl, 
@@ -353,6 +395,119 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     }
   }, [wsUrl, onStatusChange, onConnectionChange]);
 
+  // ATTEMPT 6: Proper SGR mouse protocol for tmux compatibility
+  useEffect(() => {
+    if (!terminalRef.current || !terminal.current) return;
+
+    let startY = 0;
+    let isScrolling = false;
+    let lastScrollTime = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      isScrolling = false;
+      lastScrollTime = Date.now();
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isConnected || !websocket.current) return;
+
+      const currentY = e.touches[0].clientY;
+      const deltaY = startY - currentY;
+      const currentTime = Date.now();
+      
+      // Only handle vertical scrolling gestures with minimum threshold
+      if (Math.abs(deltaY) > 20) {
+        isScrolling = true;
+        e.preventDefault(); // Prevent browser scrolling
+        e.stopPropagation(); // Stop event bubbling
+        
+        // Throttle scroll events
+        if (currentTime - lastScrollTime > 100) {
+          // Get terminal position for mouse coordinates
+          const terminalRect = terminalRef.current!.getBoundingClientRect();
+          const mouseX = Math.floor(terminalRect.width / 2);
+          const mouseY = Math.floor(terminalRect.height / 2);
+          
+          // Convert to terminal character coordinates (rough estimate)
+          const charX = Math.floor(mouseX / 8); // Assume 8px char width
+          const charY = Math.floor(mouseY / 16); // Assume 16px char height
+          
+          // Calculate scroll steps based on gesture size
+          const scrollSteps = Math.min(Math.ceil(Math.abs(deltaY) / 40), 5);
+          
+          for (let i = 0; i < scrollSteps; i++) {
+            // Fixed scroll direction: swipe down = scroll up (show earlier content)
+            if (deltaY < 0) {
+              // Swiping down = scroll up (wheel up) = show earlier content
+              // SGR format: \x1b[<64;x;yM (wheel up)
+              const sgrWheelUp = `\x1b[<64;${charX};${charY}M`;
+              const wheelUpBytes = new TextEncoder().encode(sgrWheelUp);
+              const payload = new Uint8Array(wheelUpBytes.length + 1);
+              payload[0] = 0x30;
+              payload.set(wheelUpBytes, 1);
+              websocket.current.send(payload);
+            } else {
+              // Swiping up = scroll down (wheel down) = show later content  
+              // SGR format: \x1b[<65;x;yM (wheel down)
+              const sgrWheelDown = `\x1b[<65;${charX};${charY}M`;
+              const wheelDownBytes = new TextEncoder().encode(sgrWheelDown);
+              const payload = new Uint8Array(wheelDownBytes.length + 1);
+              payload[0] = 0x30;
+              payload.set(wheelDownBytes, 1);
+              websocket.current.send(payload);
+            }
+          }
+          
+          lastScrollTime = currentTime;
+          startY = currentY;
+        }
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isScrolling) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      isScrolling = false;
+    };
+
+    const terminalElement = terminalRef.current;
+    
+    terminalElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    terminalElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    terminalElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    return () => {
+      if (terminalElement) {
+        terminalElement.removeEventListener('touchstart', handleTouchStart);
+        terminalElement.removeEventListener('touchmove', handleTouchMove);
+        terminalElement.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [isConnected]);
+
+  // For desktop, let's just disable custom wheel handling and let tmux mouse mode handle it
+  useEffect(() => {
+    if (!terminalRef.current || !terminal.current) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Let the default tmux mouse handling take care of desktop scrolling
+      // Don't preventDefault here - let it pass through to tmux
+      return;
+    };
+
+    const terminalElement = terminalRef.current;
+    terminalElement.addEventListener('wheel', handleWheel, { passive: true });
+
+    return () => {
+      if (terminalElement) {
+        terminalElement.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [isConnected]);
+
   useEffect(() => {
     if (!terminalRef.current) return;
 
@@ -498,7 +653,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        position: 'relative'
+        position: 'relative',
+        touchAction: 'none' // Prevent default touch behaviors
       }}
     />
   );
