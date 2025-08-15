@@ -2,6 +2,7 @@ import { Sandbox } from '@daytonaio/sdk';
 import { logger } from './logger';
 import { TTYD_THEME } from './workspace-constants';
 import { PortManager } from './port-manager';
+import { TmuxScriptGenerator } from './tmux-script-generator';
 import type { Repository } from '@/types/workspace';
 
 interface RepositoryWithUrls extends Repository {
@@ -65,34 +66,18 @@ export class WorkspaceServices {
 
   private async createRepositoryScripts(sandbox: Sandbox, rootDir: string, repoPath: string, repoName: string): Promise<void> {
     // Create Claude startup script for this repository with tmux
+    const claudeScript = TmuxScriptGenerator.generateClaudeScript(repoPath, repoName);
+    const claudeScriptPath = `/tmp/start-claude-${repoName}.sh`;
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash
-cd ${repoPath}
-export TERM=screen-256color
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-tmux start-server 2>/dev/null || true
-if tmux has-session -t claude-${repoName} 2>/dev/null; then
-  exec tmux attach-session -t claude-${repoName}
-else
-  exec tmux new-session -s claude-${repoName} "cd ${repoPath} && claude"
-fi' > /tmp/start-claude-${repoName}.sh && chmod +x /tmp/start-claude-${repoName}.sh`,
+      TmuxScriptGenerator.generateScriptCreationCommand(claudeScript, claudeScriptPath),
       rootDir
     );
     
     // Create zsh startup script for this repository with tmux
+    const terminalScript = TmuxScriptGenerator.generateTerminalScript(repoPath, repoName);
+    const terminalScriptPath = `/tmp/start-zsh-${repoName}.sh`;
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash
-cd ${repoPath}
-export TERM=screen-256color
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-tmux start-server 2>/dev/null || true
-if tmux has-session -t main-${repoName} 2>/dev/null; then
-  exec tmux attach-session -t main-${repoName}
-else
-  exec tmux new-session -s main-${repoName} "cd ${repoPath} && exec zsh"
-fi' > /tmp/start-zsh-${repoName}.sh && chmod +x /tmp/start-zsh-${repoName}.sh`,
+      TmuxScriptGenerator.generateScriptCreationCommand(terminalScript, terminalScriptPath),
       rootDir
     );
   }
