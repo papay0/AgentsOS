@@ -5,6 +5,7 @@ import type { UserWorkspace, Repository } from '@/types/workspace';
 import { Logger } from '@/lib/logger';
 import { TTYD_THEME } from '@/lib/workspace-constants';
 import { WorkspaceInstaller } from '@/lib/workspace-installer';
+import { TmuxScriptGenerator } from '@/lib/tmux-script-generator';
 
 export interface ServiceRestartResult {
   success: boolean;
@@ -357,35 +358,19 @@ export class WorkspaceServiceManager {
       const scriptPromises = [
         // Terminal script with tmux and environment variables
         sandbox.process.executeCommand(
-          `echo '#!/bin/bash
-cd ${repoPath}
-export TERM=screen-256color
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-tmux start-server 2>/dev/null || true
-tmux set -g mouse on 2>/dev/null || true
-if tmux has-session -t main-${repo.name} 2>/dev/null; then
-  exec tmux attach-session -t main-${repo.name}
-else
-  exec tmux new-session -s main-${repo.name} "cd ${repoPath} && exec zsh"
-fi' > "${terminalScript}" && chmod +x "${terminalScript}"`,
+          TmuxScriptGenerator.generateScriptCreationCommand(
+            TmuxScriptGenerator.generateTerminalScript(repoPath, repo.name),
+            terminalScript
+          ),
           rootDir
         ),
         
         // Claude script with tmux and environment variables
         sandbox.process.executeCommand(
-          `echo '#!/bin/bash
-cd ${repoPath}
-export TERM=screen-256color
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-tmux start-server 2>/dev/null || true
-tmux set -g mouse on 2>/dev/null || true
-if tmux has-session -t claude-${repo.name} 2>/dev/null; then
-  exec tmux attach-session -t claude-${repo.name}
-else
-  exec tmux new-session -s claude-${repo.name} "cd ${repoPath} && claude"
-fi' > "${claudeScript}" && chmod +x "${claudeScript}"`,
+          TmuxScriptGenerator.generateScriptCreationCommand(
+            TmuxScriptGenerator.generateClaudeScript(repoPath, repo.name),
+            claudeScript
+          ),
           rootDir
         )
       ];
