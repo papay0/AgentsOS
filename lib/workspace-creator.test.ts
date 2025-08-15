@@ -3,14 +3,12 @@ import { WorkspaceCreator } from './workspace-creator'
 import { WorkspaceManager } from './workspace-manager'
 import { WorkspaceInstaller } from './workspace-installer'
 import { WorkspaceServices } from './workspace-services'
-import { WorkspaceOrchestrator } from './workspace-orchestrator'
 import { Sandbox } from '@daytonaio/sdk'
 
 // Mock dependencies
 vi.mock('./workspace-manager')
 vi.mock('./workspace-installer')
 vi.mock('./workspace-services')
-vi.mock('./workspace-orchestrator')
 vi.mock('./analytics', () => ({
   trackWorkspaceCreated: vi.fn(),
 }))
@@ -41,6 +39,7 @@ vi.mock('./logger', () => ({
     },
     logWorkspace: vi.fn(),
     logError: vi.fn(),
+    info: vi.fn(),
   },
 }))
 
@@ -49,12 +48,12 @@ describe('WorkspaceCreator', () => {
   let mockWorkspaceManager: WorkspaceManager
   let mockWorkspaceInstaller: WorkspaceInstaller
   let mockWorkspaceServices: WorkspaceServices
-  let mockWorkspaceOrchestrator: WorkspaceOrchestrator
   let mockSandbox: Sandbox
   let mockLogger: {
     workspace: { creating: ReturnType<typeof vi.fn> }
     logWorkspace: ReturnType<typeof vi.fn>
     logError: ReturnType<typeof vi.fn>
+    info: ReturnType<typeof vi.fn>
   }
 
   const apiKey = 'test-api-key'
@@ -110,16 +109,10 @@ describe('WorkspaceCreator', () => {
       ]),
     } as unknown as WorkspaceServices
 
-    // Mock WorkspaceOrchestrator
-    mockWorkspaceOrchestrator = {
-      createProjectDirectory: vi.fn().mockResolvedValue('/home/user/projects'),
-    } as unknown as WorkspaceOrchestrator
-
     // Setup constructor mocks
     vi.mocked(WorkspaceManager).mockImplementation(() => mockWorkspaceManager)
     vi.mocked(WorkspaceInstaller).mockImplementation(() => mockWorkspaceInstaller)
     vi.mocked(WorkspaceServices).mockImplementation(() => mockWorkspaceServices)
-    vi.mocked(WorkspaceOrchestrator).mockImplementation(() => mockWorkspaceOrchestrator)
 
     workspaceCreator = new WorkspaceCreator(apiKey)
   })
@@ -283,7 +276,6 @@ describe('WorkspaceCreator', () => {
       // Verify core workflow still works
       expect(mockWorkspaceManager.createSandbox).toHaveBeenCalled()
       expect(mockSandbox.getUserRootDir).toHaveBeenCalled()
-      expect(mockWorkspaceOrchestrator.createProjectDirectory).toHaveBeenCalled()
       expect(mockWorkspaceServices.setupRepositoryServices).toHaveBeenCalled()
 
       expect(result).toBeDefined()

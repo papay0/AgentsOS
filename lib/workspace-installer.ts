@@ -5,9 +5,9 @@ export class WorkspaceInstaller {
   private logger = logger;
 
   async installSystemPackages(sandbox: Sandbox, rootDir: string): Promise<void> {
-    this.logger.workspace.installing('system packages (curl, wget, git, zsh)');
+    this.logger.workspace.installing('system packages (curl, wget, git, zsh, tmux)');
     const result = await sandbox.process.executeCommand(
-      `apt-get update -qq && apt-get install -y -qq curl wget git net-tools zsh`,
+      `apt-get update -qq && apt-get install -y -qq curl wget git net-tools zsh tmux`,
       rootDir,
       undefined,
       60000

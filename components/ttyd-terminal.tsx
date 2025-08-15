@@ -89,6 +89,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   const terminal = useRef<Terminal | null>(null);
   const fitAddon = useRef<ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null>(null);
   const websocket = useRef<WebSocket | null>(null);
+  const onDataDisposable = useRef<{ dispose: () => void } | null>(null);
+  const onResizeDisposable = useRef<{ dispose: () => void } | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   
   // Get current theme from document (set by ThemeProvider)
@@ -319,9 +321,13 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       onStatusChange?.('Connection error');
     };
 
+    // Clean up previous terminal event handlers
+    onDataDisposable.current?.dispose();
+    onResizeDisposable.current?.dispose();
+
     // Handle terminal input
     if (terminal.current) {
-      terminal.current.onData((data) => {
+      onDataDisposable.current = terminal.current.onData((data) => {
         if (websocket.current?.readyState === WebSocket.OPEN) {
           // INPUT = '0' (0x30) + data bytes as binary
           const inputBytes = new TextEncoder().encode(data);
@@ -333,7 +339,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       });
 
       // Handle resize
-      terminal.current.onResize((dimensions) => {
+      onResizeDisposable.current = terminal.current.onResize((dimensions) => {
         if (websocket.current?.readyState === WebSocket.OPEN) {
           // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
           const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
@@ -437,6 +443,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('windowContentResize', handleWindowContentResize);
       websocket.current?.close();
+      onDataDisposable.current?.dispose();
+      onResizeDisposable.current?.dispose();
       terminal.current?.dispose();
     };
   }, [wsUrl, connectWebSocket]); // eslint-disable-line react-hooks/exhaustive-deps

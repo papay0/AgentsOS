@@ -42,11 +42,6 @@ vi.mock('../workspace-services', () => ({
   })),
 }));
 
-vi.mock('../workspace-orchestrator', () => ({
-  WorkspaceOrchestrator: vi.fn().mockImplementation(() => ({
-    createProjectDirectory: vi.fn(),
-  })),
-}));
 
 vi.mock('../analytics', () => ({
   trackWorkspaceCreated: vi.fn(),
