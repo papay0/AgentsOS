@@ -3,7 +3,6 @@ import { logger, type WorkspaceLogData } from './logger';
 import { WorkspaceManager } from './workspace-manager';
 import { WorkspaceInstaller } from './workspace-installer';
 import { WorkspaceServices } from './workspace-services';
-import { WorkspaceOrchestrator } from './workspace-orchestrator';
 import { PortManager } from './port-manager';
 import { trackWorkspaceCreated } from './analytics';
 import { Sandbox } from '@daytonaio/sdk';
@@ -25,13 +24,18 @@ export class WorkspaceCreator {
   private manager: WorkspaceManager;
   private installer: WorkspaceInstaller;
   private services: WorkspaceServices;
-  private orchestrator: WorkspaceOrchestrator;
 
   constructor(apiKey: string) {
     this.manager = new WorkspaceManager(apiKey);
     this.installer = new WorkspaceInstaller();
     this.services = new WorkspaceServices();
-    this.orchestrator = new WorkspaceOrchestrator();
+  }
+
+  private async createProjectDirectory(sandbox: Sandbox, rootDir: string): Promise<string> {
+    const projectDir = `${rootDir}/projects`;
+    await sandbox.process.executeCommand(`mkdir -p ${projectDir}`, rootDir);
+    this.logger.info(`Created projects directory: ${projectDir}`);
+    return projectDir;
   }
 
   async createWorkspace(options: WorkspaceSetupOptions = {}): Promise<CreateWorkspaceResponse> {
@@ -51,7 +55,7 @@ export class WorkspaceCreator {
       }
       
       // Create project directory
-      const projectDir = await this.orchestrator.createProjectDirectory(sandbox, rootDir);
+      const projectDir = await this.createProjectDirectory(sandbox, rootDir);
       
       // Clone repositories if provided
       if (options.repositories && options.repositories.length > 0) {

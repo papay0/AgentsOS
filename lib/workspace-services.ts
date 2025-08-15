@@ -15,35 +15,6 @@ interface RepositoryWithUrls extends Repository {
 export class WorkspaceServices {
   private logger = logger;
 
-  async setupServices(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
-    this.logger.info('Setting up services...');
-    
-    // Create startup scripts
-    await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nclaude' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
-      rootDir
-    );
-    
-    await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nexec zsh' > /tmp/start-zsh.sh && chmod +x /tmp/start-zsh.sh`,
-      rootDir
-    );
-
-    // Start all services in parallel
-    await Promise.all([
-      this.startCodeServer(sandbox, rootDir, projectDir),
-      this.startZshTerminal(sandbox, rootDir, projectDir),
-      this.startClaudeTerminal(sandbox, rootDir)
-    ]);
-
-    // Wait for services to start
-    await new Promise(resolve => setTimeout(resolve, 8000));
-    
-    await this.verifyServices(sandbox, rootDir);
-    
-    // Health check - retry service startup if needed
-    await this.healthCheckServices(sandbox, rootDir);
-  }
 
   /**
    * Setup services for multiple repositories (one instance per repo)
@@ -93,15 +64,35 @@ export class WorkspaceServices {
   }
 
   private async createRepositoryScripts(sandbox: Sandbox, rootDir: string, repoPath: string, repoName: string): Promise<void> {
-    // Create Claude startup script for this repository
+    // Create Claude startup script for this repository with tmux
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${repoPath}\nclaude' > /tmp/start-claude-${repoName}.sh && chmod +x /tmp/start-claude-${repoName}.sh`,
+      `echo '#!/bin/bash
+cd ${repoPath}
+export TERM=screen-256color
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+tmux start-server 2>/dev/null || true
+if tmux has-session -t claude-${repoName} 2>/dev/null; then
+  exec tmux attach-session -t claude-${repoName}
+else
+  exec tmux new-session -s claude-${repoName} "cd ${repoPath} && claude"
+fi' > /tmp/start-claude-${repoName}.sh && chmod +x /tmp/start-claude-${repoName}.sh`,
       rootDir
     );
     
-    // Create zsh startup script for this repository
+    // Create zsh startup script for this repository with tmux
     await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${repoPath}\nexec zsh' > /tmp/start-zsh-${repoName}.sh && chmod +x /tmp/start-zsh-${repoName}.sh`,
+      `echo '#!/bin/bash
+cd ${repoPath}
+export TERM=screen-256color
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+tmux start-server 2>/dev/null || true
+if tmux has-session -t main-${repoName} 2>/dev/null; then
+  exec tmux attach-session -t main-${repoName}
+else
+  exec tmux new-session -s main-${repoName} "cd ${repoPath} && exec zsh"
+fi' > /tmp/start-zsh-${repoName}.sh && chmod +x /tmp/start-zsh-${repoName}.sh`,
       rootDir
     );
   }
@@ -167,123 +158,6 @@ export class WorkspaceServices {
     this.logger.success(`All services verified for ${repositories.length} repositories`);
   }
 
-  async startCodeServer(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
-    this.logger.workspace.starting('VSCode server');
-    await sandbox.process.executeCommand(
-      `nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${projectDir} > /tmp/code-server.log 2>&1 & echo "code-server started"`,
-      rootDir
-    );
-  }
 
-  async startZshTerminal(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
-    this.logger.workspace.starting('zsh terminal');
-    
-    // Create a startup script that changes to project directory
-    await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nexec zsh' > /tmp/start-zsh.sh && chmod +x /tmp/start-zsh.sh`,
-      rootDir
-    );
-    
-    await sandbox.process.executeCommand(
-      `nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' /tmp/start-zsh.sh > /tmp/ttyd.log 2>&1 & echo "ttyd started"`,
-      rootDir
-    );
-  }
 
-  async startClaudeTerminal(sandbox: Sandbox, rootDir: string): Promise<void> {
-    this.logger.workspace.starting('Claude terminal');
-    await sandbox.process.executeCommand(
-      `nohup ttyd --port 9998 --writable -t 'theme=${TTYD_THEME}' /tmp/start-claude.sh > /tmp/ttyd-claude.log 2>&1 & echo "claude ttyd started"`,
-      rootDir
-    );
-  }
-
-  async verifyServices(sandbox: Sandbox, rootDir: string): Promise<void> {
-    // Silent verification - just check if ports are listening
-    await sandbox.process.executeCommand(
-      `netstat -tlnp | grep -E "(8080|9998|9999)" > /dev/null`,
-      rootDir
-    );
-  }
-
-  async healthCheckServices(sandbox: Sandbox, rootDir: string): Promise<void> {
-    let retryCount = 0;
-    const maxRetries = 3;
-    
-    while (retryCount < maxRetries) {
-      const healthCheck = await sandbox.process.executeCommand(
-        `curl -s -o /dev/null -w "%{http_code}" http://localhost:9999 && echo "" && 
-         curl -s -o /dev/null -w "%{http_code}" http://localhost:9998 && echo "" && 
-         curl -s -o /dev/null -w "%{http_code}" http://localhost:8080`,
-        rootDir,
-        undefined,
-        15000
-      );
-      
-      // Accept 200, 302, and 301 as healthy responses
-      if (healthCheck.result.includes('200') || healthCheck.result.includes('302') || healthCheck.result.includes('301')) {
-        this.logger.success('All services are healthy');
-        return;
-      }
-      
-      retryCount++;
-      if (retryCount < maxRetries) {
-        this.logger.workspace.retry(retryCount, maxRetries);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        
-        // Try restarting services
-        this.logger.info('Attempting to restart services...');
-        await sandbox.process.executeCommand(
-          `pkill ttyd; pkill code-server; sleep 2 && 
-           nohup code-server --bind-addr 0.0.0.0:8080 --auth none --disable-telemetry ${rootDir} > /tmp/code-server.log 2>&1 & 
-           nohup ttyd --port 9999 --writable -t 'theme=${TTYD_THEME}' /tmp/start-zsh.sh > /tmp/ttyd.log 2>&1 & 
-           nohup ttyd --port 9998 --writable -t 'theme=${TTYD_THEME}' /tmp/start-claude.sh > /tmp/ttyd-claude.log 2>&1 &`,
-          rootDir
-        );
-        
-        await new Promise(resolve => setTimeout(resolve, 5000));
-      }
-    }
-    
-    this.logger.warn(`Health check failed after ${maxRetries} attempts`);
-  }
-
-  async restartServices(sandbox: Sandbox, rootDir: string, projectDir: string): Promise<void> {
-    this.logger.workspace.starting('restarting services');
-    
-    // Kill existing services
-    await sandbox.process.executeCommand(
-      `pkill -f "code-server" || true; pkill -f "ttyd" || true`,
-      rootDir
-    );
-
-    // Wait a moment for processes to die
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Recreate startup scripts
-    await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nclaude' > /tmp/start-claude.sh && chmod +x /tmp/start-claude.sh`,
-      rootDir
-    );
-    
-    await sandbox.process.executeCommand(
-      `echo '#!/bin/bash\ncd ${projectDir}\nexec zsh' > /tmp/start-zsh.sh && chmod +x /tmp/start-zsh.sh`,
-      rootDir
-    );
-
-    // Start all services
-    await Promise.all([
-      this.startCodeServer(sandbox, rootDir, projectDir),
-      this.startZshTerminal(sandbox, rootDir, projectDir),
-      this.startClaudeTerminal(sandbox, rootDir)
-    ]);
-
-    // Wait for services to start
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
-    // Verify services are running
-    await this.verifyServices(sandbox, rootDir);
-    
-    this.logger.success('Services restarted successfully');
-  }
 }

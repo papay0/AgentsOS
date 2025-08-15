@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authenticateWorkspaceAccess, handleWorkspaceAuthError, WorkspaceAuthError } from '@/lib/auth/workspace-auth';
+import { WorkspaceServiceManager } from '@/lib/workspace-service-manager';
 
 export async function POST(
   request: Request,
@@ -9,26 +10,13 @@ export async function POST(
     const { sandboxId } = await params;
     
     // Centralized auth & authorization
-    const { daytonaClient } = await authenticateWorkspaceAccess(sandboxId);
+    await authenticateWorkspaceAccess(sandboxId);
 
-    // Business logic only
-    const result = await daytonaClient.startWorkspaceAndServices(sandboxId);
+    // Use WorkspaceServiceManager for service restart (handles sandbox starting internally)
+    const serviceManager = WorkspaceServiceManager.getInstance();
+    const result = await serviceManager.restartServicesComplete(sandboxId);
 
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: result.message,
-        urls: result.urls
-      });
-    } else {
-      return NextResponse.json(
-        { 
-          success: false,
-          message: result.message 
-        },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(result);
 
   } catch (error) {
     // Handle auth errors consistently

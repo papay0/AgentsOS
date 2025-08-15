@@ -73,7 +73,6 @@ describe('workspace-auth', () => {
     stopWorkspace: ReturnType<typeof vi.fn>;
     deleteWorkspace: ReturnType<typeof vi.fn>;
     getWorkspaceUrls: ReturnType<typeof vi.fn>;
-    startWorkspaceAndServices: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -110,7 +109,6 @@ describe('workspace-auth', () => {
       stopWorkspace: vi.fn(),
       deleteWorkspace: vi.fn(),
       getWorkspaceUrls: vi.fn(),
-      startWorkspaceAndServices: vi.fn()
     };
 
     // Setup mocks (casting due to complex Clerk types)

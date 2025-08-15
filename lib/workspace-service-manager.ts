@@ -72,7 +72,7 @@ export class WorkspaceServiceManager {
   /**
    * Authenticate user and validate workspace access
    */
-  async authenticateWorkspaceAccess(sandboxId: string): Promise<WorkspaceAuthResult> {
+  async authenticateWorkspaceAccess(sandboxId: string, shouldStartSandbox: boolean = false): Promise<WorkspaceAuthResult> {
     this.logger.info(`Authenticating access to sandbox`, { sandboxId }, 'AUTH');
     
     // Check authentication
@@ -115,6 +115,17 @@ export class WorkspaceServiceManager {
     const daytona = new Daytona({ apiKey });
     const sandbox = await daytona.get(sandboxId);
     this.logger.info(`Sandbox retrieved`, { sandboxId, state: sandbox.state }, 'DAYTONA');
+    
+    // Start sandbox if requested and not already started
+    if (shouldStartSandbox && sandbox.state !== 'started') {
+      this.logger.workspace.starting('container for restart');
+      await sandbox.start();
+      
+      // Wait for container to be ready
+      this.logger.info('⏳ Waiting for container to be ready...');
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      this.logger.success(`Sandbox started`, { sandboxId }, 'DAYTONA');
+    }
     
     // Get root directory (sandbox must be started by explicit start operations)
     this.logger.debug(`Getting root directory...`, { sandboxId }, 'DAYTONA');
@@ -341,15 +352,35 @@ export class WorkspaceServiceManager {
       const claudeScript = `/tmp/start-claude-${repo.name}.sh`;
       
       const scriptPromises = [
-        // Terminal script
+        // Terminal script with tmux and environment variables
         sandbox.process.executeCommand(
-          `echo '#!/bin/bash\ncd ${repoPath}\nexec zsh' > "${terminalScript}" && chmod +x "${terminalScript}"`,
+          `echo '#!/bin/bash
+cd ${repoPath}
+export TERM=screen-256color
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+tmux start-server 2>/dev/null || true
+if tmux has-session -t main-${repo.name} 2>/dev/null; then
+  exec tmux attach-session -t main-${repo.name}
+else
+  exec tmux new-session -s main-${repo.name} "cd ${repoPath} && exec zsh"
+fi' > "${terminalScript}" && chmod +x "${terminalScript}"`,
           rootDir
         ),
         
-        // Claude script  
+        // Claude script with tmux and environment variables
         sandbox.process.executeCommand(
-          `echo '#!/bin/bash\ncd ${repoPath}\nclaude' > "${claudeScript}" && chmod +x "${claudeScript}"`,
+          `echo '#!/bin/bash
+cd ${repoPath}
+export TERM=screen-256color
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+tmux start-server 2>/dev/null || true
+if tmux has-session -t claude-${repo.name} 2>/dev/null; then
+  exec tmux attach-session -t claude-${repo.name}
+else
+  exec tmux new-session -s claude-${repo.name} "cd ${repoPath} && claude"
+fi' > "${claudeScript}" && chmod +x "${claudeScript}"`,
           rootDir
         )
       ];
@@ -526,8 +557,8 @@ export class WorkspaceServiceManager {
     try {
       this.logger.info('Starting complete service restart operation', { sandboxId });
 
-      // Authenticate and validate workspace access
-      const { userWorkspace, sandbox, rootDir } = await this.authenticateWorkspaceAccess(sandboxId);
+      // Authenticate and validate workspace access (with sandbox starting for restart)
+      const { userWorkspace, sandbox, rootDir } = await this.authenticateWorkspaceAccess(sandboxId, true);
       
       // Restart/fix services for all repositories
       const results = await this.restartServices(

@@ -3,7 +3,6 @@ import { SandboxState } from '@daytonaio/api-client';
 import type { CreateWorkspaceResponse, Repository } from '@/types/workspace';
 import { WorkspaceManager } from './workspace-manager';
 import { WorkspaceCreator } from './workspace-creator';
-import { WorkspaceOrchestrator } from './workspace-orchestrator';
 
 interface WorkspaceSetupOptions {
   repositories?: Repository[];
@@ -19,12 +18,10 @@ interface WorkspaceSetupOptions {
 export class DaytonaClient {
   private manager: WorkspaceManager;
   private creator: WorkspaceCreator;
-  private orchestrator: WorkspaceOrchestrator;
 
   constructor(apiKey: string) {
     this.manager = new WorkspaceManager(apiKey);
     this.creator = new WorkspaceCreator(apiKey);
-    this.orchestrator = new WorkspaceOrchestrator();
   }
 
   // Workspace Creation
@@ -63,19 +60,5 @@ export class DaytonaClient {
 
   async getSandbox(sandboxId: string): Promise<Sandbox> {
     return await this.manager.getSandbox(sandboxId);
-  }
-
-  // Workspace Orchestration
-  async startWorkspaceAndServices(sandboxId: string): Promise<{
-    success: boolean;
-    message: string;
-    urls?: {
-      vscodeUrl: string;
-      terminalUrl: string;
-      claudeTerminalUrl: string;
-    };
-  }> {
-    const sandbox = await this.manager.getSandbox(sandboxId);
-    return await this.orchestrator.startWorkspaceAndServices(sandbox);
   }
 }

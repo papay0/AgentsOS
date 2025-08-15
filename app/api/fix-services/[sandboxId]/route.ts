@@ -9,21 +9,10 @@ export async function POST(
   try {
     const { sandboxId } = await params;
     
-    // Centralized auth & authorization
-    const { daytonaClient } = await authenticateWorkspaceAccess(sandboxId);
-
-    // For fix-services, we need to start the sandbox first if it's stopped
-    // Since the new auth doesn't auto-start sandboxes anymore
-    const startResult = await daytonaClient.startWorkspaceAndServices(sandboxId);
+    // Centralized auth & authorization  
+    await authenticateWorkspaceAccess(sandboxId);
     
-    if (!startResult.success) {
-      return NextResponse.json({ 
-        error: 'Failed to start workspace', 
-        details: startResult.message 
-      }, { status: 500 });
-    }
-    
-    // Now use the shared method for complete service restart (original functionality)
+    // Use the shared method for complete service restart (handles sandbox starting internally)
     const serviceManager = WorkspaceServiceManager.getInstance();
     const result = await serviceManager.restartServicesComplete(sandboxId);
     

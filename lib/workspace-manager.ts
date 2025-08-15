@@ -1,6 +1,7 @@
 import { Daytona, Sandbox } from '@daytonaio/sdk';
 import { SandboxState } from '@daytonaio/api-client';
 import { logger } from './logger';
+import { PortManager } from './port-manager';
 
 // Handles basic workspace lifecycle operations (start, stop, list, get status)
 export class WorkspaceManager {
@@ -41,10 +42,11 @@ export class WorkspaceManager {
           throw new Error('Could not get root directory');
         }
 
+        const ports = PortManager.getPortsForSlot(0);
         const healthCheck = await sandbox.process.executeCommand(
-          `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 && echo "" && 
-           curl -s -o /dev/null -w "%{http_code}" http://localhost:9999 && echo "" && 
-           curl -s -o /dev/null -w "%{http_code}" http://localhost:9998`,
+          `curl -s -o /dev/null -w "%{http_code}" http://localhost:${ports.vscode} && echo "" && 
+           curl -s -o /dev/null -w "%{http_code}" http://localhost:${ports.terminal} && echo "" && 
+           curl -s -o /dev/null -w "%{http_code}" http://localhost:${ports.claude}`,
           rootDir,
           undefined,
           10000
@@ -202,10 +204,11 @@ export class WorkspaceManager {
       const sandbox = await this.daytona.get(sandboxId);
       
       // Get the preview links for each service
+      const ports = PortManager.getPortsForSlot(0);
       const [terminalInfo, claudeTerminalInfo, vscodeInfo] = await Promise.all([
-        sandbox.getPreviewLink(9999),
-        sandbox.getPreviewLink(9998),
-        sandbox.getPreviewLink(8080)
+        sandbox.getPreviewLink(ports.terminal),
+        sandbox.getPreviewLink(ports.claude),
+        sandbox.getPreviewLink(ports.vscode)
       ]);
       
       return {
