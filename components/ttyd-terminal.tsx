@@ -395,7 +395,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     }
   }, [wsUrl, onStatusChange, onConnectionChange]);
 
-  // ATTEMPT 6: Proper SGR mouse protocol for tmux compatibility
+  // ATTEMPT 6: Proper SGR mouse protocol for tmux compatibility (Fixed coordinates)
   useEffect(() => {
     if (!terminalRef.current || !terminal.current) return;
 
@@ -424,38 +424,39 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         
         // Throttle scroll events
         if (currentTime - lastScrollTime > 100) {
-          // Get terminal position for mouse coordinates
-          const terminalRect = terminalRef.current!.getBoundingClientRect();
-          const mouseX = Math.floor(terminalRect.width / 2);
-          const mouseY = Math.floor(terminalRect.height / 2);
-          
-          // Convert to terminal character coordinates (rough estimate)
-          const charX = Math.floor(mouseX / 8); // Assume 8px char width
-          const charY = Math.floor(mouseY / 16); // Assume 16px char height
-          
-          // Calculate scroll steps based on gesture size
-          const scrollSteps = Math.min(Math.ceil(Math.abs(deltaY) / 40), 5);
-          
-          for (let i = 0; i < scrollSteps; i++) {
-            // Fixed scroll direction: swipe down = scroll up (show earlier content)
-            if (deltaY < 0) {
-              // Swiping down = scroll up (wheel up) = show earlier content
-              // SGR format: \x1b[<64;x;yM (wheel up)
-              const sgrWheelUp = `\x1b[<64;${charX};${charY}M`;
-              const wheelUpBytes = new TextEncoder().encode(sgrWheelUp);
-              const payload = new Uint8Array(wheelUpBytes.length + 1);
-              payload[0] = 0x30;
-              payload.set(wheelUpBytes, 1);
-              websocket.current.send(payload);
-            } else {
-              // Swiping up = scroll down (wheel down) = show later content  
-              // SGR format: \x1b[<65;x;yM (wheel down)
-              const sgrWheelDown = `\x1b[<65;${charX};${charY}M`;
-              const wheelDownBytes = new TextEncoder().encode(sgrWheelDown);
-              const payload = new Uint8Array(wheelDownBytes.length + 1);
-              payload[0] = 0x30;
-              payload.set(wheelDownBytes, 1);
-              websocket.current.send(payload);
+          // Get actual terminal dimensions from xterm.js
+          if (terminal.current && fitAddon.current) {
+            const dimensions = fitAddon.current.proposeDimensions();
+            if (dimensions) {
+              // Use center of terminal for mouse position
+              const charX = Math.floor(dimensions.cols / 2);
+              const charY = Math.floor(dimensions.rows / 2);
+              
+              // Calculate scroll steps based on gesture size
+              const scrollSteps = Math.min(Math.ceil(Math.abs(deltaY) / 40), 5);
+              
+              for (let i = 0; i < scrollSteps; i++) {
+                // Fixed scroll direction: swipe down = scroll up (show earlier content)
+                if (deltaY < 0) {
+                  // Swiping down = scroll up (wheel up) = show earlier content
+                  // SGR format: \x1b[<64;x;yM (wheel up)
+                  const sgrWheelUp = `\x1b[<64;${charX};${charY}M`;
+                  const wheelUpBytes = new TextEncoder().encode(sgrWheelUp);
+                  const payload = new Uint8Array(wheelUpBytes.length + 1);
+                  payload[0] = 0x30;
+                  payload.set(wheelUpBytes, 1);
+                  websocket.current.send(payload);
+                } else {
+                  // Swiping up = scroll down (wheel down) = show later content  
+                  // SGR format: \x1b[<65;x;yM (wheel down)
+                  const sgrWheelDown = `\x1b[<65;${charX};${charY}M`;
+                  const wheelDownBytes = new TextEncoder().encode(sgrWheelDown);
+                  const payload = new Uint8Array(wheelDownBytes.length + 1);
+                  payload[0] = 0x30;
+                  payload.set(wheelDownBytes, 1);
+                  websocket.current.send(payload);
+                }
+              }
             }
           }
           
