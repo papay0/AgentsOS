@@ -72,6 +72,7 @@ export TERM=screen-256color
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 tmux start-server 2>/dev/null || true
+tmux set -g mouse on 2>/dev/null || true
 if tmux has-session -t claude-${repoName} 2>/dev/null; then
   exec tmux attach-session -t claude-${repoName}
 else
@@ -88,6 +89,7 @@ export TERM=screen-256color
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 tmux start-server 2>/dev/null || true
+tmux set -g mouse on 2>/dev/null || true
 if tmux has-session -t main-${repoName} 2>/dev/null; then
   exec tmux attach-session -t main-${repoName}
 else
