@@ -25,10 +25,11 @@ AgentsOS is a cloud development environment platform that enables instant worksp
 
 ### Environment Setup
 Copy `.env.example` to `.env.local` and add:
-1. **Daytona**: `DAYTONA_API_KEY` for workspace orchestration
+1. **Daytona**: Users provide their own API keys via onboarding (no server-side API key needed)
 2. **Clerk**: Authentication keys (publishable + secret)
 3. **Firebase**: Project config for analytics/Firestore
 4. **Firebase Admin**: Server-side auth (optional, via service-account-key.json)
+5. **Encryption**: Secret for encrypting user-provided API keys
 
 ## Architecture Overview
 

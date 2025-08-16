@@ -62,7 +62,8 @@
 3. **Set up environment**
    ```bash
    cp .env.example .env.local
-   # Add your DAYTONA_API_KEY, Clerk keys, and Firebase config to .env.local
+   # Add your Clerk keys, Firebase config, and encryption secret to .env.local
+   # Note: Users now provide their own Daytona API keys via the onboarding UI
    ```
 
 4. **Start the development server**
@@ -123,8 +124,8 @@ npm run lint     # Run ESLint
 ### Environment Variables
 
 ```bash
-# Required
-DAYTONA_API_KEY=your_daytona_api_key_here
+# No longer required - users provide their own API keys
+# DAYTONA_API_KEY=your_daytona_api_key_here
 
 # Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key

@@ -80,8 +80,8 @@ describe('workspace-auth', () => {
     // Reset all mocks
     vi.clearAllMocks();
     
-    // Set environment variable
-    process.env.DAYTONA_API_KEY = mockApiKey;
+    // Note: No longer using environment variables for API keys
+    // API keys are now retrieved from user's Firebase environment collection
 
     // Mock sandbox
     mockSandbox = {
@@ -120,7 +120,8 @@ describe('workspace-auth', () => {
   });
 
   afterEach(() => {
-    delete process.env.DAYTONA_API_KEY;
+    // Clean up any test state if needed
+    vi.clearAllMocks();
   });
 
   describe('authenticateWorkspaceAccess', () => {

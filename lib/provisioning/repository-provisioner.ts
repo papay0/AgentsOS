@@ -1,3 +1,16 @@
+/**
+ * Repository Provisioner
+ * 
+ * Handles automated Git repository cloning within Daytona workspaces.
+ * Clones repositories into the workspace's /projects directory with support for:
+ * - GitHub repository URLs (various formats)
+ * - Duplicate detection and skipping
+ * - Fallback from gh CLI to git clone
+ * - Detailed progress tracking and error handling
+ * 
+ * Used during workspace creation to set up user's repositories.
+ */
+
 import { Daytona, type Sandbox } from '@daytonaio/sdk';
 import { Logger } from '@/lib/logger';
 
@@ -17,11 +30,13 @@ export interface RepositoryProvisionResult {
 export class RepositoryProvisioner {
   private logger: Logger;
   private sandboxId: string;
+  private apiKey: string;
   private sandbox: Sandbox | null = null;
   private rootDir: string | null = null;
   
-  constructor(sandboxId: string) {
+  constructor(sandboxId: string, apiKey: string) {
     this.sandboxId = sandboxId;
+    this.apiKey = apiKey;
     this.logger = Logger.create('RepositoryProvisioner');
   }
   
@@ -80,12 +95,11 @@ export class RepositoryProvisioner {
   }
   
   private async initialize(): Promise<void> {
-    const apiKey = process.env.DAYTONA_API_KEY;
-    if (!apiKey) {
-      throw new Error('DAYTONA_API_KEY not configured');
+    if (!this.apiKey) {
+      throw new Error('Daytona API key is required');
     }
     
-    const daytona = new Daytona({ apiKey });
+    const daytona = new Daytona({ apiKey: this.apiKey });
     this.sandbox = await daytona.get(this.sandboxId);
     
     // Ensure sandbox is started

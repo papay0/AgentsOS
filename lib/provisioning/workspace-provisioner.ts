@@ -1,3 +1,16 @@
+/**
+ * Workspace Provisioner
+ * 
+ * Handles workspace customization and configuration within Daytona workspaces.
+ * Applies user preferences and settings after workspace creation:
+ * - VSCode color themes (light/dark/system)
+ * - Editor settings (font size, formatting, minimap, etc.)
+ * - VSCode extension installation via code-server
+ * - Workspace-specific configurations
+ * 
+ * Used during workspace setup to personalize the development environment.
+ */
+
 import { Daytona, type Sandbox } from '@daytonaio/sdk';
 import { Logger } from '@/lib/logger';
 
@@ -19,11 +32,13 @@ export interface WorkspaceProvisionResult {
 export class WorkspaceProvisioner {
   private logger: Logger;
   private sandboxId: string;
+  private apiKey: string;
   private sandbox: Sandbox | null = null;
   private rootDir: string | null = null;
   
-  constructor(sandboxId: string) {
+  constructor(sandboxId: string, apiKey: string) {
     this.sandboxId = sandboxId;
+    this.apiKey = apiKey;
     this.logger = Logger.create('WorkspaceProvisioner');
   }
   
@@ -73,12 +88,11 @@ export class WorkspaceProvisioner {
   }
   
   private async initialize(): Promise<void> {
-    const apiKey = process.env.DAYTONA_API_KEY;
-    if (!apiKey) {
-      throw new Error('DAYTONA_API_KEY not configured');
+    if (!this.apiKey) {
+      throw new Error('Daytona API key is required');
     }
     
-    const daytona = new Daytona({ apiKey });
+    const daytona = new Daytona({ apiKey: this.apiKey });
     this.sandbox = await daytona.get(this.sandboxId);
     
     if (this.sandbox.state !== 'started') {

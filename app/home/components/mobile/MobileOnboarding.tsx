@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Code, User, Eye, EyeOff, Key } from 'lucide-react'
+import { Code, User, Eye, EyeOff, Key, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { workspaceApi } from '@/lib/api/workspace-api'
@@ -196,6 +196,16 @@ export function MobileOnboarding({ onComplete, onSkip }: MobileOnboardingProps) 
                     <p className="text-xs text-blue-700 dark:text-blue-300">
                       Use your own Daytona API key for free until we figure out scaling to millions of users.
                     </p>
+                    <a 
+                      href="https://app.daytona.io/dashboard/keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium underline underline-offset-2"
+                    >
+                      <Key className="w-3 h-3" />
+                      Get your API key
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
                   </div>
                 </div>
               </div>
