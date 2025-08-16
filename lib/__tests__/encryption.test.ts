@@ -27,7 +27,6 @@ describe('AgentsOSEncryption', () => {
 
   // Import after setting up mocks
   const getModule = async () => {
-    // eslint-disable-next-line @next/next/no-assign-module-variable
     const encryptionModule = await import('../encryption');
     return encryptionModule;
   };
@@ -125,7 +124,6 @@ describe('EncryptionHelpers', () => {
   });
 
   const getModule = async () => {
-    // eslint-disable-next-line @next/next/no-assign-module-variable
     const encryptionModule = await import('../encryption');
     return encryptionModule;
   };
@@ -199,7 +197,6 @@ describe('End-to-End Encryption Flow', () => {
   });
 
   const getModule = async () => {
-    // eslint-disable-next-line @next/next/no-assign-module-variable
     const encryptionModule = await import('../encryption');
     return encryptionModule;
   };

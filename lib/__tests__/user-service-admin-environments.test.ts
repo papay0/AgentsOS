@@ -57,6 +57,9 @@ describe('UserServiceAdmin - Environment Management', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     
+    // Silence console.error during tests to keep output clean
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    
     // Setup Firebase Admin mock
     const firebaseAdmin = await import('firebase-admin');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,7 +87,6 @@ describe('UserServiceAdmin - Environment Management', () => {
   // Import the module after mocks are set up
   const getUserServiceAdmin = async () => {
     vi.resetModules();
-    // eslint-disable-next-line @next/next/no-assign-module-variable
     const userServiceModule = await import('../user-service-admin');
     return userServiceModule.UserServiceAdmin.getInstance();
   };
