@@ -61,4 +61,13 @@ export class DaytonaClient {
   async getSandbox(sandboxId: string): Promise<Sandbox> {
     return await this.manager.getSandbox(sandboxId);
   }
+
+  // File System Operations
+  async readEnvFile(sandboxId: string, projectName?: string): Promise<string | null> {
+    return await this.manager.readEnvFile(sandboxId, projectName);
+  }
+
+  async writeEnvFile(sandboxId: string, content: string, createBackup: boolean = true, projectName?: string): Promise<void> {
+    return await this.manager.writeEnvFile(sandboxId, content, createBackup, projectName);
+  }
 }

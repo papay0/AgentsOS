@@ -4,7 +4,7 @@ import { useTheme } from '@/components/theme-provider';
 import { createApp } from './BaseApp';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { ProjectSelector, EnvVarsList } from '../components/env-vars';
+import { ProjectSelector, EnvVarsList, SyncEnvVars } from '../components/env-vars';
 import { useProjectEnvVars } from '../hooks/useProjectEnvVars';
 
 // Wallpapers
@@ -45,6 +45,7 @@ const SettingsDesktopContent = () => {
     setSelectedProject,
     isReady
   } = useProjectEnvVars();
+  const [hasEnvVars, setHasEnvVars] = useState(false);
 
   // Load wallpaper preference from localStorage
   useEffect(() => {
@@ -225,7 +226,16 @@ const SettingsDesktopContent = () => {
               />
               
               {isReady && (
-                <EnvVarsList projectName={selectedProject} />
+                <>
+                  <EnvVarsList 
+                    projectName={selectedProject} 
+                    onVariablesChange={setHasEnvVars}
+                  />
+                  <SyncEnvVars 
+                    projectName={selectedProject} 
+                    hasVariables={hasEnvVars}
+                  />
+                </>
               )}
             </div>
           </div>
@@ -376,6 +386,7 @@ const SettingsMobileContent = () => {
     setSelectedProject,
     isReady
   } = useProjectEnvVars();
+  const [hasEnvVars, setHasEnvVars] = useState(false);
 
   // Load wallpaper preference from localStorage
   useEffect(() => {
@@ -547,7 +558,16 @@ const SettingsMobileContent = () => {
             />
             
             {isReady && (
-              <EnvVarsList projectName={selectedProject} />
+              <>
+                <EnvVarsList 
+                  projectName={selectedProject} 
+                  onVariablesChange={setHasEnvVars}
+                />
+                <SyncEnvVars 
+                  projectName={selectedProject} 
+                  hasVariables={hasEnvVars}
+                />
+              </>
             )}
           </div>
         </div>

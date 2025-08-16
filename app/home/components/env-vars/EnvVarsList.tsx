@@ -6,9 +6,10 @@ export interface EnvVarsListProps {
   projectName: string;
   onLoad?: (loading: boolean) => void;
   onSave?: (saving: boolean) => void;
+  onVariablesChange?: (hasVariables: boolean) => void;
 }
 
-export function EnvVarsList({ projectName, onLoad, onSave }: EnvVarsListProps) {
+export function EnvVarsList({ projectName, onLoad, onSave, onVariablesChange }: EnvVarsListProps) {
   const [envVars, setEnvVars] = useState<EnvironmentVariable[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,6 +36,12 @@ export function EnvVarsList({ projectName, onLoad, onSave }: EnvVarsListProps) {
   useEffect(() => {
     onSave?.(isSaving);
   }, [isSaving, onSave]);
+
+  // Notify parent when variables change
+  useEffect(() => {
+    const hasVars = envVars.length > 0 && envVars.some(v => v.key.trim() !== '');
+    onVariablesChange?.(hasVars);
+  }, [envVars, onVariablesChange]);
 
   const loadEnvVars = async () => {
     if (!projectName) return;

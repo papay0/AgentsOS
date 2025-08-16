@@ -252,7 +252,7 @@ export class UserServiceAdmin {
       const currentData = currentDoc.exists ? currentDoc.data() : {};
       
       // Create the nested structure properly
-      const projects = currentData.projects || {};
+      const projects = currentData?.projects || {};
       if (!projects[projectName]) {
         projects[projectName] = {};
       }
