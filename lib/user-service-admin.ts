@@ -242,14 +242,26 @@ export class UserServiceAdmin {
 
     try {
       const { EncryptionHelpers } = await import('./encryption');
-      const encryptedValue = EncryptionHelpers.encryptDaytonaApiKey(value, uid);
+      const encryptedValue = EncryptionHelpers.encryptEnvVar(value, uid);
       
       const envRef = adminDb.collection('environments').doc(uid);
       const now = Timestamp.now();
 
-      // Use dot notation to update nested project env var
+      // First get the current document to preserve existing data
+      const currentDoc = await envRef.get();
+      const currentData = currentDoc.exists ? currentDoc.data() : {};
+      
+      // Create the nested structure properly
+      const projects = currentData.projects || {};
+      if (!projects[projectName]) {
+        projects[projectName] = {};
+      }
+      projects[projectName][key] = encryptedValue;
+
+      // Update the entire projects object to ensure proper nesting
       await envRef.set({
-        [`projects.${projectName}.${key}`]: encryptedValue,
+        ...currentData,
+        projects: projects,
         updatedAt: now
       }, { merge: true });
     } catch (error) {
@@ -279,7 +291,7 @@ export class UserServiceAdmin {
 
         for (const [key, encryptedValue] of Object.entries(projectEnvs)) {
           try {
-            decryptedEnvs[key] = EncryptionHelpers.decryptDaytonaApiKey(encryptedValue as import('./encryption').EncryptedValue, uid);
+            decryptedEnvs[key] = EncryptionHelpers.decryptEnvVar(encryptedValue as import('./encryption').EncryptedValue, uid);
           } catch (error) {
             console.error(`Failed to decrypt env var ${key}:`, error);
             // Skip this variable but continue with others
@@ -293,6 +305,48 @@ export class UserServiceAdmin {
     } catch (error) {
       console.error('Error retrieving project environment variables:', error);
       throw new Error('Failed to retrieve project environment variables');
+    }
+  }
+
+  /**
+   * Delete a specific environment variable for a project
+   */
+  async deleteProjectEnvVar(uid: string, projectName: string, key: string): Promise<void> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
+
+    try {
+      const envRef = adminDb.collection('environments').doc(uid);
+      const now = Timestamp.now();
+
+      // Get current document to properly update nested structure
+      const currentDoc = await envRef.get();
+      if (!currentDoc.exists) {
+        return; // Nothing to delete
+      }
+
+      const currentData = currentDoc.data();
+      const projects = currentData?.projects || {};
+      
+      if (projects[projectName] && projects[projectName][key]) {
+        delete projects[projectName][key];
+        
+        // If project has no more env vars, remove the project entirely
+        if (Object.keys(projects[projectName]).length === 0) {
+          delete projects[projectName];
+        }
+
+        // Update the document with the modified projects structure
+        await envRef.set({
+          ...currentData,
+          projects: projects,
+          updatedAt: now
+        }, { merge: true });
+      }
+    } catch (error) {
+      console.error('Error deleting project environment variable:', error);
+      throw new Error('Failed to delete project environment variable');
     }
   }
 

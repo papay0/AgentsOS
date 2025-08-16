@@ -190,5 +190,22 @@ export const EncryptionHelpers = {
       throw new Error('Decrypted API key is invalid');
     }
     return decrypted;
+  },
+
+  /**
+   * Encrypt any environment variable value for storage
+   */
+  encryptEnvVar(value: string, userId: string): EncryptedValue {
+    if (typeof value !== 'string') {
+      throw new Error('Environment variable value must be a string');
+    }
+    return AgentsOSEncryption.encrypt(value, userId);
+  },
+
+  /**
+   * Decrypt any environment variable value for use
+   */
+  decryptEnvVar(encryptedValue: EncryptedValue, userId: string): string {
+    return AgentsOSEncryption.decrypt(encryptedValue, userId);
   }
 };
