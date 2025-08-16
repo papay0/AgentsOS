@@ -64,12 +64,6 @@ export async function POST(request: Request): Promise<NextResponse<SyncEnvVarsRe
     const userService = UserServiceAdmin.getInstance();
     const envVars = await userService.getProjectEnvVars(userId, body.projectName);
 
-    console.log(`🔍 [DEBUG] Sync request for project "${body.projectName}":`, {
-      userId,
-      cloudVarsCount: Object.keys(envVars).length,
-      cloudVarsKeys: Object.keys(envVars),
-      workspaceId: body.workspaceId
-    });
 
     if (Object.keys(envVars).length === 0) {
       return NextResponse.json({

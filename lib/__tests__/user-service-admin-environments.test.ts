@@ -19,7 +19,9 @@ vi.mock('firebase-admin', () => ({
 vi.mock('../encryption', () => ({
   EncryptionHelpers: {
     encryptDaytonaApiKey: vi.fn(),
-    decryptDaytonaApiKey: vi.fn()
+    decryptDaytonaApiKey: vi.fn(),
+    encryptEnvVar: vi.fn(),
+    decryptEnvVar: vi.fn()
   }
 }));
 
@@ -73,6 +75,8 @@ describe('UserServiceAdmin - Environment Management', () => {
     const { EncryptionHelpers } = await import('../encryption');
     vi.mocked(EncryptionHelpers.encryptDaytonaApiKey).mockReturnValue(mockEncryptedValue);
     vi.mocked(EncryptionHelpers.decryptDaytonaApiKey).mockReturnValue(testApiKey);
+    vi.mocked(EncryptionHelpers.encryptEnvVar).mockReturnValue(mockEncryptedValue);
+    vi.mocked(EncryptionHelpers.decryptEnvVar).mockReturnValue('decrypted-value');
     
     // Reset mock implementations
     mockDocRef.get.mockResolvedValue({ exists: false });
@@ -232,16 +236,20 @@ describe('UserServiceAdmin - Environment Management', () => {
       
       await userService.storeProjectEnvVar(testUserId, projectName, envKey, envValue);
 
-      expect(EncryptionHelpers.encryptDaytonaApiKey).toHaveBeenCalledWith(envValue, testUserId);
+      expect(EncryptionHelpers.encryptEnvVar).toHaveBeenCalledWith(envValue, testUserId);
       expect(mockDocRef.set).toHaveBeenCalledWith({
-        [`projects.${projectName}.${envKey}`]: mockEncryptedValue,
+        projects: {
+          [projectName]: {
+            [envKey]: mockEncryptedValue
+          }
+        },
         updatedAt: expect.any(Object)
       }, { merge: true });
     });
 
     it('should handle encryption errors', async () => {
       const { EncryptionHelpers } = await import('../encryption');
-      vi.mocked(EncryptionHelpers.encryptDaytonaApiKey).mockImplementation(() => {
+      vi.mocked(EncryptionHelpers.encryptEnvVar).mockImplementation(() => {
         throw new Error('Encryption failed');
       });
 
@@ -268,7 +276,11 @@ describe('UserServiceAdmin - Environment Management', () => {
       await userService.storeProjectEnvVar(testUserId, specialProjectName, specialEnvKey, envValue);
 
       expect(mockDocRef.set).toHaveBeenCalledWith({
-        [`projects.${specialProjectName}.${specialEnvKey}`]: mockEncryptedValue,
+        projects: {
+          [specialProjectName]: {
+            [specialEnvKey]: mockEncryptedValue
+          }
+        },
         updatedAt: expect.any(Object)
       }, { merge: true });
     });
@@ -294,7 +306,7 @@ describe('UserServiceAdmin - Environment Management', () => {
       });
 
       const { EncryptionHelpers } = await import('../encryption');
-      vi.mocked(EncryptionHelpers.decryptDaytonaApiKey)
+      vi.mocked(EncryptionHelpers.decryptEnvVar)
         .mockReturnValueOnce('api-key-value')
         .mockReturnValueOnce('database-url-value');
 
@@ -306,7 +318,7 @@ describe('UserServiceAdmin - Environment Management', () => {
         'DATABASE_URL': 'database-url-value'
       });
 
-      expect(EncryptionHelpers.decryptDaytonaApiKey).toHaveBeenCalledTimes(2);
+      expect(EncryptionHelpers.decryptEnvVar).toHaveBeenCalledTimes(2);
     });
 
     it('should return empty object when document does not exist', async () => {
@@ -347,7 +359,7 @@ describe('UserServiceAdmin - Environment Management', () => {
       });
 
       const { EncryptionHelpers } = await import('../encryption');
-      vi.mocked(EncryptionHelpers.decryptDaytonaApiKey)
+      vi.mocked(EncryptionHelpers.decryptEnvVar)
         .mockReturnValueOnce('valid-value')
         .mockImplementationOnce(() => { throw new Error('Decryption failed'); });
 
@@ -456,7 +468,7 @@ describe('UserServiceAdmin - Environment Management', () => {
       const fullEnv = await userService.getUserEnvironment(testUserId);
 
       expect(retrievedApiKey).toBe(testApiKey);
-      expect(projectEnvs[envKey]).toBe(testApiKey); // Uses same mock return value
+      expect(projectEnvs[envKey]).toBe('decrypted-value'); // Uses mocked decryptEnvVar return value
       expect(fullEnv).toEqual(mockCompleteEnvData);
     });
 
@@ -492,7 +504,11 @@ describe('UserServiceAdmin - Environment Management', () => {
         .not.toThrow();
 
       expect(mockDocRef.set).toHaveBeenCalledWith({
-        'projects..KEY': mockEncryptedValue,
+        projects: {
+          '': {
+            'KEY': mockEncryptedValue
+          }
+        },
         updatedAt: expect.any(Object)
       }, { merge: true });
     });
@@ -505,7 +521,11 @@ describe('UserServiceAdmin - Environment Management', () => {
         .not.toThrow();
 
       expect(mockDocRef.set).toHaveBeenCalledWith({
-        'projects.project.': mockEncryptedValue,
+        projects: {
+          'project': {
+            '': mockEncryptedValue
+          }
+        },
         updatedAt: expect.any(Object)
       }, { merge: true });
     });
@@ -518,7 +538,7 @@ describe('UserServiceAdmin - Environment Management', () => {
         .resolves
         .not.toThrow();
 
-      expect(EncryptionHelpers.encryptDaytonaApiKey).toHaveBeenCalledWith('', testUserId);
+      expect(EncryptionHelpers.encryptEnvVar).toHaveBeenCalledWith('', testUserId);
     });
 
     it('should handle very long values', async () => {
@@ -530,7 +550,7 @@ describe('UserServiceAdmin - Environment Management', () => {
         .resolves
         .not.toThrow();
 
-      expect(EncryptionHelpers.encryptDaytonaApiKey).toHaveBeenCalledWith(longValue, testUserId);
+      expect(EncryptionHelpers.encryptEnvVar).toHaveBeenCalledWith(longValue, testUserId);
     });
   });
 });

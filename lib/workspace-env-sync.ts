@@ -261,31 +261,12 @@ export class WorkspaceEnvSync {
     // Read existing .env.local
     const localVars = await this.readExistingEnvFile(sandboxId, projectName);
 
-    console.log(`🔍 [DEBUG] Smart sync merge input:`, {
-      projectName,
-      sandboxId,
-      localVarsCount: localVars ? Object.keys(localVars).length : 0,
-      localVarsKeys: localVars ? Object.keys(localVars) : [],
-      cloudVarsCount: Object.keys(cloudVars).length,
-      cloudVarsKeys: Object.keys(cloudVars),
-      conflictResolution
-    });
-
     // Perform smart merge
     const mergeResult = this.mergeEnvironmentVariables(
       localVars,
       cloudVars,
       conflictResolution
     );
-
-    console.log(`🔍 [DEBUG] Smart sync merge result:`, {
-      added: mergeResult.added,
-      updated: mergeResult.updated,
-      preserved: mergeResult.preserved,
-      conflicts: mergeResult.conflicts.length,
-      finalVarsCount: Object.keys(mergeResult.final).length,
-      finalVarsKeys: Object.keys(mergeResult.final)
-    });
 
     // Generate new content
     const content = this.generateEnvFileContent(mergeResult, projectName, cloudVars);

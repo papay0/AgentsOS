@@ -272,7 +272,7 @@ export class WorkspaceManager {
       await sandbox.fs.uploadFile(buffer, envPath);
       this.logger.info(`Updated .env.local in project ${targetProject} at ${envPath}`);
       
-    } catch (error) {
+    } catch {
       // Fallback to root directory if projects structure doesn't exist
       this.logger.warn('Projects directory not found, falling back to root directory');
       const envPath = `${rootDir}/.env.local`;
