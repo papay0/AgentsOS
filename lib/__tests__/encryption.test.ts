@@ -269,10 +269,10 @@ describe('End-to-End Encryption Flow', () => {
 
     const encrypted = AgentsOSEncryption.encrypt(value, userId);
     
-    // Tamper with encrypted value
+    // Tamper with auth tag to ensure authentication failure
     const tampered = {
       ...encrypted,
-      value: encrypted.value.slice(0, -1) + 'X' // Change last character
+      tag: encrypted.tag.slice(0, -4) + 'XXXX' // Change last 4 chars of auth tag
     };
 
     expect(() => {
