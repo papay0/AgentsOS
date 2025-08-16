@@ -162,4 +162,214 @@ export class UserServiceAdmin {
       throw new Error('Failed to update workspace status');
     }
   }
+
+  /**
+   * Store encrypted Daytona API key in environments collection
+   */
+  async storeDaytonaApiKey(uid: string, apiKey: string): Promise<void> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
+
+    try {
+      const { EncryptionHelpers } = await import('./encryption');
+      const encryptedApiKey = EncryptionHelpers.encryptDaytonaApiKey(apiKey, uid);
+      
+      const envRef = adminDb.collection('environments').doc(uid);
+      const now = Timestamp.now();
+
+      // Check if environment document exists
+      const envDoc = await envRef.get();
+      
+      if (envDoc.exists) {
+        // Update existing document
+        await envRef.update({
+          daytonaApiKey: encryptedApiKey,
+          updatedAt: now
+        });
+      } else {
+        // Create new environment document
+        await envRef.set({
+          userId: uid,
+          daytonaApiKey: encryptedApiKey,
+          projects: {},
+          createdAt: now,
+          updatedAt: now
+        });
+      }
+    } catch (error) {
+      console.error('Error storing Daytona API key:', error);
+      throw new Error('Failed to store Daytona API key');
+    }
+  }
+
+  /**
+   * Retrieve and decrypt Daytona API key from environments collection
+   */
+  async getDaytonaApiKey(uid: string): Promise<string | null> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
+
+    try {
+      const envRef = adminDb.collection('environments').doc(uid);
+      const envDoc = await envRef.get();
+
+      if (envDoc.exists) {
+        const envData = envDoc.data();
+        const encryptedApiKey = envData?.daytonaApiKey;
+
+        if (encryptedApiKey) {
+          const { EncryptionHelpers } = await import('./encryption');
+          return EncryptionHelpers.decryptDaytonaApiKey(encryptedApiKey, uid);
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error retrieving Daytona API key:', error);
+      throw new Error('Failed to retrieve Daytona API key');
+    }
+  }
+
+  /**
+   * Store an environment variable for a specific project
+   */
+  async storeProjectEnvVar(uid: string, projectName: string, key: string, value: string): Promise<void> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
+
+    try {
+      const { EncryptionHelpers } = await import('./encryption');
+      const encryptedValue = EncryptionHelpers.encryptEnvVar(value, uid);
+      
+      const envRef = adminDb.collection('environments').doc(uid);
+      const now = Timestamp.now();
+
+      // First get the current document to preserve existing data
+      const currentDoc = await envRef.get();
+      const currentData = currentDoc.exists ? currentDoc.data() : {};
+      
+      // Create the nested structure properly
+      const projects = currentData?.projects || {};
+      if (!projects[projectName]) {
+        projects[projectName] = {};
+      }
+      projects[projectName][key] = encryptedValue;
+
+      // Update the entire projects object to ensure proper nesting
+      await envRef.set({
+        ...currentData,
+        projects: projects,
+        updatedAt: now
+      }, { merge: true });
+    } catch (error) {
+      console.error('Error storing project environment variable:', error);
+      throw new Error('Failed to store project environment variable');
+    }
+  }
+
+  /**
+   * Get all environment variables for a specific project (decrypted)
+   */
+  async getProjectEnvVars(uid: string, projectName: string): Promise<Record<string, string>> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
+
+    try {
+      const envRef = adminDb.collection('environments').doc(uid);
+      const envDoc = await envRef.get();
+
+      if (envDoc.exists) {
+        const envData = envDoc.data();
+        const projectEnvs = envData?.projects?.[projectName] || {};
+        
+        const decryptedEnvs: Record<string, string> = {};
+        const { EncryptionHelpers } = await import('./encryption');
+
+        for (const [key, encryptedValue] of Object.entries(projectEnvs)) {
+          try {
+            decryptedEnvs[key] = EncryptionHelpers.decryptEnvVar(encryptedValue as import('./encryption').EncryptedValue, uid);
+          } catch (error) {
+            console.error(`Failed to decrypt env var ${key}:`, error);
+            // Skip this variable but continue with others
+          }
+        }
+
+        return decryptedEnvs;
+      }
+
+      return {};
+    } catch (error) {
+      console.error('Error retrieving project environment variables:', error);
+      throw new Error('Failed to retrieve project environment variables');
+    }
+  }
+
+  /**
+   * Delete a specific environment variable for a project
+   */
+  async deleteProjectEnvVar(uid: string, projectName: string, key: string): Promise<void> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
+
+    try {
+      const envRef = adminDb.collection('environments').doc(uid);
+      const now = Timestamp.now();
+
+      // Get current document to properly update nested structure
+      const currentDoc = await envRef.get();
+      if (!currentDoc.exists) {
+        return; // Nothing to delete
+      }
+
+      const currentData = currentDoc.data();
+      const projects = currentData?.projects || {};
+      
+      if (projects[projectName] && projects[projectName][key]) {
+        delete projects[projectName][key];
+        
+        // If project has no more env vars, remove the project entirely
+        if (Object.keys(projects[projectName]).length === 0) {
+          delete projects[projectName];
+        }
+
+        // Update the document with the modified projects structure
+        await envRef.set({
+          ...currentData,
+          projects: projects,
+          updatedAt: now
+        }, { merge: true });
+      }
+    } catch (error) {
+      console.error('Error deleting project environment variable:', error);
+      throw new Error('Failed to delete project environment variable');
+    }
+  }
+
+  /**
+   * Get user's full environment document
+   */
+  async getUserEnvironment(uid: string): Promise<import('@/types/environments').UserEnvironment | null> {
+    if (!adminDb) {
+      throw new Error('Firebase Admin not initialized');
+    }
+
+    try {
+      const envRef = adminDb.collection('environments').doc(uid);
+      const envDoc = await envRef.get();
+
+      if (envDoc.exists) {
+        return envDoc.data() as import('@/types/environments').UserEnvironment;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error retrieving user environment:', error);
+      throw new Error('Failed to retrieve user environment');
+    }
+  }
 }

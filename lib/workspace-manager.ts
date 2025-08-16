@@ -179,6 +179,122 @@ export class WorkspaceManager {
     return await this.daytona.get(sandboxId);
   }
 
+  async readEnvFile(sandboxId: string, projectName?: string): Promise<string | null> {
+    try {
+      const sandbox = await this.daytona.get(sandboxId);
+      
+      // Get the user's root directory 
+      const rootDir = await sandbox.getUserRootDir();
+      if (!rootDir) {
+        throw new Error('Could not get root directory');
+      }
+      
+      let envPath: string;
+      
+      if (projectName) {
+        // Try to read from specific project directory first
+        const projectPath = `${rootDir}/projects/${projectName}`;
+        envPath = `${projectPath}/.env.local`;
+        
+        // Verify project directory exists
+        const checkDir = await sandbox.process.executeCommand(`ls -la "${projectPath}" || echo "NOT_FOUND"`, rootDir);
+        if (checkDir.result.includes('NOT_FOUND')) {
+          this.logger.debug(`Project directory "${projectName}" not found, trying root directory`);
+          envPath = `${rootDir}/.env.local`;
+        }
+      } else {
+        // Fallback to root directory
+        envPath = `${rootDir}/.env.local`;
+      }
+      
+      const buffer = await sandbox.fs.downloadFile(envPath);
+      return buffer.toString('utf-8');
+    } catch {
+      // File doesn't exist or can't be read
+      this.logger.debug(`.env.local does not exist in workspace ${sandboxId}`);
+      return null;
+    }
+  }
+
+  async writeEnvFile(sandboxId: string, content: string, createBackup: boolean = true, projectName?: string): Promise<void> {
+    const sandbox = await this.daytona.get(sandboxId);
+    
+    // Get the user's root directory 
+    const rootDir = await sandbox.getUserRootDir();
+    if (!rootDir) {
+      throw new Error('Could not get root directory');
+    }
+    
+    // Find the target project directory
+    try {
+      const projectsDir = `${rootDir}/projects`;
+      let targetProject: string;
+      
+      if (projectName) {
+        // Use the specific project name provided
+        targetProject = projectName;
+        
+        // Verify the project directory exists
+        const checkDir = await sandbox.process.executeCommand(`ls -la "${projectsDir}/${projectName}" || echo "NOT_FOUND"`, rootDir);
+        if (checkDir.result.includes('NOT_FOUND')) {
+          throw new Error(`Project directory "${projectName}" not found in workspace`);
+        }
+      } else {
+        // Fallback: use first project directory found
+        const dirList = await sandbox.process.executeCommand('ls -1', projectsDir);
+        
+        if (!dirList.result || !dirList.result.trim()) {
+          throw new Error('No projects found in workspace');
+        }
+        
+        targetProject = dirList.result.trim().split('\n')[0];
+      }
+      
+      const projectPath = `${projectsDir}/${targetProject}`;
+      const envPath = `${projectPath}/.env.local`;
+      
+      if (createBackup) {
+        try {
+          // Try to backup existing file
+          const existing = await sandbox.fs.downloadFile(envPath);
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const backupPath = `${projectPath}/.env.local.backup-${timestamp}`;
+          await sandbox.fs.uploadFile(existing, backupPath);
+          this.logger.debug(`Created backup at ${backupPath}`);
+        } catch {
+          // No existing file to backup
+          this.logger.debug('No existing .env.local to backup');
+        }
+      }
+      
+      // Write the new content
+      const buffer = Buffer.from(content, 'utf-8');
+      await sandbox.fs.uploadFile(buffer, envPath);
+      this.logger.info(`Updated .env.local in project ${targetProject} at ${envPath}`);
+      
+    } catch {
+      // Fallback to root directory if projects structure doesn't exist
+      this.logger.warn('Projects directory not found, falling back to root directory');
+      const envPath = `${rootDir}/.env.local`;
+      
+      if (createBackup) {
+        try {
+          const existing = await sandbox.fs.downloadFile(envPath);
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const backupPath = `${rootDir}/.env.local.backup-${timestamp}`;
+          await sandbox.fs.uploadFile(existing, backupPath);
+          this.logger.debug(`Created backup at ${backupPath}`);
+        } catch {
+          this.logger.debug('No existing .env.local to backup');
+        }
+      }
+      
+      const buffer = Buffer.from(content, 'utf-8');
+      await sandbox.fs.uploadFile(buffer, envPath);
+      this.logger.info(`Updated .env.local in workspace root at ${envPath}`);
+    }
+  }
+
   async createSandbox(options: {
     cpu: number;
     memory: number;

@@ -1,9 +1,11 @@
-import { User, Moon, Sun, Download, Monitor, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { User, Moon, Sun, Download, Monitor, ExternalLink, Image as ImageIcon, Key } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useTheme } from '@/components/theme-provider';
 import { createApp } from './BaseApp';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { ProjectSelector, EnvVarsList, SyncEnvVars } from '../components/env-vars';
+import { useProjectEnvVars } from '../hooks/useProjectEnvVars';
 
 // Wallpapers
 const wallpapers = [
@@ -37,6 +39,13 @@ const SettingsDesktopContent = () => {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
   const [selectedWallpaper, setSelectedWallpaper] = useState('wallpaper-1');
+  const {
+    availableProjects,
+    selectedProject,
+    setSelectedProject,
+    isReady
+  } = useProjectEnvVars();
+  const [hasEnvVars, setHasEnvVars] = useState(false);
 
   // Load wallpaper preference from localStorage
   useEffect(() => {
@@ -203,6 +212,34 @@ const SettingsDesktopContent = () => {
             </div>
           </div>
 
+          {/* Environment Variables */}
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <Key className="w-5 h-5 mr-2" />
+              Environment Variables
+            </h2>
+            <div className="space-y-4">
+              <ProjectSelector
+                projects={availableProjects}
+                selectedProject={selectedProject}
+                onProjectChange={setSelectedProject}
+              />
+              
+              {isReady && (
+                <>
+                  <EnvVarsList 
+                    projectName={selectedProject} 
+                    onVariablesChange={setHasEnvVars}
+                  />
+                  <SyncEnvVars 
+                    projectName={selectedProject} 
+                    hasVariables={hasEnvVars}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Installed Apps */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center">
@@ -343,6 +380,13 @@ const SettingsMobileContent = () => {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
   const [selectedWallpaper, setSelectedWallpaper] = useState('wallpaper-1');
+  const {
+    availableProjects,
+    selectedProject,
+    setSelectedProject,
+    isReady
+  } = useProjectEnvVars();
+  const [hasEnvVars, setHasEnvVars] = useState(false);
 
   // Load wallpaper preference from localStorage
   useEffect(() => {
@@ -497,6 +541,34 @@ const SettingsMobileContent = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Environment Variables */}
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+          <h3 className="font-medium mb-3 flex items-center">
+            <Key className="w-4 h-4 mr-2" />
+            Environment Variables
+          </h3>
+          <div className="space-y-3">
+            <ProjectSelector
+              projects={availableProjects}
+              selectedProject={selectedProject}
+              onProjectChange={setSelectedProject}
+            />
+            
+            {isReady && (
+              <>
+                <EnvVarsList 
+                  projectName={selectedProject} 
+                  onVariablesChange={setHasEnvVars}
+                />
+                <SyncEnvVars 
+                  projectName={selectedProject} 
+                  hasVariables={hasEnvVars}
+                />
+              </>
+            )}
           </div>
         </div>
 

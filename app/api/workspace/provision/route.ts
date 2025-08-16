@@ -153,6 +153,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    // Get user's Daytona API key
+    const userService = UserServiceAdmin.getInstance();
+    const apiKey = await userService.getDaytonaApiKey(userId);
+    if (!apiKey) {
+      return NextResponse.json({ 
+        error: 'Daytona API key not found. Please provide your API key in the onboarding process.' 
+      }, { status: 400 });
+    }
+    
     const config: ProvisioningConfig = await request.json();
     const provisioningId = `prov-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
@@ -175,7 +184,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (config.repositories && config.repositories.length > 0) {
       logger.info('Provisioning repositories', { count: config.repositories.length });
       
-      const repoProvisioner = new RepositoryProvisioner(config.sandboxId);
+      const repoProvisioner = new RepositoryProvisioner(config.sandboxId, apiKey);
       const repoResult = await repoProvisioner.provision(config.repositories);
       
       result.steps.repositories = repoResult;
@@ -195,7 +204,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (config.theme || config.wallpaper) {
       logger.info('Configuring workspace settings');
       
-      const workspaceProvisioner = new WorkspaceProvisioner(config.sandboxId);
+      const workspaceProvisioner = new WorkspaceProvisioner(config.sandboxId, apiKey);
       const workspaceResult = await workspaceProvisioner.provision({
         theme: config.theme,
         wallpaper: config.wallpaper

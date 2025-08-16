@@ -10,6 +10,7 @@ export interface Repository {
 export interface CreateWorkspaceRequest {
   repositories?: Repository[];
   workspaceName?: string;
+  daytonaApiKey?: string;
   resources?: {
     cpu: number;
     memory: number;

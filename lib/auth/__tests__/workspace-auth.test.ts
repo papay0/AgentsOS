@@ -61,6 +61,7 @@ describe('workspace-auth', () => {
     getUserWorkspace: ReturnType<typeof vi.fn>;
     createOrUpdateWorkspace: ReturnType<typeof vi.fn>;
     updateWorkspaceStatus: ReturnType<typeof vi.fn>;
+    getDaytonaApiKey: ReturnType<typeof vi.fn>;
   };
   let mockDaytonaInstance: {
     getSandbox: ReturnType<typeof vi.fn>;
@@ -79,8 +80,8 @@ describe('workspace-auth', () => {
     // Reset all mocks
     vi.clearAllMocks();
     
-    // Set environment variable
-    process.env.DAYTONA_API_KEY = mockApiKey;
+    // Note: No longer using environment variables for API keys
+    // API keys are now retrieved from user's Firebase environment collection
 
     // Mock sandbox
     mockSandbox = {
@@ -94,7 +95,8 @@ describe('workspace-auth', () => {
     mockUserService = {
       getUserWorkspace: vi.fn().mockResolvedValue(mockUserWorkspace),
       createOrUpdateWorkspace: vi.fn(),
-      updateWorkspaceStatus: vi.fn()
+      updateWorkspaceStatus: vi.fn(),
+      getDaytonaApiKey: vi.fn().mockResolvedValue(mockApiKey)
     };
 
     // Mock DaytonaClient instance
@@ -118,7 +120,8 @@ describe('workspace-auth', () => {
   });
 
   afterEach(() => {
-    delete process.env.DAYTONA_API_KEY;
+    // Clean up any test state if needed
+    vi.clearAllMocks();
   });
 
   describe('authenticateWorkspaceAccess', () => {
@@ -132,6 +135,7 @@ describe('workspace-auth', () => {
       });
 
       expect(mockAuth).toHaveBeenCalledOnce();
+      expect(mockUserService.getDaytonaApiKey).toHaveBeenCalledWith(mockUserId);
       expect(mockUserService.getUserWorkspace).toHaveBeenCalledWith(mockUserId);
       expect(mockDaytonaClient).toHaveBeenCalledWith(mockApiKey);
     });
@@ -155,7 +159,7 @@ describe('workspace-auth', () => {
     });
 
     it('should throw MISSING_API_KEY when no API key', async () => {
-      delete process.env.DAYTONA_API_KEY;
+      mockUserService.getDaytonaApiKey.mockResolvedValue(null);
 
       await expect(authenticateWorkspaceAccess(mockSandboxId))
         .rejects
@@ -167,7 +171,7 @@ describe('workspace-auth', () => {
         expect(WorkspaceAuthError.isWorkspaceAuthError(error)).toBe(true);
         if (WorkspaceAuthError.isWorkspaceAuthError(error)) {
           expect(error.code).toBe(WorkspaceAuthErrorCode.MISSING_API_KEY);
-          expect(error.statusCode).toBe(500);
+          expect(error.statusCode).toBe(400); // Updated from 500 to 400 as per our implementation
         }
       }
     });
@@ -341,22 +345,25 @@ describe('workspace-auth', () => {
       // 1. Must authenticate user
       expect(mockAuth).toHaveBeenCalledOnce();
       
-      // 2. Must get user workspace from Firebase
+      // 2. Must get user's API key from environments collection
+      expect(mockUserService.getDaytonaApiKey).toHaveBeenCalledWith(mockUserId);
+      
+      // 3. Must get user workspace from Firebase
       expect(mockUserService.getUserWorkspace).toHaveBeenCalledWith(mockUserId);
       
-      // 3. Must create DaytonaClient with API key
+      // 4. Must create DaytonaClient with API key
       expect(mockDaytonaClient).toHaveBeenCalledWith(mockApiKey);
       
-      // 4. Must get sandbox
+      // 5. Must get sandbox
       expect(mockDaytonaInstance.getSandbox).toHaveBeenCalledWith(mockSandboxId);
       
-      // 5. CRITICAL: Must NEVER start sandbox - that's for explicit start operations only
+      // 6. CRITICAL: Must NEVER start sandbox - that's for explicit start operations only
       expect(mockSandbox.start).not.toHaveBeenCalled();
       
-      // 6. CRITICAL: Must call getUserRootDir() for actual root directory
+      // 7. CRITICAL: Must call getUserRootDir() for actual root directory
       expect(mockSandbox.getUserRootDir).toHaveBeenCalledOnce();
       
-      // 7. Must return all required properties
+      // 8. Must return all required properties
       expect(result).toHaveProperty('userId', mockUserId);
       expect(result).toHaveProperty('userWorkspace', mockUserWorkspace);
       expect(result).toHaveProperty('daytonaClient', mockDaytonaInstance);
