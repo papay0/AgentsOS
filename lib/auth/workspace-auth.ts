@@ -51,18 +51,18 @@ export async function authenticateWorkspaceAccess(sandboxId: string): Promise<Wo
     throw new WorkspaceAuthError('Unauthorized', 401, WorkspaceAuthErrorCode.UNAUTHORIZED);
   }
   
-  // 2. Validate Daytona API key
-  const apiKey = process.env.DAYTONA_API_KEY;
+  // 2. Get user's Daytona API key from Firebase
+  const userService = UserServiceAdmin.getInstance();
+  const apiKey = await userService.getDaytonaApiKey(userId);
   if (!apiKey) {
     throw new WorkspaceAuthError(
-      'Missing DAYTONA_API_KEY environment variable', 
-      500, 
+      'No Daytona API key found. Please provide your API key.', 
+      400, 
       WorkspaceAuthErrorCode.MISSING_API_KEY
     );
   }
 
   // 3. Get user's workspace data from Firebase
-  const userService = UserServiceAdmin.getInstance();
   const userWorkspace = await userService.getUserWorkspace(userId);
   
   if (!userWorkspace) {

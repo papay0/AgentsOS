@@ -3,6 +3,7 @@
 import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Repository, UserWorkspace } from '@/types/workspace';
+import type { EncryptedValue } from './encryption';
 
 /**
  * User profile data structure in Firebase
@@ -18,6 +19,7 @@ export interface UserProfile {
   agentsOS?: {
     onboardingCompleted: boolean;
     workspace?: UserWorkspace; // Single workspace per user
+    daytonaApiKey?: EncryptedValue; // Encrypted Daytona API key
     preferences: {
       theme: 'light' | 'dark' | 'system';
     };

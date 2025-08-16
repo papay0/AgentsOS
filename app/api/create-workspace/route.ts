@@ -16,6 +16,7 @@ type FirebaseUserWorkspace = Omit<UserWorkspace, 'createdAt' | 'updatedAt'> & {
 interface CreateWorkspaceRequest {
   repositories?: Repository[];
   workspaceName?: string;
+  daytonaApiKey?: string;
   resources?: {
     cpu: number;
     memory: number;
@@ -37,12 +38,23 @@ export async function POST(request: Request): Promise<NextResponse<CreateWorkspa
     // Parse request body
     const body: CreateWorkspaceRequest = await request.json().catch(() => ({}));
     
-    // Validate environment
-    const apiKey = process.env.DAYTONA_API_KEY;
+    // Get or store user's Daytona API key
+    const userService = UserServiceAdmin.getInstance();
+    let apiKey: string | null = null;
+    
+    if (body.daytonaApiKey) {
+      // User provided a new API key - store it encrypted
+      await userService.storeDaytonaApiKey(userId, body.daytonaApiKey);
+      apiKey = body.daytonaApiKey;
+    } else {
+      // Try to get existing API key from user profile
+      apiKey = await userService.getDaytonaApiKey(userId);
+    }
+    
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Missing DAYTONA_API_KEY environment variable' },
-        { status: 500 }
+        { error: 'Daytona API key is required. Please provide your API key.' },
+        { status: 400 }
       );
     }
 
@@ -56,13 +68,12 @@ export async function POST(request: Request): Promise<NextResponse<CreateWorkspa
     });
 
     // Save workspace data to Firebase user profile
-    const userService = UserServiceAdmin.getInstance();
     
     // Get repositories with URLs from the workspace creation
     const repositoriesWithUrls = workspace.repositories || [];
     
     // Use WorkspaceCreator to create proper UserWorkspace structure
-    const workspaceCreator = new WorkspaceCreator(process.env.DAYTONA_API_KEY!);
+    const workspaceCreator = new WorkspaceCreator(apiKey);
     const userWorkspace = workspaceCreator.createUserWorkspace(workspace.sandboxId, repositoriesWithUrls);
     
     // Convert to Firebase format (with Timestamps)

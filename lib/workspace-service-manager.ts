@@ -87,17 +87,17 @@ export class WorkspaceServiceManager {
     }
     this.logger.success(`User authenticated`, { userId }, 'AUTH');
     
-    // Validate environment
-    const apiKey = process.env.DAYTONA_API_KEY;
+    // Get user's encrypted API key from Firebase
+    const userService = UserServiceAdmin.getInstance();
+    const apiKey = await userService.getDaytonaApiKey(userId);
     if (!apiKey) {
-      this.logger.error(`Missing DAYTONA_API_KEY environment variable`, undefined, 'AUTH');
-      throw new Error('Missing DAYTONA_API_KEY environment variable');
+      this.logger.error(`No Daytona API key found for user`, { userId }, 'AUTH');
+      throw new Error('No Daytona API key found. Please provide your API key.');
     }
-    this.logger.success(`Daytona API key found`, undefined, 'AUTH');
+    this.logger.success(`User's Daytona API key retrieved`, undefined, 'AUTH');
 
     // Get user's workspace data from Firebase
     this.logger.debug(`Getting workspace data for user`, { userId }, 'FIREBASE');
-    const userService = UserServiceAdmin.getInstance();
     const userWorkspace = await userService.getUserWorkspace(userId);
     
     if (!userWorkspace || userWorkspace.sandboxId !== sandboxId) {
