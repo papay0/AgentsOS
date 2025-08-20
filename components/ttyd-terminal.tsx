@@ -293,9 +293,10 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       
       // Proxy handles ttyd auth automatically - no need to send auth message
       
-      // Then send proper resize after short delay
-      setTimeout(() => {
+      // Force multiple resize events to fix layout (like manual resize does)
+      const sendResize = () => {
         if (websocket.current?.readyState === WebSocket.OPEN && terminal.current && fitAddon.current) {
+          fitAddon.current.fit();
           const dimensions = fitAddon.current.proposeDimensions();
           if (dimensions) {
             console.log('📏 Sending terminal dimensions:', dimensions);
@@ -307,7 +308,11 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
             websocket.current!.send(payload);
           }
         }
-      }, 100);
+      };
+      
+      setTimeout(sendResize, 100);
+      setTimeout(sendResize, 500);
+      setTimeout(sendResize, 1000);
 
     };
 
@@ -599,10 +604,11 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       }
     };
     
-    // Initial fits with delays for mobile animation
+    // Initial fits with delays for proper rendering
     setTimeout(fitTerminal, 100);
-    setTimeout(fitTerminal, 350);
-    setTimeout(fitTerminal, 600);
+    setTimeout(fitTerminal, 500);
+    setTimeout(fitTerminal, 1000);
+    setTimeout(fitTerminal, 2000);
 
     // Connect to WebSocket
     connectWebSocket();
