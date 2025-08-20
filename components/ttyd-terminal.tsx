@@ -45,6 +45,7 @@ import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, us
 import { Terminal, ITerminalAddon } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
 
+
 const terminalThemes = {
   light: {
     background: '#ffffff',
@@ -272,9 +273,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     onStatusChange?.('Connecting...');
 
     // Close existing connection if any
-    if (websocket.current?.readyState === WebSocket.OPEN) {
-      console.log('🔌 Closing existing WebSocket connection');
-      websocket.current.close(1000, 'Reconnecting');
+    if (websocket.current) {
+      if (websocket.current.readyState === WebSocket.OPEN || websocket.current.readyState === WebSocket.CONNECTING) {
+        console.log('🔌 Closing existing WebSocket connection');
+        websocket.current.close(1000, 'Reconnecting');
+      }
+      websocket.current = null;
     }
 
     // ttyd requires the "tty" subprotocol
@@ -318,9 +322,9 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
             const output = data.slice(1);
             terminal.current.write(output);
           } else if (data.startsWith('1')) {
-            // Command/shell startup - don't display, just log
+            // Control message (resize, shell startup, etc) - don't display
             const output = data.slice(1);
-            console.log('📝 Shell startup command:', output.substring(0, 100));
+            console.log('📝 Control message:', output.substring(0, 100));
           } else {
             console.log('⚠️ Ignoring message type:', data.substring(0, 50));
           }
@@ -337,10 +341,10 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
                 const output = text.slice(1);
                 terminal.current?.write(output);
               } else if (text.startsWith('1')) {
-                // Command/shell output - remove the '1' prefix and display
+                // Control message (resize, etc) - don't display
                 const output = text.slice(1);
-                console.log('📝 Command output (blob):', output.substring(0, 100));
-                terminal.current?.write(output);
+                console.log('📝 Control message (blob):', output.substring(0, 100));
+                // Don't write control messages to terminal
               } else {
                 console.log('⚠️ Ignoring blob message type:', text.substring(0, 50));
               }
@@ -354,10 +358,10 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
               // Terminal output data - remove the '0' prefix
               terminal.current.write(text.slice(1));
             } else if (text.startsWith('1')) {
-              // Command/shell output - remove the '1' prefix and display
+              // Control message (resize, etc) - don't display
               const output = text.slice(1);
-              console.log('📝 Command output (binary):', output.substring(0, 100));
-              terminal.current.write(output);
+              console.log('📝 Control message (binary):', output.substring(0, 100));
+              // Don't write control messages to terminal
             } else {
               console.log('⚠️ Ignoring binary message type:', text.substring(0, 50));
             }
@@ -371,6 +375,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       setIsConnected(false);
       onConnectionChange?.(false);
       onStatusChange?.(event.code === 1000 ? 'Disconnected' : `Connection failed (${event.code})`);
+      
       
       // Auto-reconnect for network issues (not user-initiated close)
       if (event.code !== 1000) {
@@ -545,6 +550,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       lineHeight: 1.2,
       cursorBlink: true,
       allowTransparency: false,
+      disableStdin: false,
+      convertEol: true,
     });
 
     // Dynamically import and add addons
