@@ -4,11 +4,11 @@ import { ClaudeAppProps } from '../BaseApp';
 export const ClaudeDesktop = ({ repositoryUrl }: ClaudeAppProps) => {
   
   // If we have a repository URL, use the real Claude terminal
-  if (repositoryUrl) {
-    // Convert HTTP URL to WebSocket URL for ttyd
-    const wsUrl = repositoryUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws';
-    return <TTYDTerminal key={repositoryUrl} wsUrl={wsUrl} className="w-full h-full" />;
-  }
+  // if (repositoryUrl) {
+  //   // Convert HTTP URL to WebSocket URL for ttyd
+  //   const wsUrl = repositoryUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws';
+  //   return <TTYDTerminal key={repositoryUrl} wsUrl={wsUrl} className="w-full h-full" />;
+  // }
 
   // Show error when no URL available
   return (

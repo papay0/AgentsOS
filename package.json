@@ -16,6 +16,7 @@
     "type-check:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
+    "@clerk/backend": "^2.9.3",
     "@clerk/nextjs": "^6.28.1",
     "@daytonaio/sdk": "^0.24.5",
     "@hookform/resolvers": "^5.2.0",

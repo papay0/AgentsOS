@@ -1,13 +1,14 @@
 import TTYDTerminal from '@/components/ttyd-terminal';
 import { TerminalAppProps } from '../BaseApp';
+import { useWorkspaceStore } from '@/app/home/stores/workspaceStore';
 
 export const TerminalDesktop = ({ repositoryUrl }: TerminalAppProps) => {
-  
-  // If we have a repository URL, use the real terminal
-  if (repositoryUrl) {
-    // Convert HTTP URL to WebSocket URL for ttyd
-    const wsUrl = repositoryUrl.replace('http://', 'ws://').replace('https://', 'wss://').replace(/\/$/, '') + '/ws';
-    return <TTYDTerminal key={repositoryUrl} wsUrl={wsUrl} className="w-full h-full" />;
+  const { sandboxId } = useWorkspaceStore();
+
+  if (sandboxId) {
+    // Use our local proxy server - browser will send session cookies automatically
+    const wsUrl = `ws://localhost:3000?workspaceId=${sandboxId}`;
+    return <TTYDTerminal wsUrl={wsUrl} className="w-full h-full" />;
   }
 
   // Show error when no URL available

@@ -268,43 +268,42 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   }));
 
   const connectWebSocket = useCallback(() => {
+    console.log('🔌 TTYDTerminal: Attempting WebSocket connection to:', wsUrl);
     onStatusChange?.('Connecting...');
+
+    // Close existing connection if any
+    if (websocket.current?.readyState === WebSocket.OPEN) {
+      console.log('🔌 Closing existing WebSocket connection');
+      websocket.current.close(1000, 'Reconnecting');
+    }
 
     // ttyd requires the "tty" subprotocol
     websocket.current = new WebSocket(wsUrl, ['tty']);
     websocket.current.binaryType = 'arraybuffer';
 
     websocket.current.onopen = () => {
+      console.log('✅ TTYDTerminal: WebSocket connection opened successfully');
       setIsConnected(true);
       onConnectionChange?.(true);
       onStatusChange?.('Connected');
       
-      // Step 1: Send initial authentication and window size
-      // CRITICAL: JSON_DATA messages do NOT have operation code prefix
-      const authMessage = JSON.stringify({
-        AuthToken: "",  // Empty if no auth required
-        columns: 120,   // Terminal width
-        rows: 30        // Terminal height
-      });
+      // Proxy handles ttyd auth automatically - no need to send auth message
       
-      websocket.current!.send(new TextEncoder().encode(authMessage));
-      
-      // Wait for ttyd to process auth, then send proper resize
+      // Then send proper resize after short delay
       setTimeout(() => {
         if (websocket.current?.readyState === WebSocket.OPEN && terminal.current && fitAddon.current) {
           const dimensions = fitAddon.current.proposeDimensions();
           if (dimensions) {
-            // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
+            console.log('📏 Sending terminal dimensions:', dimensions);
             const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
             const resizeBytes = new TextEncoder().encode(resizeData);
             const payload = new Uint8Array(resizeBytes.length + 1);
             payload[0] = 0x31; // '1' as byte
             payload.set(resizeBytes, 1);
-            
             websocket.current!.send(payload);
           }
         }
-      }, 200);
+      }, 100);
 
     };
 
@@ -313,10 +312,17 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         const data = event.data;
         
         if (typeof data === 'string') {
+          console.log('📨 Received from proxy (string):', data.substring(0, 100));
           if (data.startsWith('0')) {
-            // Output data - remove the '0' prefix
+            // Terminal output data - remove the '0' prefix
             const output = data.slice(1);
             terminal.current.write(output);
+          } else if (data.startsWith('1')) {
+            // Command/shell startup - don't display, just log
+            const output = data.slice(1);
+            console.log('📝 Shell startup command:', output.substring(0, 100));
+          } else {
+            console.log('⚠️ Ignoring message type:', data.substring(0, 50));
           }
         } else {
           // Handle binary data (ArrayBuffer/Blob)
@@ -324,19 +330,36 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
             // Convert Blob to text
             data.arrayBuffer().then(buffer => {
               const text = new TextDecoder().decode(buffer);
+              console.log('📨 Received from proxy (blob):', text.substring(0, 100));
               
               if (text.startsWith('0')) {
-                // Output data - remove the '0' prefix
+                // Terminal output data - remove the '0' prefix
                 const output = text.slice(1);
                 terminal.current?.write(output);
+              } else if (text.startsWith('1')) {
+                // Command/shell output - remove the '1' prefix and display
+                const output = text.slice(1);
+                console.log('📝 Command output (blob):', output.substring(0, 100));
+                terminal.current?.write(output);
+              } else {
+                console.log('⚠️ Ignoring blob message type:', text.substring(0, 50));
               }
             }).catch(err => {
               console.error('Failed to decode blob:', err);
             });
           } else if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
             const text = new TextDecoder().decode(data);
+            console.log('📨 Received from proxy (binary):', text.substring(0, 100));
             if (text.startsWith('0')) {
+              // Terminal output data - remove the '0' prefix
               terminal.current.write(text.slice(1));
+            } else if (text.startsWith('1')) {
+              // Command/shell output - remove the '1' prefix and display
+              const output = text.slice(1);
+              console.log('📝 Command output (binary):', output.substring(0, 100));
+              terminal.current.write(output);
+            } else {
+              console.log('⚠️ Ignoring binary message type:', text.substring(0, 50));
             }
           }
         }
@@ -344,12 +367,14 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     };
 
     websocket.current.onclose = (event) => {
+      console.log(`🔌 TTYDTerminal: WebSocket closed with code ${event.code}: ${event.reason}`);
       setIsConnected(false);
       onConnectionChange?.(false);
       onStatusChange?.(event.code === 1000 ? 'Disconnected' : `Connection failed (${event.code})`);
       
       // Auto-reconnect for network issues (not user-initiated close)
       if (event.code !== 1000) {
+        console.log(`🔄 TTYDTerminal: Auto-reconnecting in 3 seconds (close code: ${event.code})`);
         setTimeout(() => {
           if (websocket.current?.readyState === WebSocket.CLOSED) {
             connectWebSocket();
@@ -359,7 +384,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     };
 
     websocket.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('❌ TTYDTerminal: WebSocket error for URL:', wsUrl, error);
       onStatusChange?.('Connection error');
     };
 
@@ -596,14 +621,17 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     window.addEventListener('windowContentResize', handleWindowContentResize);
 
     return () => {
+      console.log('🧹 TTYDTerminal: Cleaning up WebSocket connection');
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('windowContentResize', handleWindowContentResize);
-      websocket.current?.close();
+      if (websocket.current?.readyState === WebSocket.OPEN) {
+        websocket.current.close(1000, 'Component unmounting');
+      }
       onDataDisposable.current?.dispose();
       onResizeDisposable.current?.dispose();
       terminal.current?.dispose();
     };
-  }, [wsUrl, connectWebSocket]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wsUrl]); // Only reconnect when URL actually changes
 
   // Update terminal theme when resolved theme changes
   useEffect(() => {

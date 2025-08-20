@@ -301,7 +301,7 @@ export class WorkspaceManager {
     disk: number;
   }): Promise<Sandbox> {
     return await this.daytona.create({
-      public: true,
+      public: false,
       image: "node:20",
       resources: {
         cpu: options.cpu,
