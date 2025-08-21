@@ -201,7 +201,7 @@ export default function Dock() {
       ? { x: 100 + Math.random() * 200, y: 100 + Math.random() * 150 }
       : app.window.position;
 
-    // Get repository URLs for this workspace
+    // Get repository URLs and ports for this workspace
     const repositoryUrl = (() => {
       switch (type) {
         case 'vscode':
@@ -215,7 +215,8 @@ export default function Dock() {
       }
     })();
 
-    addWindow({
+    // Get port information for this window type
+    const windowProps: any = {
       type,
       title: `${app.metadata.name} - ${activeWorkspace.name}`,
       position,
@@ -225,7 +226,22 @@ export default function Dock() {
       focused: true,
       repositoryName: activeWorkspace.name,
       repositoryUrl,
-    });
+    };
+
+    // Add type-specific port information
+    switch (type) {
+      case 'terminal':
+        windowProps.terminalPort = activeWorkspace.repository.ports?.terminal;
+        break;
+      case 'claude':
+        windowProps.claudePort = activeWorkspace.repository.ports?.claude;
+        break;
+      case 'vscode':
+        windowProps.vscodePort = activeWorkspace.repository.ports?.vscode;
+        break;
+    }
+
+    addWindow(windowProps);
   };
 
   const handleMinimizedWindowClick = (windowId: string) => {
