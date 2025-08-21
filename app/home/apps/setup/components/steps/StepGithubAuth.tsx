@@ -27,9 +27,10 @@ export const StepGithubAuth = ({
   const terminalRef = useRef<TTYDTerminalRef>(null);
   const { workspace } = useAgentsOSUser();
 
-  // Get terminal URL from workspace - simple approach
-  const repositoryUrl = workspace?.sandboxId && workspace?.repositories?.[0]?.ports?.terminal
-    ? `https://${workspace.repositories[0].ports.terminal}-${workspace.sandboxId}.proxy.daytona.work`
+  // Get terminal port and use WebSocket proxy server (same as terminal desktop)
+  const terminalPort = workspace?.repositories?.[0]?.ports?.terminal;
+  const repositoryUrl = terminalPort 
+    ? `${process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000'}?port=${terminalPort}`
     : null;
 
   const handleStartAuth = () => {
@@ -184,7 +185,7 @@ export const StepGithubAuth = ({
             <TTYDTerminal
               key={repositoryUrl}
               ref={terminalRef}
-              wsUrl={repositoryUrl.replace('https://', 'wss://') + '/ws'}
+              wsUrl={repositoryUrl}
               className="w-full h-full"
               onConnectionChange={setIsConnected}
             />
