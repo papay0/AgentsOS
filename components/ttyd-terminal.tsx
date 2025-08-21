@@ -644,7 +644,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       onResizeDisposable.current?.dispose();
       terminal.current?.dispose();
     };
-  }, [wsUrl]); // Only reconnect when URL actually changes
+  }, [wsUrl, connectWebSocket, resolvedTheme]); // Only reconnect when URL actually changes
 
   // Update terminal theme when resolved theme changes
   useEffect(() => {
