@@ -21,6 +21,9 @@ export interface Window {
   // Repository-specific data
   repositoryName?: string;
   repositoryUrl?: string; // vscode URL, terminal URL, or claude URL
+  terminalPort?: number;
+  claudePort?: number;
+  vscodePort?: number;
 }
 
 interface Repository {

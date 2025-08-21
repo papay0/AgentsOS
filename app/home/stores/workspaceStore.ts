@@ -13,6 +13,11 @@ export interface Repository {
     terminal: string;
     claude: string;
   };
+  ports?: {
+    vscode: number;
+    terminal: number;
+    claude: number;
+  };
 }
 
 export interface Workspace {
@@ -106,7 +111,8 @@ const createDefaultWindows = (repository: Repository): Window[] => {
       maximized: false,
       focused: false,
       repositoryName: repository.name,
-      repositoryUrl: repository.urls?.terminal || ''
+      repositoryUrl: repository.urls?.terminal || '',
+      terminalPort: repository.ports?.terminal
     }
   ];
 };
@@ -381,26 +387,31 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
             repository: { ...workspace.repository, urls: updatedRepo.urls }
           };
 
-          // Update all windows in this workspace with new URLs
+          // Update all windows in this workspace with new URLs and ports
           const updatedWindows = workspace.windows.map(window => {
 
-            // Update URL based on window type
+            // Update URL and port based on window type
             let newUrl = '';
+            const updates: Partial<typeof window> = {};
+            
             switch (window.type) {
               case 'vscode':
                 newUrl = updatedRepo.urls?.vscode || '';
+                updates.vscodePort = updatedRepo.ports?.vscode;
                 break;
               case 'claude':
                 newUrl = updatedRepo.urls?.claude || '';
+                updates.claudePort = updatedRepo.ports?.claude;
                 break;
               case 'terminal':
                 newUrl = updatedRepo.urls?.terminal || '';
+                updates.terminalPort = updatedRepo.ports?.terminal;
                 break;
               default:
                 newUrl = window.repositoryUrl || '';
             }
 
-            return { ...window, repositoryUrl: newUrl };
+            return { ...window, repositoryUrl: newUrl, ...updates };
           });
 
           return { ...updatedWorkspace, windows: updatedWindows };

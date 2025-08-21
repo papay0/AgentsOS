@@ -2,15 +2,16 @@ import { ReactNode } from 'react';
 
 // App-specific props interfaces - each app defines its own props
 export interface TerminalAppProps {
-  repositoryUrl?: string;
+  terminalPort?: number;
 }
 
 export interface ClaudeAppProps {
-  repositoryUrl?: string;
+  claudePort?: number;
 }
 
 export interface VSCodeAppProps {
   repositoryUrl?: string;
+  vscodePort?: number;
 }
 
 // Create a proper "no props" type that's explicit about having no properties

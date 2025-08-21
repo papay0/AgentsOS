@@ -284,12 +284,12 @@ const WindowContent = memo(function WindowContent({ window }: { window: WindowTy
     // Switch case ensures we handle all app types - compiler will error if we add new types
     switch (window.type) {
       case 'terminal': {
-        const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
-        return <Component repositoryUrl={window.repositoryUrl} />;
+        const Component = DesktopContent as React.ComponentType<{ terminalPort?: number }>;
+        return <Component terminalPort={window.terminalPort} />;
       }
       case 'claude': {
-        const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
-        return <Component repositoryUrl={window.repositoryUrl} />;
+        const Component = DesktopContent as React.ComponentType<{ claudePort?: number }>;
+        return <Component claudePort={window.claudePort} />;
       }
       case 'vscode': {
         const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;

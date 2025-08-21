@@ -1,13 +1,11 @@
 import TTYDTerminal from '@/components/ttyd-terminal';
 import { TerminalAppProps } from '../BaseApp';
-import { useWorkspaceStore } from '@/app/home/stores/workspaceStore';
 
-export const TerminalDesktop = ({ repositoryUrl }: TerminalAppProps) => {
-  const { sandboxId } = useWorkspaceStore();
-
-  if (sandboxId) {
-    // Use our local proxy server - browser will send session cookies automatically
-    const wsUrl = `ws://localhost:3000?workspaceId=${sandboxId}`;
+export const TerminalDesktop = ({ terminalPort }: TerminalAppProps) => {
+  if (terminalPort) {
+    // Use WebSocket proxy server with the specific terminal port
+    const proxyUrl = process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000';
+    const wsUrl = `${proxyUrl}?port=${terminalPort}`;
     return <TTYDTerminal wsUrl={wsUrl} className="w-full h-full" />;
   }
 
