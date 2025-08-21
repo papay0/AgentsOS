@@ -83,7 +83,8 @@ const createDefaultWindows = (repository: Repository): Window[] => {
       maximized: false,
       focused: true, // VSCode gets focus by default
       repositoryName: repository.name,
-      repositoryUrl: repository.urls?.vscode || ''
+      repositoryUrl: repository.urls?.vscode || '',
+      vscodePort: repository.ports?.vscode
     },
     // Claude terminal window
     {
@@ -97,7 +98,8 @@ const createDefaultWindows = (repository: Repository): Window[] => {
       maximized: false,
       focused: false,
       repositoryName: repository.name,
-      repositoryUrl: repository.urls?.claude || ''
+      repositoryUrl: repository.urls?.claude || '',
+      claudePort: repository.ports?.claude
     },
     // Regular terminal window
     {

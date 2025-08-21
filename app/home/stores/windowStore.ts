@@ -36,6 +36,11 @@ interface Repository {
     terminal: string;
     claude: string;
   };
+  ports?: {
+    vscode: number;
+    terminal: number;
+    claude: number;
+  };
 }
 
 interface WorkspaceData {
@@ -194,7 +199,8 @@ export const useWindowStore = create<WindowStore>()(
             maximized: false,
             focused: repoIndex === 0, // Focus first repo's VSCode
             repositoryName: repo.name,
-            repositoryUrl: repo.urls?.vscode || ''
+            repositoryUrl: repo.urls?.vscode || '',
+            vscodePort: repo.ports?.vscode
           });
           
           // Claude terminal window
@@ -209,7 +215,8 @@ export const useWindowStore = create<WindowStore>()(
             maximized: false,
             focused: false,
             repositoryName: repo.name,
-            repositoryUrl: repo.urls?.claude || ''
+            repositoryUrl: repo.urls?.claude || '',
+            claudePort: repo.ports?.claude
           });
           
           // Regular terminal window
@@ -224,7 +231,8 @@ export const useWindowStore = create<WindowStore>()(
             maximized: false,
             focused: false,
             repositoryName: repo.name,
-            repositoryUrl: repo.urls?.terminal || ''
+            repositoryUrl: repo.urls?.terminal || '',
+            terminalPort: repo.ports?.terminal
           });
         });
       } else {
