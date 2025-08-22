@@ -2,6 +2,7 @@
 
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useWindowAnimation } from '../../hooks/useWindowAnimation';
+import type { Window } from '../../stores/windowStore';
 import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
 import { getAllApps, getApp, AppStore } from '../../apps';
@@ -216,7 +217,7 @@ export default function Dock() {
     })();
 
     // Get port information for this window type
-    const windowProps: any = {
+    const windowProps: Omit<Window, 'id' | 'zIndex'> = {
       type,
       title: `${app.metadata.name} - ${activeWorkspace.name}`,
       position,

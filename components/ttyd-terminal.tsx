@@ -642,17 +642,17 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       onDataDisposable.current?.dispose();
       onResizeDisposable.current?.dispose();
     };
-  }, [wsUrl]); // Only reconnect when URL actually changes
+  }, [wsUrl, connectWebSocket, resolvedTheme]); // Only reconnect when URL actually changes
 
   // Cleanup on component unmount only
   useEffect(() => {
-    console.log('🔧 TTYDTerminal: Component mounted for URL:', wsUrl);
+    console.log('🔧 TTYDTerminal: Component mounted');
     return () => {
-      console.log('🧹 TTYDTerminal: Component unmounting for URL:', wsUrl);
+      console.log('🧹 TTYDTerminal: Component unmounting');
       if (websocket.current) {
         const state = websocket.current.readyState;
         if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) {
-          console.log('🔌 Closing WebSocket on unmount (state:', state, ', URL:', wsUrl, ')');
+          console.log('🔌 Closing WebSocket on unmount (state:', state, ')');
           websocket.current.close(1000, 'Component unmounting');
         }
         websocket.current = null;
