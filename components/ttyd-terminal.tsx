@@ -634,17 +634,32 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     window.addEventListener('windowContentResize', handleWindowContentResize);
 
     return () => {
-      console.log('🧹 TTYDTerminal: Cleaning up WebSocket connection');
+      console.log('🧹 TTYDTerminal: useEffect cleanup for URL:', wsUrl);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('windowContentResize', handleWindowContentResize);
-      if (websocket.current?.readyState === WebSocket.OPEN) {
-        websocket.current.close(1000, 'Component unmounting');
-      }
+      
+      // Clean up terminal event handlers when URL changes
       onDataDisposable.current?.dispose();
       onResizeDisposable.current?.dispose();
+    };
+  }, [wsUrl]); // Only reconnect when URL actually changes
+
+  // Cleanup on component unmount only
+  useEffect(() => {
+    console.log('🔧 TTYDTerminal: Component mounted for URL:', wsUrl);
+    return () => {
+      console.log('🧹 TTYDTerminal: Component unmounting for URL:', wsUrl);
+      if (websocket.current) {
+        const state = websocket.current.readyState;
+        if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) {
+          console.log('🔌 Closing WebSocket on unmount (state:', state, ', URL:', wsUrl, ')');
+          websocket.current.close(1000, 'Component unmounting');
+        }
+        websocket.current = null;
+      }
       terminal.current?.dispose();
     };
-  }, [wsUrl, connectWebSocket, resolvedTheme]); // Only reconnect when URL actually changes
+  }, []); // Empty deps = only runs on unmount
 
   // Update terminal theme when resolved theme changes
   useEffect(() => {
