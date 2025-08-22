@@ -390,6 +390,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
             connectWebSocket();
           }
         }, 3000);
+      } else {
+        console.log(`🚫 TTYDTerminal: Normal close (code 1000) - no auto-reconnect`);
       }
     };
 
@@ -644,19 +646,20 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     };
   }, [wsUrl, connectWebSocket, resolvedTheme]); // Only reconnect when URL actually changes
 
-  // Cleanup on component unmount only
+  // Cleanup on component unmount only  
   useEffect(() => {
-    console.log('🔧 TTYDTerminal: Component mounted');
+    const portMatch = wsUrl.match(/port=(\d+)/);
+    const port = portMatch ? portMatch[1] : 'unknown';
+    console.log(`🔧 TTYDTerminal: Component mounted for port ${port} (URL: ${wsUrl})`);
+    
     return () => {
-      console.log('🧹 TTYDTerminal: Component unmounting');
-      if (websocket.current) {
-        const state = websocket.current.readyState;
-        if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) {
-          console.log('🔌 Closing WebSocket on unmount (state:', state, ')');
-          websocket.current.close(1000, 'Component unmounting');
-        }
-        websocket.current = null;
-      }
+      console.log(`🧹 TTYDTerminal: Component unmounting for port ${port} (URL: ${wsUrl})`);
+      
+      // SIMPLE: Don't close WebSocket on unmount - let proxy handle lifecycle
+      // The proxy server will handle connection reuse when components remount
+      // This prevents connection drops when switching repos
+      
+      // Only dispose the terminal instance, not the WebSocket
       terminal.current?.dispose();
     };
   }, []); // Empty deps = only runs on unmount
