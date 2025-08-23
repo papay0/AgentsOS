@@ -100,6 +100,8 @@ interface TTYDTerminalProps {
   onConnectionChange?: (connected: boolean) => void;
   /** Called when status message changes */
   onStatusChange?: (status: string) => void;
+  /** Called when terminal is clicked/focused - for window management */
+  onFocus?: () => void;
   /** Custom CSS class for the terminal container */
   className?: string;
 }
@@ -126,6 +128,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   wsUrl, 
   onConnectionChange, 
   onStatusChange,
+  onFocus,
   className
 }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -136,6 +139,9 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   const onResizeDisposable = useRef<{ dispose: () => void } | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const resizeDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const lastResizeTime = useRef<number>(0);
+  const isResizing = useRef<boolean>(false);
+  const lastDimensions = useRef<{ cols: number; rows: number } | null>(null);
   
   // Get current theme from document (set by ThemeProvider)
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
@@ -294,37 +300,11 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       
       // Proxy handles ttyd auth automatically - no need to send auth message
       
-      // Send initial resize and refresh terminal after connection
-      const sendInitialResize = () => {
-        if (websocket.current?.readyState === WebSocket.OPEN && terminal.current && fitAddon.current) {
-          // Force a fit to recalculate dimensions
-          fitAddon.current.fit();
-          const dimensions = fitAddon.current.proposeDimensions();
-          if (dimensions) {
-            console.log('📏 Sending initial terminal dimensions:', dimensions);
-            const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
-            const resizeBytes = new TextEncoder().encode(resizeData);
-            const payload = new Uint8Array(resizeBytes.length + 1);
-            payload[0] = 0x31; // '1' as byte
-            payload.set(resizeBytes, 1);
-            websocket.current!.send(payload);
-            
-            // Force terminal refresh to fix any display corruption
-            terminal.current.refresh(0, terminal.current.rows - 1);
-          }
-        }
-      };
+      // Send initial resize after connection using unified system
+      setTimeout(() => triggerTerminalResize('Initial Connection', true), 150);
       
-      // Send initial resize after a short delay to ensure terminal is ready
-      setTimeout(sendInitialResize, 150);
-      
-      // Do another refresh slightly later to catch any lingering issues
-      setTimeout(() => {
-        if (terminal.current && fitAddon.current) {
-          fitAddon.current.fit();
-          terminal.current.refresh(0, terminal.current.rows - 1);
-        }
-      }, 500);
+      // Do a follow-up resize to catch any lingering issues
+      setTimeout(() => triggerTerminalResize('Connection Stabilization', true), 500);
 
     };
 
@@ -340,15 +320,10 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
             const output = data.slice(1);
             terminal.current.write(output);
             
-            // After first data, force a refresh to fix any display issues
+            // After first data, trigger resize to fix any display issues
             if (!firstDataReceived) {
               firstDataReceived = true;
-              setTimeout(() => {
-                if (terminal.current && fitAddon.current) {
-                  fitAddon.current.fit();
-                  terminal.current.refresh(0, terminal.current.rows - 1);
-                }
-              }, 100);
+              setTimeout(() => triggerTerminalResize('First Data Received', true), 100);
             }
           } else if (data.startsWith('1')) {
             // Control message (resize, shell startup, etc) - don't display
@@ -441,27 +416,23 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         }
       });
 
-      // Handle resize with debouncing to prevent corruption
+      // Handle xterm.js internal resize events (when terminal dimensions change)
       onResizeDisposable.current = terminal.current.onResize((dimensions) => {
-        // Clear any pending resize timer
-        if (resizeDebounceTimer.current) {
-          clearTimeout(resizeDebounceTimer.current);
-        }
+        // Only send if dimensions actually changed
+        const dimensionsChanged = !lastDimensions.current || 
+          lastDimensions.current.cols !== dimensions.cols || 
+          lastDimensions.current.rows !== dimensions.rows;
         
-        // Debounce resize events - only send after user stops resizing
-        resizeDebounceTimer.current = setTimeout(() => {
-          if (websocket.current?.readyState === WebSocket.OPEN) {
-            // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
-            const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
-            const resizeBytes = new TextEncoder().encode(resizeData);
-            const payload = new Uint8Array(resizeBytes.length + 1);
-            payload[0] = 0x31; // '1' as byte
-            payload.set(resizeBytes, 1);
-            websocket.current.send(payload);
-            
-            console.log('📏 Resize sent after debounce:', dimensions);
-          }
-        }, 150); // 150ms debounce delay
+        if (dimensionsChanged && websocket.current?.readyState === WebSocket.OPEN) {
+          const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
+          const resizeBytes = new TextEncoder().encode(resizeData);
+          const payload = new Uint8Array(resizeBytes.length + 1);
+          payload[0] = 0x31; // '1' as byte
+          payload.set(resizeBytes, 1);
+          websocket.current.send(payload);
+          console.log('📏 XTerm resize sent:', dimensions);
+          lastDimensions.current = { cols: dimensions.cols, rows: dimensions.rows };
+        }
       });
     }
   }, [wsUrl, onStatusChange, onConnectionChange]);
@@ -491,7 +462,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       if (Math.abs(deltaY) > 20) {
         isScrolling = true;
         e.preventDefault(); // Prevent browser scrolling
-        e.stopPropagation(); // Stop event bubbling
+        // Don't stopPropagation() - let window focus still work
         
         // Throttle scroll events
         if (currentTime - lastScrollTime > 100) {
@@ -540,7 +511,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     const handleTouchEnd = (e: TouchEvent) => {
       if (isScrolling) {
         e.preventDefault();
-        e.stopPropagation();
+        // Don't stopPropagation() - let window focus still work
       }
       isScrolling = false;
     };
@@ -646,87 +617,169 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     // Connect to WebSocket
     connectWebSocket();
 
-    // Debounced resize handler to prevent terminal corruption
-    let resizeTimer: NodeJS.Timeout | null = null;
-    const handleResize = () => {
-      // Clear any pending resize
-      if (resizeTimer) {
-        clearTimeout(resizeTimer);
+    // UNIFIED RESIZE SYSTEM - handles ALL resize scenarios
+    const triggerTerminalResize = (reason: string, immediate = false) => {
+      if (!terminal.current || !fitAddon.current || !websocket.current || websocket.current.readyState !== WebSocket.OPEN) {
+        return;
       }
+
+      const now = Date.now();
       
-      // Debounce the resize - only fit after resizing stops
-      resizeTimer = setTimeout(() => {
-        if (fitAddon.current) {
-          fitAddon.current.fit();
+      const performResize = () => {
+        if (!terminal.current || !fitAddon.current || !websocket.current) return;
+        
+        // FORCE dimension recalculation by triggering DOM measurement
+        // This ensures we get the actual current container dimensions
+        const container = terminalRef.current;
+        if (container) {
+          // Force a reflow to get accurate dimensions
+          const actualHeight = container.offsetHeight;
+          const actualWidth = container.offsetWidth;
+          console.log(`📐 Container actual size: ${actualWidth}x${actualHeight}px`);
         }
-      }, 150);
-    };
-    
-    // Handle window content resize (from AgentsOS windows)
-    const handleWindowContentResize = () => {
-      handleResize(); // Use the same debounced handler
-    };
-    
-    // Handle focus events to trigger REAL resize (fixes display corruption)
-    const handleFocus = () => {
-      if (terminal.current && fitAddon.current && websocket.current?.readyState === WebSocket.OPEN) {
-        // Force a fit to recalculate dimensions
+        
+        // Clear xterm's internal size cache by resetting the terminal size
+        // This forces it to recalculate based on current container dimensions
+        if (terminal.current.element && terminal.current.element.parentElement) {
+          terminal.current.element.style.width = '100%';
+          terminal.current.element.style.height = '100%';
+        }
+        
+        // Now fit and get fresh dimensions
         fitAddon.current.fit();
         const dimensions = fitAddon.current.proposeDimensions();
         if (dimensions) {
-          console.log('🎯 Terminal focused - sending resize:', dimensions);
-          // Send the SAME resize message that manual resize sends
-          const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
-          const resizeBytes = new TextEncoder().encode(resizeData);
-          const payload = new Uint8Array(resizeBytes.length + 1);
-          payload[0] = 0x31; // '1' as byte
-          payload.set(resizeBytes, 1);
-          websocket.current.send(payload);
+          // ONLY send resize if dimensions actually changed
+          const dimensionsChanged = !lastDimensions.current || 
+            lastDimensions.current.cols !== dimensions.cols || 
+            lastDimensions.current.rows !== dimensions.rows;
           
-          // Also refresh display
-          terminal.current.refresh(0, terminal.current.rows - 1);
+          if (dimensionsChanged) {
+            console.log(`🎯 ${reason}${immediate ? '' : ' (debounced)'} - sending resize:`, dimensions);
+            const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
+            const resizeBytes = new TextEncoder().encode(resizeData);
+            const payload = new Uint8Array(resizeBytes.length + 1);
+            payload[0] = 0x31; // '1' as byte (resize command)
+            payload.set(resizeBytes, 1);
+            websocket.current.send(payload);
+            
+            terminal.current.refresh(0, terminal.current.rows - 1);
+            lastResizeTime.current = now;
+            lastDimensions.current = { cols: dimensions.cols, rows: dimensions.rows };
+          } else {
+            console.log(`⏭️ Skipping resize - dimensions unchanged: ${dimensions.cols}x${dimensions.rows}`);
+          }
         }
+      };
+      
+      // For immediate resizes (focus, snap), skip debouncing
+      if (immediate) {
+        if (resizeDebounceTimer.current) {
+          clearTimeout(resizeDebounceTimer.current);
+        }
+        performResize();
+        return;
       }
+
+      // For debounced resizes (window resize, drag), use 150ms debounce
+      if (resizeDebounceTimer.current) {
+        clearTimeout(resizeDebounceTimer.current);
+      }
+      
+      isResizing.current = true;
+      resizeDebounceTimer.current = setTimeout(() => {
+        performResize();
+        isResizing.current = false;
+      }, 150);
     };
-    
-    // Handle window movement/position changes
-    const handleWindowMove = () => {
-      handleResize(); // Use debounced resize handler
+
+    // ALL RESIZE EVENT HANDLERS - using unified system
+    const handleResize = () => {
+      console.log('🔴 RESIZE EVENT FIRED');
+      // Just call the same thing that focus does - immediate resize
+      triggerTerminalResize('Browser/Window Resize', true);
     };
-    
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('windowContentResize', handleWindowContentResize);
-    
-    // Listen for terminal container focus
-    if (terminalRef.current) {
-      terminalRef.current.addEventListener('focus', handleFocus, true);
-      terminalRef.current.addEventListener('click', handleFocus);
+    const handleWindowContentResize = () => {
+      console.log('🔵 WINDOW CONTENT RESIZE EVENT FIRED');
+      triggerTerminalResize('AgentsOS Window Content Resize', true);
+    };  
+    const handleFocus = () => {
+      console.log('🟢 FOCUS EVENT FIRED');
+      triggerTerminalResize('Terminal Focus/Click', true);
     }
+    const handleWindowMove = () => triggerTerminalResize('Window Move/Drag', true); // Immediate
+    const handleWindowSnap = () => triggerTerminalResize('Window Snap/Dock', true); // Immediate
     
-    // Listen for window movement (AgentsOS window drag events)
+    // COMPREHENSIVE RESIZE EVENT LISTENERS
+    // Browser/System events
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => triggerTerminalResize('Orientation Change', true));
+    
+    // AgentsOS window management events  
+    window.addEventListener('windowContentResize', handleWindowContentResize);
     window.addEventListener('windowMoved', handleWindowMove);
     window.addEventListener('windowPositionChanged', handleWindowMove);
+    window.addEventListener('windowSnapped', handleWindowSnap);
+    window.addEventListener('windowDocked', handleWindowSnap);
+    window.addEventListener('windowMaximized', () => triggerTerminalResize('Window Maximized', true));
+    window.addEventListener('windowRestored', () => triggerTerminalResize('Window Restored', true));
+    window.addEventListener('windowStateChanged', () => triggerTerminalResize('Window State Change', true));
+    
+    // Developer/Debug events
+    window.addEventListener('devtoolschange', () => triggerTerminalResize('DevTools Toggle', true));
+    
+    // Visual Viewport (mobile keyboard, zoom changes)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => triggerTerminalResize('Viewport Resize', true));
+    }
+    
+    // Listen for terminal container focus - use capture to get clicks before xterm.js
+    if (terminalRef.current) {
+      terminalRef.current.addEventListener('focus', handleFocus, true);
+      terminalRef.current.addEventListener('click', () => {
+        onFocus?.(); // Bring window to front FIRST
+        handleFocus(); // Then handle terminal focus and resize
+      }, true); // Capture phase - runs before xterm.js handlers
+    }
 
     return () => {
       console.log('🧹 TTYDTerminal: useEffect cleanup for URL:', wsUrl);
       
       // Clear any pending resize timers
-      if (resizeTimer) {
-        clearTimeout(resizeTimer);
-      }
       if (resizeDebounceTimer.current) {
         clearTimeout(resizeDebounceTimer.current);
       }
       
+      // COMPREHENSIVE EVENT LISTENER CLEANUP
+      // Browser/System events
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', () => triggerTerminalResize('Orientation Change', true));
+      
+      // AgentsOS window management events
       window.removeEventListener('windowContentResize', handleWindowContentResize);
       window.removeEventListener('windowMoved', handleWindowMove);
       window.removeEventListener('windowPositionChanged', handleWindowMove);
+      window.removeEventListener('windowSnapped', handleWindowSnap);
+      window.removeEventListener('windowDocked', handleWindowSnap);
+      window.removeEventListener('windowMaximized', () => triggerTerminalResize('Window Maximized', true));
+      window.removeEventListener('windowRestored', () => triggerTerminalResize('Window Restored', true));
+      window.removeEventListener('windowStateChanged', () => triggerTerminalResize('Window State Change', true));
+      
+      // Developer/Debug events
+      window.removeEventListener('devtoolschange', () => triggerTerminalResize('DevTools Toggle', true));
+      
+      // Visual Viewport cleanup
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', () => triggerTerminalResize('Viewport Resize', true));
+      }
       
       // Remove focus listeners from terminal container
       if (terminalRef.current) {
         terminalRef.current.removeEventListener('focus', handleFocus, true);
-        terminalRef.current.removeEventListener('click', handleFocus);
+        terminalRef.current.removeEventListener('click', () => {
+          onFocus?.();
+          handleFocus();
+        }, true);
       }
       
       // Clean up terminal event handlers when URL changes
@@ -761,8 +814,17 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   }, [resolvedTheme]);
 
   // Handle terminal click/tap for mobile keyboard focus
-  const handleTerminalInteraction = useCallback(() => {
-    // Only trigger on mobile devices
+  const handleTerminalInteraction = useCallback((e: React.MouseEvent) => {
+    // ALWAYS call onFocus immediately to bring window to front
+    // This ensures window focus happens on first click, not just second click
+    onFocus?.();
+    
+    // Also ensure terminal gets focus
+    if (terminal.current) {
+      terminal.current.focus();
+    }
+    
+    // Only trigger mobile logic on mobile devices
     if (window.visualViewport && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
       // Small delay to allow keyboard to start appearing
       setTimeout(() => {

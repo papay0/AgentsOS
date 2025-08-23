@@ -1,7 +1,7 @@
 import TTYDTerminal from '@/components/ttyd-terminal';
 import { ClaudeAppProps } from '../BaseApp';
 
-export const ClaudeDesktop = ({ claudePort }: ClaudeAppProps) => {
+export const ClaudeDesktop = ({ claudePort, onFocus }: ClaudeAppProps & { onFocus?: () => void }) => {
   // Always render a container to prevent component unmounting
   // The TTYDTerminal component will handle invalid/missing ports internally
   const proxyUrl = process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000';
@@ -15,7 +15,8 @@ export const ClaudeDesktop = ({ claudePort }: ClaudeAppProps) => {
         <TTYDTerminal 
           key={`claude-${claudePort}`} 
           wsUrl={wsUrl} 
-          className="w-full h-full" 
+          className="w-full h-full"
+          onFocus={onFocus}
         />
       ) : (
         <div className="w-full h-full bg-gray-800 text-red-400 font-mono text-sm p-4 flex items-center justify-center">
