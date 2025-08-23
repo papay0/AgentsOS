@@ -12,6 +12,7 @@ export interface ClaudeAppProps {
 export interface VSCodeAppProps {
   repositoryUrl?: string;
   vscodePort?: number;
+  workspaceId?: string;
 }
 
 // Create a proper "no props" type that's explicit about having no properties

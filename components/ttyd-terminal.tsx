@@ -437,6 +437,82 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     }
   }, [wsUrl, onStatusChange, onConnectionChange]);
 
+  // UNIFIED RESIZE SYSTEM - handles ALL resize scenarios
+  const triggerTerminalResize = useCallback((reason: string, immediate = false) => {
+    if (!terminal.current || !fitAddon.current || !websocket.current || websocket.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    const now = Date.now();
+    
+    const performResize = () => {
+      if (!terminal.current || !fitAddon.current || !websocket.current) return;
+      
+      // FORCE dimension recalculation by triggering DOM measurement
+      // This ensures we get the actual current container dimensions
+      const container = terminalRef.current;
+      if (container) {
+        // Force a reflow to get accurate dimensions
+        const actualHeight = container.offsetHeight;
+        const actualWidth = container.offsetWidth;
+        console.log(`📐 Container actual size: ${actualWidth}x${actualHeight}px`);
+      }
+      
+      // Clear xterm's internal size cache by resetting the terminal size
+      // This forces it to recalculate based on current container dimensions
+      if (terminal.current.element && terminal.current.element.parentElement) {
+        terminal.current.element.style.width = '100%';
+        terminal.current.element.style.height = '100%';
+      }
+      
+      // Now fit and get fresh dimensions
+      fitAddon.current.fit();
+      const dimensions = fitAddon.current.proposeDimensions();
+      if (dimensions) {
+        // ONLY send resize if dimensions actually changed
+        const dimensionsChanged = !lastDimensions.current || 
+          lastDimensions.current.cols !== dimensions.cols || 
+          lastDimensions.current.rows !== dimensions.rows;
+        
+        if (dimensionsChanged) {
+          console.log(`🎯 ${reason}${immediate ? '' : ' (debounced)'} - sending resize:`, dimensions);
+          const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
+          const resizeBytes = new TextEncoder().encode(resizeData);
+          const payload = new Uint8Array(resizeBytes.length + 1);
+          payload[0] = 0x31; // '1' as byte (resize command)
+          payload.set(resizeBytes, 1);
+          websocket.current.send(payload);
+          
+          terminal.current.refresh(0, terminal.current.rows - 1);
+          lastResizeTime.current = now;
+          lastDimensions.current = { cols: dimensions.cols, rows: dimensions.rows };
+        } else {
+          console.log(`⏭️ Skipping resize - dimensions unchanged: ${dimensions.cols}x${dimensions.rows}`);
+        }
+      }
+    };
+    
+    // For immediate resizes (focus, snap), skip debouncing
+    if (immediate) {
+      if (resizeDebounceTimer.current) {
+        clearTimeout(resizeDebounceTimer.current);
+      }
+      performResize();
+      return;
+    }
+
+    // For debounced resizes (window resize, drag), use 150ms debounce
+    if (resizeDebounceTimer.current) {
+      clearTimeout(resizeDebounceTimer.current);
+    }
+    
+    isResizing.current = true;
+    resizeDebounceTimer.current = setTimeout(() => {
+      performResize();
+      isResizing.current = false;
+    }, 150);
+  }, []);
+
   // ATTEMPT 6: Proper SGR mouse protocol for tmux compatibility (Fixed coordinates)
   useEffect(() => {
     if (!terminalRef.current || !terminal.current) return;
@@ -614,84 +690,9 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     // Initial fit after DOM is ready
     setTimeout(fitTerminal, 100);
 
+
     // Connect to WebSocket
     connectWebSocket();
-
-    // UNIFIED RESIZE SYSTEM - handles ALL resize scenarios
-    const triggerTerminalResize = (reason: string, immediate = false) => {
-      if (!terminal.current || !fitAddon.current || !websocket.current || websocket.current.readyState !== WebSocket.OPEN) {
-        return;
-      }
-
-      const now = Date.now();
-      
-      const performResize = () => {
-        if (!terminal.current || !fitAddon.current || !websocket.current) return;
-        
-        // FORCE dimension recalculation by triggering DOM measurement
-        // This ensures we get the actual current container dimensions
-        const container = terminalRef.current;
-        if (container) {
-          // Force a reflow to get accurate dimensions
-          const actualHeight = container.offsetHeight;
-          const actualWidth = container.offsetWidth;
-          console.log(`📐 Container actual size: ${actualWidth}x${actualHeight}px`);
-        }
-        
-        // Clear xterm's internal size cache by resetting the terminal size
-        // This forces it to recalculate based on current container dimensions
-        if (terminal.current.element && terminal.current.element.parentElement) {
-          terminal.current.element.style.width = '100%';
-          terminal.current.element.style.height = '100%';
-        }
-        
-        // Now fit and get fresh dimensions
-        fitAddon.current.fit();
-        const dimensions = fitAddon.current.proposeDimensions();
-        if (dimensions) {
-          // ONLY send resize if dimensions actually changed
-          const dimensionsChanged = !lastDimensions.current || 
-            lastDimensions.current.cols !== dimensions.cols || 
-            lastDimensions.current.rows !== dimensions.rows;
-          
-          if (dimensionsChanged) {
-            console.log(`🎯 ${reason}${immediate ? '' : ' (debounced)'} - sending resize:`, dimensions);
-            const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
-            const resizeBytes = new TextEncoder().encode(resizeData);
-            const payload = new Uint8Array(resizeBytes.length + 1);
-            payload[0] = 0x31; // '1' as byte (resize command)
-            payload.set(resizeBytes, 1);
-            websocket.current.send(payload);
-            
-            terminal.current.refresh(0, terminal.current.rows - 1);
-            lastResizeTime.current = now;
-            lastDimensions.current = { cols: dimensions.cols, rows: dimensions.rows };
-          } else {
-            console.log(`⏭️ Skipping resize - dimensions unchanged: ${dimensions.cols}x${dimensions.rows}`);
-          }
-        }
-      };
-      
-      // For immediate resizes (focus, snap), skip debouncing
-      if (immediate) {
-        if (resizeDebounceTimer.current) {
-          clearTimeout(resizeDebounceTimer.current);
-        }
-        performResize();
-        return;
-      }
-
-      // For debounced resizes (window resize, drag), use 150ms debounce
-      if (resizeDebounceTimer.current) {
-        clearTimeout(resizeDebounceTimer.current);
-      }
-      
-      isResizing.current = true;
-      resizeDebounceTimer.current = setTimeout(() => {
-        performResize();
-        isResizing.current = false;
-      }, 150);
-    };
 
     // ALL RESIZE EVENT HANDLERS - using unified system
     const handleResize = () => {
