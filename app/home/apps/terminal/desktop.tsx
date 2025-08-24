@@ -1,11 +1,40 @@
 import TTYDTerminal from '@/components/ttyd-terminal';
 import { TerminalAppProps } from '../BaseApp';
+import { useAuth } from '@clerk/nextjs';
+import { useEffect, useState } from 'react';
 
 export const TerminalDesktop = ({ terminalPort, onFocus }: TerminalAppProps & { onFocus?: () => void }) => {
-  // Always render a container to prevent component unmounting
-  // The TTYDTerminal component will handle invalid/missing ports internally
-  const proxyUrl = process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000';
-  const wsUrl = terminalPort ? `${proxyUrl}?port=${terminalPort}` : '';
+  const { getToken } = useAuth();
+  const [wsUrl, setWsUrl] = useState('');
+  const [authAttempt, setAuthAttempt] = useState(0);
+  
+  // Build WebSocket URL with authentication token
+  useEffect(() => {
+    if (!terminalPort) {
+      setWsUrl('');
+      return;
+    }
+
+    const buildWsUrl = async () => {
+      const proxyUrl = process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000';
+      
+      try {
+        const token = await getToken();
+        if (token) {
+          console.log('🔑 Using URL token authentication for terminal');
+          setWsUrl(`${proxyUrl}?port=${terminalPort}&token=${token}`);
+        } else {
+          console.error('❌ No auth token available for terminal connection');
+          setWsUrl(''); // Clear URL to show error state
+        }
+      } catch (error) {
+        console.error('❌ Failed to get auth token for terminal:', error);
+        setWsUrl(''); // Clear URL to show error state
+      }
+    };
+
+    buildWsUrl();
+  }, [terminalPort, getToken, authAttempt]);
   
   // Use terminalPort as key to ensure each terminal gets its own component instance
   // This prevents connection reuse between different ports
@@ -13,7 +42,6 @@ export const TerminalDesktop = ({ terminalPort, onFocus }: TerminalAppProps & { 
     <div className="w-full h-full">
       {terminalPort ? (
         <TTYDTerminal 
-          key={`terminal-${terminalPort}`} 
           wsUrl={wsUrl} 
           className="w-full h-full"
           onFocus={onFocus}

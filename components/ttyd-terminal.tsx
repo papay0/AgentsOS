@@ -102,6 +102,8 @@ interface TTYDTerminalProps {
   onStatusChange?: (status: string) => void;
   /** Called when terminal is clicked/focused - for window management */
   onFocus?: () => void;
+  /** Called when authentication fails - allows retry with different auth method */
+  onConnectionFailure?: () => void;
   /** Custom CSS class for the terminal container */
   className?: string;
 }
@@ -129,6 +131,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   onConnectionChange, 
   onStatusChange,
   onFocus,
+  onConnectionFailure,
   className
 }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -151,6 +154,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     const updateResolvedTheme = () => {
       const isDark = document.documentElement.classList.contains('dark');
       const newTheme = isDark ? 'dark' : 'light';
+      console.log('🎨 Theme detection:', {
+        documentHasDarkClass: isDark,
+        documentClasses: document.documentElement.className,
+        newTheme: newTheme,
+        currentResolvedTheme: resolvedTheme
+      });
       setResolvedTheme(newTheme);
     };
 
@@ -318,12 +327,104 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
           if (data.startsWith('0')) {
             // Terminal output data - remove the '0' prefix
             const output = data.slice(1);
+            console.log('✍️ Writing to terminal:', JSON.stringify(output.substring(0, 50)));
             terminal.current.write(output);
+            
+            // DEBUG: Check what's actually in the terminal after write
+            setTimeout(() => {
+              if (terminal.current) {
+                const buffer = terminal.current.buffer.active;
+                const cursor = terminal.current.buffer.active.cursorY;
+                const currentLine = buffer.getLine(cursor);
+                if (currentLine) {
+                  console.log(`🖥️ Current line ${cursor}:`, currentLine.translateToString(true));
+                }
+                
+                // Check terminal element visibility and FORCE FIX lab() color
+                const termEl = terminalRef.current?.querySelector('.xterm-screen');
+                if (termEl) {
+                  const style = window.getComputedStyle(termEl as HTMLElement);
+                  console.log('🎨 Terminal screen CSS BEFORE FIX:', {
+                    color: style.color,
+                    backgroundColor: style.backgroundColor,
+                    visibility: style.visibility,
+                    opacity: style.opacity,
+                    display: style.display
+                  });
+                  
+                  // CRITICAL: Force fix lab() color issue
+                  if (style.color.includes('lab(')) {
+                    console.log('🚨 FIXING lab() color issue!');
+                    (termEl as HTMLElement).style.color = resolvedTheme === 'dark' ? '#ffffff' : '#000000';
+                    (termEl as HTMLElement).style.backgroundColor = resolvedTheme === 'dark' ? '#1e1e1e' : '#ffffff';
+                    
+                    // Also fix all text elements inside
+                    const textElements = termEl.querySelectorAll('*');
+                    textElements.forEach(el => {
+                      const htmlEl = el as HTMLElement;
+                      const elStyle = window.getComputedStyle(htmlEl);
+                      if (elStyle.color.includes('lab(')) {
+                        htmlEl.style.color = resolvedTheme === 'dark' ? '#ffffff' : '#000000';
+                        console.log('🔧 Fixed lab() color on child element');
+                      }
+                    });
+                    
+                    // Force terminal refresh to apply changes
+                    setTimeout(() => {
+                      if (terminal.current) {
+                        terminal.current.refresh(0, terminal.current.rows - 1);
+                        console.log('🔄 Forced terminal refresh after color fix');
+                      }
+                    }, 10);
+                  }
+                }
+              }
+            }, 10);
             
             // After first data, trigger resize to fix any display issues
             if (!firstDataReceived) {
               firstDataReceived = true;
-              setTimeout(() => triggerTerminalResize('First Data Received', true), 100);
+              console.log('🎯 First data received, triggering resize in 100ms');
+              
+              // Debug: Check terminal buffer content
+              setTimeout(() => {
+                if (terminal.current) {
+                  const buffer = terminal.current.buffer.active;
+                  console.log('📄 Terminal buffer info:', {
+                    cursorX: buffer.cursorX,
+                    cursorY: buffer.cursorY,
+                    length: buffer.length,
+                    baseY: buffer.baseY,
+                    viewportY: buffer.viewportY
+                  });
+                  
+                  // Check if there's any text in the buffer
+                  for (let i = 0; i < Math.min(5, buffer.length); i++) {
+                    const line = buffer.getLine(i);
+                    if (line) {
+                      console.log(`📄 Line ${i}:`, line.translateToString(true));
+                    }
+                  }
+                }
+                
+                // Try to force a refresh and refit
+                if (terminal.current && fitAddon.current) {
+                  console.log('🔄 Forcing terminal refresh and refit');
+                  terminal.current.refresh(0, terminal.current.rows - 1);
+                  fitAddon.current.fit();
+                  
+                  // CRITICAL FIX: Scroll to bottom to make content visible
+                  const buffer = terminal.current.buffer.active;
+                  console.log('📜 Scrolling to bottom - before:', { viewportY: buffer.viewportY, baseY: buffer.baseY, length: buffer.length });
+                  terminal.current.scrollToBottom();
+                  setTimeout(() => {
+                    const bufferAfter = terminal.current!.buffer.active;
+                    console.log('📜 After scroll to bottom:', { viewportY: bufferAfter.viewportY, baseY: bufferAfter.baseY, length: bufferAfter.length });
+                  }, 50);
+                }
+                
+                triggerTerminalResize('First Data Received', true);
+              }, 100);
             }
           } else if (data.startsWith('1')) {
             // Control message (resize, shell startup, etc) - don't display
@@ -380,6 +481,13 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       onConnectionChange?.(false);
       onStatusChange?.(event.code === 1000 ? 'Disconnected' : `Connection failed (${event.code})`);
       
+      // Handle authentication failures specifically
+      if (event.code === 1008 && event.reason?.includes('Authentication failed')) {
+        console.log('🔄 Authentication failed, notifying parent to retry with fallback auth');
+        // Call parent to retry with fallback authentication
+        onConnectionFailure?.();
+        return;
+      }
       
       // Auto-reconnect for network issues (not user-initiated close)
       if (event.code !== 1000) {
@@ -413,6 +521,23 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
           payload[0] = 0x30; // '0' as byte
           payload.set(inputBytes, 1);
           websocket.current.send(payload);
+          
+          // DEBUG: Check what user typed and cursor position
+          console.log('⌨️ User typed:', JSON.stringify(data), {
+            char: data.charCodeAt(0),
+            length: data.length
+          });
+          
+          setTimeout(() => {
+            if (terminal.current) {
+              const buffer = terminal.current.buffer.active;
+              console.log('🖱️ After typing - Cursor at:', {
+                x: buffer.cursorX,
+                y: buffer.cursorY,
+                line: buffer.getLine(buffer.cursorY)?.translateToString(true)
+              });
+            }
+          }, 50);
         }
       });
 
@@ -631,6 +756,17 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     if (!terminalRef.current) return;
 
     // Initialize terminal with current theme
+    console.log('🎨 Terminal theme:', resolvedTheme, terminalThemes[resolvedTheme]);
+    
+    // DEBUG: Check if colors have proper contrast
+    const theme = terminalThemes[resolvedTheme];
+    console.log('🔍 Theme contrast check:', {
+      bgColor: theme.background,
+      fgColor: theme.foreground,
+      isSameColor: theme.background === theme.foreground,
+      isDarkTheme: resolvedTheme === 'dark'
+    });
+    
     terminal.current = new Terminal({
       theme: terminalThemes[resolvedTheme],
       fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
@@ -656,6 +792,48 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
 
     // Open terminal in DOM
     terminal.current.open(terminalRef.current);
+    
+    // 🧪 HARDCODED TEST - Write test text immediately after opening
+    setTimeout(() => {
+      if (terminal.current) {
+        console.log('🧪 HARDCODED TEST: Writing test text to terminal');
+        terminal.current.write('\r\n🔥 HARDCODED TEST: Can you see this text?\r\n');
+        terminal.current.write('If you can see this, xterm rendering is working!\r\n');
+        terminal.current.write('$ test_prompt> ');
+        
+        // Check what actually got written
+        setTimeout(() => {
+          const buffer = terminal.current!.buffer.active;
+          console.log('🧪 HARDCODED TEST - Buffer after write:', {
+            bufferLength: buffer.length,
+            cursorX: buffer.cursorX,
+            cursorY: buffer.cursorY
+          });
+          
+          // Show last few lines
+          for (let i = Math.max(0, buffer.length - 3); i < buffer.length; i++) {
+            const line = buffer.getLine(i);
+            if (line) {
+              console.log(`🧪 HARDCODED TEST - Line ${i}:`, line.translateToString(true));
+            }
+          }
+          
+          // Check visibility of xterm elements
+          const xtermScreen = terminalRef.current?.querySelector('.xterm-screen');
+          if (xtermScreen) {
+            const style = window.getComputedStyle(xtermScreen as HTMLElement);
+            console.log('🧪 HARDCODED TEST - xterm-screen style:', {
+              color: style.color,
+              backgroundColor: style.backgroundColor,
+              visibility: style.visibility,
+              opacity: style.opacity,
+              width: style.width,
+              height: style.height
+            });
+          }
+        }, 100);
+      }
+    }, 200);
     
     // Force xterm elements to take full height and fit properly
     const fitTerminal = () => {
@@ -687,10 +865,28 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       }
     };
     
-    // Initial fit after DOM is ready
+    // Initial fits with delays for mobile animation
     setTimeout(fitTerminal, 100);
-
-
+    setTimeout(fitTerminal, 350);
+    setTimeout(fitTerminal, 600);
+    
+    // Debug: Check if terminal DOM elements are created
+    setTimeout(() => {
+      if (terminalRef.current) {
+        const xtermScreen = terminalRef.current.querySelector('.xterm-screen');
+        const xtermViewport = terminalRef.current.querySelector('.xterm-viewport');
+        const xtermHelper = terminalRef.current.querySelector('.xterm-helpers');
+        console.log('🔍 Terminal DOM elements:', {
+          container: terminalRef.current,
+          screen: xtermScreen,
+          viewport: xtermViewport,
+          helpers: xtermHelper,
+          containerStyle: terminalRef.current.style.cssText,
+          containerClasses: terminalRef.current.className
+        });
+      }
+    }, 100);
+    
     // Connect to WebSocket
     connectWebSocket();
 
@@ -810,7 +1006,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   // Update terminal theme when resolved theme changes
   useEffect(() => {
     if (terminal.current) {
+      console.log('🎨 Updating terminal theme to:', resolvedTheme, terminalThemes[resolvedTheme]);
       terminal.current.options.theme = terminalThemes[resolvedTheme];
+      
+      // Force a refresh to apply the new theme
+      terminal.current.refresh(0, terminal.current.rows - 1);
+      console.log('🔄 Terminal theme updated and refreshed');
     }
   }, [resolvedTheme]);
 
@@ -866,7 +1067,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         height: '100%',
         overflow: 'hidden',
         position: 'relative',
-        touchAction: 'none' // Prevent default touch behaviors
+        touchAction: 'none', // Prevent default touch behaviors
+        // backgroundColor: terminalThemes[resolvedTheme].background
       }}
     />
   );

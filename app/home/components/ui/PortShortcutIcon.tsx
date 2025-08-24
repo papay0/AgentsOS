@@ -24,8 +24,20 @@ export function PortShortcutIcon() {
   const proxyPort = urlParts ? urlParts[1] : '3000';
   
   // For local dev, use lvh.me which resolves *.lvh.me to 127.0.0.1
-  // For production, use your actual domain with the proxy port
-  const proxyDomain = isDevelopment ? `lvh.me:${proxyPort}` : wsProxyUrl.replace('ws://', '').replace('wss://', '').replace('http://', '').replace('https://', '');
+  // For production, determine domain based on WebSocket proxy URL
+  let proxyDomain;
+  if (isDevelopment) {
+    proxyDomain = `lvh.me:${proxyPort}`;
+  } else {
+    // Extract domain from WebSocket URL
+    const domain = wsProxyUrl.replace('wss://', '').replace('ws://', '');
+    if (domain.includes('proxy.agentsos.app')) {
+      proxyDomain = 'proxy.agentsos.app';
+    } else {
+      // Railway URL or other custom domain
+      proxyDomain = domain;
+    }
+  }
   
   // Use subdomain format: {port}-{sandbox-id}.domain
   // This ensures browser resolves relative URLs correctly in iframes
