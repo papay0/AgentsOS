@@ -42,13 +42,11 @@ export const ClaudeDesktop = ({ claudePort, onFocus }: ClaudeAppProps & { onFocu
     setAuthAttempt(prev => prev + 1);
   };
 
-  // Use claudePort as key to ensure each Claude terminal gets its own component instance
-  // This prevents connection reuse between different ports
+  // Component will handle connection changes via wsUrl updates
   return (
     <div className="w-full h-full">
       {claudePort ? (
         <TTYDTerminal 
-          key={`claude-${claudePort}`} 
           wsUrl={wsUrl} 
           className="w-full h-full"
           onFocus={onFocus}

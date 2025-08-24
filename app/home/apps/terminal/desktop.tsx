@@ -42,6 +42,7 @@ export const TerminalDesktop = ({ terminalPort, onFocus }: TerminalAppProps & { 
     <div className="w-full h-full">
       {terminalPort ? (
         <TTYDTerminal 
+          key={`terminal-${terminalPort}`} 
           wsUrl={wsUrl} 
           className="w-full h-full"
           onFocus={onFocus}
