@@ -13,8 +13,23 @@ export function PortShortcutIcon() {
   const sandboxId = useWorkspaceStore((state) => state.sandboxId);
   const isMobile = useIsMobile();
 
-  // Generate the port URL
-  const portUrl = sandboxId ? `https://${portInput}-${sandboxId}.proxy.daytona.work` : '';
+  // Generate the port URL using subdomain proxy
+  // This solves iframe asset loading issues that path-based proxy can't handle
+  // Using lvh.me for local testing - it always resolves to 127.0.0.1
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const wsProxyUrl = process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000';
+  
+  // Extract port from WebSocket URL
+  const urlParts = wsProxyUrl.match(/:(\d+)$/);
+  const proxyPort = urlParts ? urlParts[1] : '3000';
+  
+  // For local dev, use lvh.me which resolves *.lvh.me to 127.0.0.1
+  // For production, use your actual domain with the proxy port
+  const proxyDomain = isDevelopment ? `lvh.me:${proxyPort}` : wsProxyUrl.replace('ws://', '').replace('wss://', '').replace('http://', '').replace('https://', '');
+  
+  // Use subdomain format: {port}-{sandbox-id}.domain
+  // This ensures browser resolves relative URLs correctly in iframes
+  const portUrl = sandboxId ? `http://${portInput}-${sandboxId}.${proxyDomain}` : '';
 
   // Handle click outside to close popup
   useEffect(() => {
@@ -63,7 +78,7 @@ export function PortShortcutIcon() {
     setPortInput(value);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleOpenPort();
     }
@@ -115,7 +130,7 @@ export function PortShortcutIcon() {
                       type="text"
                       value={portInput}
                       onChange={handlePortChange}
-                      onKeyPress={handleKeyPress}
+                      onKeyDown={handleKeyDown}
                       placeholder="3000"
                       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       autoFocus
