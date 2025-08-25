@@ -553,6 +553,10 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         fitAddon.current = new FitAddon() as ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined };
         terminal.current.loadAddon(fitAddon.current);
         terminal.current.loadAddon(new WebLinksAddon());
+        
+        // Step 3: Send multiple delayed resizes to catch when terminal is fully ready
+        resizeManager.current.setFitAddon(fitAddon.current);
+        resizeManager.current.sendDelayedResizes(); // Multiple attempts with increasing delays
       }
     });
 

@@ -64,4 +64,13 @@ export class ResizeManager {
   sendFocusResize() {
     this.sendResize(true); // Force resize on focus
   }
+
+  // Send multiple delayed resizes to catch when terminal is fully ready
+  sendDelayedResizes() {
+    // Multiple attempts with increasing delays
+    setTimeout(() => this.sendResize(true), 500);  // 500ms
+    setTimeout(() => this.sendResize(true), 800);  // 800ms  
+    setTimeout(() => this.sendResize(true), 1200); // 1.2s
+    setTimeout(() => this.sendResize(true), 2000); // 2s (final attempt)
+  }
 }
