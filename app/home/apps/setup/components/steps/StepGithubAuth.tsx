@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Terminal } from 'lucide-react';
 import TTYDTerminal, { TTYDTerminalRef } from '@/components/ttyd-terminal';
 import { useAgentsOSUser } from '@/hooks/use-agentsos-user';
+import { useAuth } from '@clerk/nextjs';
 import { SetupData } from '../SetupWizard';
 
 interface StepGithubAuthProps {
@@ -23,15 +24,42 @@ export const StepGithubAuth = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [wsUrl, setWsUrl] = useState('');
   
   const terminalRef = useRef<TTYDTerminalRef>(null);
   const { workspace } = useAgentsOSUser();
+  const { getToken } = useAuth();
 
-  // Get terminal port and use WebSocket proxy server (same as terminal desktop)
+  // Get terminal port and build WebSocket URL with authentication (same as terminal desktop)
   const terminalPort = workspace?.repositories?.[0]?.ports?.terminal;
-  const repositoryUrl = terminalPort 
-    ? `${process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000'}?port=${terminalPort}`
-    : null;
+  
+  // Build WebSocket URL with authentication token
+  useEffect(() => {
+    if (!terminalPort) {
+      setWsUrl('');
+      return;
+    }
+
+    const buildWsUrl = async () => {
+      const proxyUrl = process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000';
+      
+      try {
+        const token = await getToken();
+        if (token) {
+          console.log('🔑 Using URL token authentication for setup terminal');
+          setWsUrl(`${proxyUrl}?port=${terminalPort}&token=${token}`);
+        } else {
+          console.error('❌ No auth token available for setup terminal connection');
+          setWsUrl(''); // Clear URL to show error state
+        }
+      } catch (error) {
+        console.error('❌ Failed to get auth token for setup terminal:', error);
+        setWsUrl(''); // Clear URL to show error state
+      }
+    };
+
+    buildWsUrl();
+  }, [terminalPort, getToken]);
 
   const handleStartAuth = () => {
     if (terminalRef.current && isConnected) {
@@ -78,7 +106,7 @@ export const StepGithubAuth = ({
     onNext();
   };
 
-  if (!repositoryUrl) {
+  if (!wsUrl) {
     return (
       <div className="space-y-6 max-w-3xl mx-auto">
         <div className="text-center py-8">
@@ -95,28 +123,31 @@ export const StepGithubAuth = ({
   }
 
   return (
-    <div className="w-full p-4 space-y-4 overflow-y-auto">
-      {/* Header with Action Buttons */}
-      <div className="text-center flex-shrink-0">
-        <Terminal className="w-8 h-8 md:w-12 md:h-12 text-blue-500 mx-auto mb-2 md:mb-4" />
-        <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          Authenticate with GitHub
-        </h3>
-        <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 px-2 mb-3 md:mb-4">
-          Use the terminal below to sign in to your GitHub account.
-        </p>
-        
-        {/* Action Buttons moved here */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center mb-3 md:mb-4">
+    <div className="w-full h-full flex gap-4 p-4">
+      {/* Left Panel - Instructions & Controls (30%) */}
+      <div className="w-[30%] flex flex-col gap-4">
+        {/* Header */}
+        <div className="text-center">
+          <Terminal className="w-8 h-8 md:w-12 md:h-12 text-blue-500 mx-auto mb-2 md:mb-4" />
+          <h3 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Authenticate with GitHub
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Use the terminal to sign in to your GitHub account.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-2">
           {!hasStarted && (
             <Button
               onClick={handleStartAuth}
               disabled={!isConnected}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm w-full sm:w-auto"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               <Terminal className="w-4 h-4 mr-2" />
-              <span className="truncate">{isConnected ? 'Start Authentication' : 'Connecting...'}</span>
+              {isConnected ? 'Start Authentication' : 'Connecting...'}
             </Button>
           )}
 
@@ -159,10 +190,23 @@ export const StepGithubAuth = ({
             )
           )}
         </div>
+
+        {/* Instructions */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 flex-1">
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 text-sm">
+            Follow these steps:
+          </h4>
+          <ol className="space-y-1 text-xs text-blue-800 dark:text-blue-200">
+            <li>1. Click &ldquo;Start Authentication&rdquo; above</li>
+            <li>2. Follow the terminal prompts to authenticate</li>
+            <li>3. Click &ldquo;Check Authentication&rdquo; when done</li>
+            <li>4. Click &ldquo;Complete Setup&rdquo; to proceed</li>
+          </ol>
+        </div>
       </div>
 
-      {/* Terminal Container - fixed height for mobile */}
-      <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-80 sm:h-96">
+      {/* Right Panel - Terminal (70%) */}
+      <div className="w-[70%] bg-gray-900 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-full">
         <div className="bg-gray-800 px-2 sm:px-4 py-2 border-b border-gray-700 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex gap-1.5">
@@ -181,11 +225,11 @@ export const StepGithubAuth = ({
         </div>
         
         <div className="flex-1 min-h-0">
-          {repositoryUrl && (
+          {wsUrl && (
             <TTYDTerminal
-              key={repositoryUrl}
+              key={wsUrl}
               ref={terminalRef}
-              wsUrl={repositoryUrl}
+              wsUrl={wsUrl}
               className="w-full h-full"
               onConnectionChange={setIsConnected}
             />
@@ -193,18 +237,6 @@ export const StepGithubAuth = ({
         </div>
       </div>
 
-      {/* Instructions */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800 flex-shrink-0">
-        <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 text-sm sm:text-base">
-          Follow these steps:
-        </h4>
-        <ol className="space-y-1 text-xs sm:text-sm text-blue-800 dark:text-blue-200">
-          <li>1. Click the blue &ldquo;Start Authentication&rdquo; button above</li>
-          <li>2. Follow the prompts in the terminal to authenticate with GitHub</li>
-          <li>3. Once completed, click &ldquo;Verify Authentication&rdquo;</li>
-          <li>4. Click &ldquo;Next&rdquo; to proceed to repository selection</li>
-        </ol>
-      </div>
 
     </div>
   );
