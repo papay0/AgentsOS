@@ -373,52 +373,71 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     },
 
     updateWorkspaceUrls: (repositories: Repository[]) => {
+      console.log('🔍 DEBUG: updateWorkspaceUrls called with repositories:', repositories.map((r, i) => ({ 
+        index: i, 
+        name: r.name, 
+        ports: r.ports 
+      })));
       
-      set((state) => ({
-        workspaces: state.workspaces.map(workspace => {
-          // Find the matching repository with updated URLs
-          const updatedRepo = repositories.find(repo => repo.name === workspace.repository.name);
-          if (!updatedRepo) {
-            return workspace;
-          }
-
-
-          // Update the workspace's repository URLs
-          const updatedWorkspace = {
-            ...workspace,
-            repository: { ...workspace.repository, urls: updatedRepo.urls }
-          };
-
-          // Update all windows in this workspace with new URLs and ports
-          const updatedWindows = workspace.windows.map(window => {
-
-            // Update URL and port based on window type
-            let newUrl = '';
-            const updates: Partial<typeof window> = {};
+      set((state) => {
+        console.log('🔍 DEBUG: Current workspaces:', state.workspaces.map(w => ({ 
+          name: w.name, 
+          repoName: w.repository.name 
+        })));
+        
+        return {
+          workspaces: state.workspaces.map(workspace => {
+            console.log(`🔍 DEBUG: Looking for repository match for workspace "${workspace.name}" (repo: "${workspace.repository.name}")`);
             
-            switch (window.type) {
-              case 'vscode':
-                newUrl = updatedRepo.urls?.vscode || '';
-                updates.vscodePort = updatedRepo.ports?.vscode;
-                break;
-              case 'claude':
-                newUrl = updatedRepo.urls?.claude || '';
-                updates.claudePort = updatedRepo.ports?.claude;
-                break;
-              case 'terminal':
-                newUrl = updatedRepo.urls?.terminal || '';
-                updates.terminalPort = updatedRepo.ports?.terminal;
-                break;
-              default:
-                newUrl = window.repositoryUrl || '';
+            // Find the matching repository with updated URLs
+            const updatedRepo = repositories.find(repo => repo.name === workspace.repository.name);
+            console.log(`🔍 DEBUG: Found match:`, updatedRepo ? { 
+              name: updatedRepo.name, 
+              ports: updatedRepo.ports 
+            } : 'NO MATCH');
+            
+            if (!updatedRepo) {
+              console.warn(`⚠️ DEBUG: No repository found for workspace "${workspace.name}" looking for repo "${workspace.repository.name}"`);
+              return workspace;
             }
 
-            return { ...window, repositoryUrl: newUrl, ...updates };
-          });
+            // Update the workspace's repository URLs
+            const updatedWorkspace = {
+              ...workspace,
+              repository: { ...workspace.repository, urls: updatedRepo.urls }
+            };
 
-          return { ...updatedWorkspace, windows: updatedWindows };
-        })
-      }));
+            // Update all windows in this workspace with new URLs and ports
+            const updatedWindows = workspace.windows.map(window => {
+
+              // Update URL and port based on window type
+              let newUrl = '';
+              const updates: Partial<typeof window> = {};
+              
+              switch (window.type) {
+                case 'vscode':
+                  newUrl = updatedRepo.urls?.vscode || '';
+                  updates.vscodePort = updatedRepo.ports?.vscode;
+                  break;
+                case 'claude':
+                  newUrl = updatedRepo.urls?.claude || '';
+                  updates.claudePort = updatedRepo.ports?.claude;
+                  break;
+                case 'terminal':
+                  newUrl = updatedRepo.urls?.terminal || '';
+                  updates.terminalPort = updatedRepo.ports?.terminal;
+                  break;
+                default:
+                  newUrl = window.repositoryUrl || '';
+              }
+
+              return { ...window, repositoryUrl: newUrl, ...updates };
+            });
+
+            return { ...updatedWorkspace, windows: updatedWindows };
+          })
+        }
+      });
     },
 
     setSandboxId: (sandboxId: string | null) => {

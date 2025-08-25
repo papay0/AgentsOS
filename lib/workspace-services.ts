@@ -21,6 +21,12 @@ export class WorkspaceServices {
    * Setup services for multiple repositories (one instance per repo)
    */
   async setupRepositoryServices(sandbox: Sandbox, rootDir: string, repositories: Repository[]): Promise<RepositoryWithUrls[]> {
+    console.log('🔍 DEBUG: setupRepositoryServices input order:', repositories.map((r, i) => ({ 
+      index: i, 
+      name: r.name,
+      id: r.id,
+      sourceType: r.sourceType 
+    })));
     this.logger.info(`Setting up services for ${repositories.length} repositories...`);
     
     const repositoriesWithUrls: RepositoryWithUrls[] = [];
@@ -29,6 +35,8 @@ export class WorkspaceServices {
       const repo = repositories[i];
       const ports = this.allocatePorts(i);
       const repoPath = `${rootDir}/projects/${repo.name.replace(/[^a-zA-Z0-9-_]/g, '-')}`;
+      
+      console.log(`🔍 DEBUG: Repository[${i}] "${repo.name}" → Path: ${repoPath}, Ports: ${JSON.stringify(ports)}`);
       
       // Create startup scripts for this repository
       await this.createRepositoryScripts(sandbox, rootDir, repoPath, repo.name);
@@ -55,6 +63,14 @@ export class WorkspaceServices {
     
     // Verify all services
     await this.verifyRepositoryServices(sandbox, rootDir, repositoriesWithUrls);
+    
+    console.log('🔍 DEBUG: setupRepositoryServices output order:', repositoriesWithUrls.map((r, i) => ({ 
+      index: i, 
+      name: r.name,
+      id: r.id,
+      ports: PortManager.getPortsForSlot(i),
+      urls: r.urls 
+    })));
     
     return repositoriesWithUrls;
   }

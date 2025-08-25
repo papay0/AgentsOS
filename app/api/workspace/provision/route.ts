@@ -82,9 +82,9 @@ async function addRepositoriesToWorkspace(
       // No existing workspace - create default repository as slot 0
       const defaultPorts = PortManager.getPortsForSlot(0);
       repositories.push({
-        id: 'repo-default',
+        id: 'repo-0000000000000-0', // Ensure default always sorts first
         url: '',
-        name: 'Default',
+        name: 'default',
         description: 'Default workspace for new projects',
         sourceType: 'default' as const,
         ports: defaultPorts,
@@ -95,6 +95,7 @@ async function addRepositoriesToWorkspace(
 
     // Add new cloned repositories
     if (repositoryResults.details.length > 0) {
+      const baseTimestamp = Date.now();
       const clonedRepos = repositoryResults.details
         .filter((detail: RepositoryProvisionDetail) => detail.status === 'cloned' || detail.status === 'skipped')
         .map((detail: RepositoryProvisionDetail, index: number) => {
@@ -102,8 +103,9 @@ async function addRepositoriesToWorkspace(
           const nextSlot = repositories.length + index; // Use next available slot
           const ports = PortManager.getPortsForSlot(nextSlot);
           
+          // Ensure unique IDs by adding index to timestamp
           return {
-            id: `repo-${Date.now()}-${nextSlot}`,
+            id: `repo-${baseTimestamp + index}-${nextSlot}`,
             url: detail.repository,
             name: repoName,
             description: `Repository: ${detail.repository}`,
@@ -120,6 +122,17 @@ async function addRepositoriesToWorkspace(
       });
     }
 
+    // Sort repositories deterministically before saving to Firebase
+    // This ensures consistent ordering across all operations
+    repositories.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+    
+    console.log('🔍 DEBUG: Saving sorted repositories to Firebase:', repositories.map((r, i) => ({
+      index: i,
+      id: r.id,
+      name: r.name,
+      ports: r.ports
+    })));
+    
     // Save updated workspace to Firebase
     await userService.createOrUpdateWorkspace(userId, {
       id: existingWorkspace?.id || sandboxId,

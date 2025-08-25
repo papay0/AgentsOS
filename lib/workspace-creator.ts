@@ -136,7 +136,7 @@ export class WorkspaceCreator {
   createUserWorkspace(sandboxId: string, repositoriesWithUrls: RepositoryWithUrls[]): UserWorkspace {
     // Convert RepositoryWithUrls to Repository with ports
     const repositories: Repository[] = repositoriesWithUrls.map((repo, index) => ({
-      id: repo.url ? `repo-${Date.now()}-${index}` : 'default-workspace',
+      id: repo.url ? `repo-${Date.now()}-${index}` : 'repo-0000000000000-0',
       url: repo.url || '',
       name: repo.name,
       description: repo.description,
@@ -156,6 +156,14 @@ export class WorkspaceCreator {
 
   private async cloneRepositories(sandbox: Sandbox, projectDir: string, repositories: Repository[]): Promise<void> {
     try {
+      console.log('🔍 DEBUG: cloneRepositories input order:', repositories.map((r, i) => ({ 
+        index: i, 
+        name: r.name,
+        id: r.id,
+        url: r.url,
+        sourceType: r.sourceType 
+      })));
+      
       const clonedRepos: string[] = [];
       
       for (const repository of repositories) {

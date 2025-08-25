@@ -23,7 +23,7 @@ export class PortManager {
    */
   static createDefaultRepository(): Repository {
     return {
-      id: 'default-workspace',
+      id: 'repo-0000000000000-0', // Ensure default always sorts first
       url: '',
       name: 'default',
       description: 'Default workspace for new projects',
