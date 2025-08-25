@@ -334,7 +334,21 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
             const output = data.slice(1);
             console.log('📝 Control message:', output.substring(0, 100));
           } else {
-            console.log('⚠️ Ignoring message type:', data.substring(0, 50));
+            // Check if this is a JSON control message from proxy
+            try {
+              const message = JSON.parse(data);
+              if (message.type === 'reconnecting') {
+                onStatusChange?.(`Reconnecting... (${message.attemptNumber}/${message.maxAttempts})`);
+              } else if (message.type === 'daytona_connected') {
+                onStatusChange?.('Connected');
+              } else if (message.type === 'error') {
+                onStatusChange?.(message.message || 'Connection error');
+              } else {
+                console.log('📝 Control message:', message.type);
+              }
+            } catch {
+              console.log('⚠️ Ignoring message type:', data.substring(0, 50));
+            }
           }
         } else {
           // Handle binary data (ArrayBuffer/Blob)
