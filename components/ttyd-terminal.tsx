@@ -134,6 +134,28 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   onConnectionFailure,
   className
 }, ref) => {
+  // Extract port number from wsUrl for debugging
+  const extractPortFromUrl = (url: string): string => {
+    try {
+      // Handle URL patterns like: ws://domain?port=8080&token=xyz
+      const urlObj = new URL(url);
+      const portParam = urlObj.searchParams.get('port');
+      if (portParam) return portParam;
+      
+      // Handle subdomain patterns like: ws://8080-workspace.domain.com
+      const hostname = urlObj.hostname;
+      const subdomainMatch = hostname.match(/^(\d+)-/);
+      if (subdomainMatch) return subdomainMatch[1];
+      
+      // Fallback to URL port or unknown
+      return urlObj.port || 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  };
+  
+  const port = extractPortFromUrl(wsUrl);
+  
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
   const fitAddon = useRef<ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null>(null);
@@ -306,6 +328,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       // Set up ResizeManager
       resizeManager.current.setWebSocket(websocket.current);
       resizeManager.current.setFitAddon(fitAddon.current);
+      resizeManager.current.setPort(port);
       resizeManager.current.setConnected(true);
       
       // Wait for ttyd to process auth, then send proper resize via ResizeManager
@@ -566,7 +589,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
 
     // Open terminal in DOM - with safety check
     if (terminalRef.current && terminalRef.current.offsetWidth > 0 && terminalRef.current.offsetHeight > 0) {
-      console.log('📺 Opening terminal with dimensions:', {
+      console.log(`[${port}] 📺 Opening terminal with dimensions:`, {
         width: terminalRef.current.offsetWidth,
         height: terminalRef.current.offsetHeight
       });
@@ -580,7 +603,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       // Retry after a delay
       setTimeout(() => {
         if (terminalRef.current && terminal.current && terminalRef.current.offsetWidth > 0) {
-          console.log('🔄 Retrying terminal open with dimensions:', {
+          console.log(`[${port}] 🔄 Retrying terminal open with dimensions:`, {
             width: terminalRef.current.offsetWidth,
             height: terminalRef.current.offsetHeight
           });
@@ -639,7 +662,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       setTimeout(() => {
         if (fitAddon.current) {
           fitAddon.current.fit();
-          console.log('🔧 Fitting terminal after window snap...');
+          console.log(`[${port}] 🔧 Fitting terminal after window snap...`);
           // Step 4c: Much longer delay to test timing
           resizeManager.current.sendDebouncedResize(500);
         }
@@ -674,12 +697,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   // Update terminal theme when resolved theme changes
   useEffect(() => {
     if (terminal.current) {
-      console.log('🎨 Updating terminal theme to:', resolvedTheme, terminalThemes[resolvedTheme]);
+      console.log(`[${port}] 🎨 Updating terminal theme to:`, resolvedTheme, terminalThemes[resolvedTheme]);
       terminal.current.options.theme = terminalThemes[resolvedTheme];
       
       // Force a refresh to apply the new theme
       terminal.current.refresh(0, terminal.current.rows - 1);
-      console.log('🔄 Terminal theme updated and refreshed');
+      console.log(`[${port}] 🔄 Terminal theme updated and refreshed`);
     }
   }, [resolvedTheme]);
 

@@ -4,6 +4,7 @@ export class ResizeManager {
   private fitAddon: any = null;
   private lastCols: number = 0;
   private lastRows: number = 0;
+  private port: string = 'unknown';
 
   setWebSocket(ws: WebSocket | null) {
     this.websocket = ws;
@@ -11,6 +12,10 @@ export class ResizeManager {
 
   setFitAddon(addon: any) {
     this.fitAddon = addon;
+  }
+
+  setPort(port: string) {
+    this.port = port;
   }
 
   private getDimensions(): { cols: number; rows: number } | null {
@@ -26,18 +31,18 @@ export class ResizeManager {
 
   private sendResize(force: boolean = false) {
     if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
-      console.log('⏭️ Skipping resize - not connected');
+      console.log(`[${this.port}] ⏭️ Skipping resize - not connected`);
       return;
     }
 
     const dimensions = this.getDimensions();
     if (!dimensions) {
-      console.log('⏭️ Skipping resize - no valid dimensions');
+      console.log(`[${this.port}] ⏭️ Skipping resize - no valid dimensions`);
       return;
     }
 
     if (!force && !this.hasChanged(dimensions.cols, dimensions.rows)) {
-      console.log(`⏭️ Skipping resize - dimensions unchanged (${dimensions.cols}x${dimensions.rows})`);
+      console.log(`[${this.port}] ⏭️ Skipping resize - dimensions unchanged (${dimensions.cols}x${dimensions.rows})`);
       return;
     }
 
@@ -52,7 +57,7 @@ export class ResizeManager {
     this.lastCols = dimensions.cols;
     this.lastRows = dimensions.rows;
     
-    console.log(`📐 ResizeManager: Terminal resized to ${dimensions.cols}x${dimensions.rows}`);
+    console.log(`[${this.port}] 📐 ResizeManager: Terminal resized to ${dimensions.cols}x${dimensions.rows}`);
   }
 
   // Send initial resize after connection - identical to working manual logic
