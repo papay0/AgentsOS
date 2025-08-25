@@ -676,6 +676,9 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       onFocus();
     }
     
+    // Step 2: Send resize on focus to ensure perfect layout
+    resizeManager.current.sendFocusResize();
+    
     // Only trigger mobile keyboard logic on mobile devices
     if (window.visualViewport && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
       // Small delay to allow keyboard to start appearing

@@ -36,13 +36,11 @@ export const TerminalDesktop = ({ terminalPort, onFocus }: TerminalAppProps & { 
     buildWsUrl();
   }, [terminalPort, getToken, authAttempt]);
   
-  // Use terminalPort as key to ensure each terminal gets its own component instance
-  // This prevents connection reuse between different ports
+  // Component will handle connection changes via wsUrl updates
   return (
     <div className="w-full h-full">
       {terminalPort ? (
         <TTYDTerminal 
-          key={`terminal-${terminalPort}`} 
           wsUrl={wsUrl} 
           className="w-full h-full"
           onFocus={onFocus}
