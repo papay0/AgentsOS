@@ -73,4 +73,24 @@ export class ResizeManager {
     setTimeout(() => this.sendResize(true), 1200); // 1.2s
     setTimeout(() => this.sendResize(true), 2000); // 2s (final attempt)
   }
+
+  // Send debounced resize for window/container changes
+  private resizeTimer: NodeJS.Timeout | null = null;
+  
+  sendDebouncedResize(delay: number = 150) {
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+    }
+    this.resizeTimer = setTimeout(() => {
+      this.sendResize(true); // Force resize after debounce
+      this.resizeTimer = null;
+    }, delay);
+  }
+
+  cleanup() {
+    if (this.resizeTimer) {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = null;
+    }
+  }
 }

@@ -624,17 +624,22 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     const handleResize = () => {
       if (fitAddon.current) {
         fitAddon.current.fit();
+        // Step 4: Send debounced resize after browser window resize
+        resizeManager.current.sendDebouncedResize(150);
       }
     };
     
     // Handle window content resize (from AgentsOS windows)
     const handleWindowContentResize = () => {
-      // Add a small delay to ensure the container has resized
+      // Test with much longer delay to see if it's timing issue
       setTimeout(() => {
         if (fitAddon.current) {
           fitAddon.current.fit();
+          console.log('🔧 Fitting terminal after window snap...');
+          // Step 4c: Much longer delay to test timing
+          resizeManager.current.sendDebouncedResize(500);
         }
-      }, 50);
+      }, 1500); // Wait even longer for snap animation + DOM updates
     };
     
     window.addEventListener('resize', handleResize);
@@ -643,6 +648,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('windowContentResize', handleWindowContentResize);
+      resizeManager.current.cleanup();
       onDataDisposable.current?.dispose();
       onResizeDisposable.current?.dispose();
       terminal.current?.dispose();
