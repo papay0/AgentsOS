@@ -306,6 +306,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       // Set up ResizeManager
       resizeManager.current.setWebSocket(websocket.current);
       resizeManager.current.setFitAddon(fitAddon.current);
+      resizeManager.current.setConnected(true);
       
       // Wait for ttyd to process auth, then send proper resize via ResizeManager
       setTimeout(() => {
@@ -373,6 +374,9 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       setIsConnected(false);
       onConnectionChange?.(false);
       onStatusChange?.(event.code === 1000 ? 'Disconnected' : `Connection failed (${event.code})`);
+      
+      // Stop periodic resize when disconnected
+      resizeManager.current.setConnected(false);
       
       // Notify parent of connection failure for retry logic
       if (event.code !== 1000 && onConnectionFailure) {

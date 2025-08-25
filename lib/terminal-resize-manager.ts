@@ -76,6 +76,17 @@ export class ResizeManager {
 
   // Send debounced resize for window/container changes
   private resizeTimer: NodeJS.Timeout | null = null;
+  private periodicTimer: NodeJS.Timeout | null = null;
+  private isConnected: boolean = false;
+  
+  setConnected(connected: boolean) {
+    this.isConnected = connected;
+    if (connected) {
+      this.startPeriodicResize();
+    } else {
+      this.stopPeriodicResize();
+    }
+  }
   
   sendDebouncedResize(delay: number = 150) {
     if (this.resizeTimer) {
@@ -87,10 +98,28 @@ export class ResizeManager {
     }, delay);
   }
 
+  // Step 5: Periodic safety refresh when terminal is focused
+  private startPeriodicResize() {
+    this.stopPeriodicResize();
+    this.periodicTimer = setInterval(() => {
+      if (document.hasFocus()) {
+        this.sendResize(); // Non-forced, only if dimensions changed
+      }
+    }, 8000); // Every 8 seconds
+  }
+
+  private stopPeriodicResize() {
+    if (this.periodicTimer) {
+      clearInterval(this.periodicTimer);
+      this.periodicTimer = null;
+    }
+  }
+
   cleanup() {
     if (this.resizeTimer) {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
     }
+    this.stopPeriodicResize();
   }
 }
