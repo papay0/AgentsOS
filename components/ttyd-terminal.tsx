@@ -44,6 +44,7 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Terminal, ITerminalAddon } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
+import { ResizeManager } from '@/lib/terminal-resize-manager';
 
 const terminalThemes = {
   light: {
@@ -140,6 +141,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   const onDataDisposable = useRef<{ dispose: () => void } | null>(null);
   const onResizeDisposable = useRef<{ dispose: () => void } | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const resizeManager = useRef<ResizeManager>(new ResizeManager());
   
   // Get current theme from document (set by ThemeProvider)
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
@@ -301,21 +303,13 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       
       websocket.current!.send(new TextEncoder().encode(authMessage));
       
-      // Wait for ttyd to process auth, then send proper resize
+      // Set up ResizeManager
+      resizeManager.current.setWebSocket(websocket.current);
+      resizeManager.current.setFitAddon(fitAddon.current);
+      
+      // Wait for ttyd to process auth, then send proper resize via ResizeManager
       setTimeout(() => {
-        if (websocket.current?.readyState === WebSocket.OPEN && terminal.current && fitAddon.current) {
-          const dimensions = fitAddon.current.proposeDimensions();
-          if (dimensions) {
-            // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
-            const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
-            const resizeBytes = new TextEncoder().encode(resizeData);
-            const payload = new Uint8Array(resizeBytes.length + 1);
-            payload[0] = 0x31; // '1' as byte
-            payload.set(resizeBytes, 1);
-            
-            websocket.current!.send(payload);
-          }
-        }
+        resizeManager.current.sendInitialResize();
       }, 200);
 
     };
