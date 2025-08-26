@@ -1,10 +1,12 @@
-// Step 2: ResizeManager with initial resize + focus resize
+// Simple ResizeManager with per-terminal debouncing
 export class ResizeManager {
   private websocket: WebSocket | null = null;
   private fitAddon: any = null;
   private lastCols: number = 0;
   private lastRows: number = 0;
   private port: string = 'unknown';
+  private resizeTimeout: NodeJS.Timeout | null = null;
+  private readonly DEBOUNCE_MS = 1000; // 1 second debounce
 
   setWebSocket(ws: WebSocket | null) {
     this.websocket = ws;
@@ -29,22 +31,25 @@ export class ResizeManager {
     return cols !== this.lastCols || rows !== this.lastRows;
   }
 
-  private sendResize(force: boolean = false) {
+  /**
+   * SINGLE RESIZE METHOD - This is the only method that actually sends resize to server
+   * You should see ONLY ONE log from here per resize operation
+   */
+  private performResize() {
+    console.log(`🔍 [${this.port}] performResize() called - checking conditions...`);
+    
     if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
-      console.log(`[${this.port}] ⏭️ Skipping resize - not connected`);
+      console.log(`❌ [${this.port}] performResize FAILED: WebSocket not ready (${this.websocket ? this.websocket.readyState : 'null'})`);
       return;
     }
+    console.log(`✅ [${this.port}] WebSocket is ready`);
 
     const dimensions = this.getDimensions();
     if (!dimensions) {
-      console.log(`[${this.port}] ⏭️ Skipping resize - no valid dimensions`);
+      console.log(`❌ [${this.port}] performResize FAILED: No dimensions from fitAddon`);
       return;
     }
-
-    if (!force && !this.hasChanged(dimensions.cols, dimensions.rows)) {
-      console.log(`[${this.port}] ⏭️ Skipping resize - dimensions unchanged (${dimensions.cols}x${dimensions.rows})`);
-      return;
-    }
+    console.log(`✅ [${this.port}] Got dimensions: ${dimensions.cols}x${dimensions.rows}`);
 
     // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
     const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
@@ -57,74 +62,58 @@ export class ResizeManager {
     this.lastCols = dimensions.cols;
     this.lastRows = dimensions.rows;
     
-    console.log(`[${this.port}] 📐 ResizeManager: Terminal resized to ${dimensions.cols}x${dimensions.rows}`);
+    // THE ONLY LOG YOU SHOULD SEE PER RESIZE
+    console.log(`🎯 [${this.port}] TERMINAL RESIZED: ${dimensions.cols}x${dimensions.rows}`);
   }
 
-  // Send initial resize after connection - identical to working manual logic
+  /**
+   * SINGLE ENTRY POINT for all resize triggers
+   * This method debounces all resize requests to prevent spam
+   */
+  triggerResize(source: string = 'unknown') {
+    // Clear any pending resize
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+
+    // Schedule new resize after debounce period
+    this.resizeTimeout = setTimeout(() => {
+      this.performResize();
+      this.resizeTimeout = null;
+    }, this.DEBOUNCE_MS);
+  }
+
+  // Convenience methods that all route through triggerResize
   sendInitialResize() {
-    this.sendResize(true); // Force initial resize
+    // For initial resize, perform immediately without debounce
+    this.performResize();
   }
 
-  // Send resize on focus - ensures perfect layout when user interacts
   sendFocusResize() {
-    this.sendResize(true); // Force resize on focus
+    this.triggerResize('focus');
   }
 
-  // Send multiple delayed resizes to catch when terminal is fully ready
+  sendWindowResize() {
+    this.triggerResize('window');
+  }
+
+  sendDebouncedResize(delay?: number) {
+    this.triggerResize('debounced');
+  }
+
   sendDelayedResizes() {
-    // Multiple attempts with increasing delays
-    setTimeout(() => this.sendResize(true), 500);  // 500ms
-    setTimeout(() => this.sendResize(true), 800);  // 800ms  
-    setTimeout(() => this.sendResize(true), 1200); // 1.2s
-    setTimeout(() => this.sendResize(true), 2000); // 2s (final attempt)
+    // For initial setup, send immediate resize
+    setTimeout(() => this.performResize(), 500);
   }
 
-  // Send debounced resize for window/container changes
-  private resizeTimer: NodeJS.Timeout | null = null;
-  private periodicTimer: NodeJS.Timeout | null = null;
-  private isConnected: boolean = false;
-  
   setConnected(connected: boolean) {
-    this.isConnected = connected;
-    if (connected) {
-      this.startPeriodicResize();
-    } else {
-      this.stopPeriodicResize();
-    }
-  }
-  
-  sendDebouncedResize(delay: number = 150) {
-    if (this.resizeTimer) {
-      clearTimeout(this.resizeTimer);
-    }
-    this.resizeTimer = setTimeout(() => {
-      this.sendResize(true); // Force resize after debounce
-      this.resizeTimer = null;
-    }, delay);
-  }
-
-  // Step 5: Periodic safety refresh when terminal is focused
-  private startPeriodicResize() {
-    this.stopPeriodicResize();
-    this.periodicTimer = setInterval(() => {
-      if (document.hasFocus()) {
-        this.sendResize(); // Non-forced, only if dimensions changed
-      }
-    }, 8000); // Every 8 seconds
-  }
-
-  private stopPeriodicResize() {
-    if (this.periodicTimer) {
-      clearInterval(this.periodicTimer);
-      this.periodicTimer = null;
-    }
+    // No periodic resize needed - we resize on actual events
   }
 
   cleanup() {
-    if (this.resizeTimer) {
-      clearTimeout(this.resizeTimer);
-      this.resizeTimer = null;
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = null;
     }
-    this.stopPeriodicResize();
   }
 }
