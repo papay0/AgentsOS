@@ -13,35 +13,24 @@ export function PortShortcutIcon() {
   const sandboxId = useWorkspaceStore((state) => state.sandboxId);
   const isMobile = useIsMobile();
 
-  // Generate the port URL using subdomain proxy
+  // Generate the port URL using HTTP subdomain proxy
   // This solves iframe asset loading issues that path-based proxy can't handle
   // Using lvh.me for local testing - it always resolves to 127.0.0.1
   const isDevelopment = process.env.NODE_ENV === 'development';
-  const wsProxyUrl = process.env.NEXT_PUBLIC_WEBSOCKET_PROXY_URL || 'ws://localhost:3000';
-  
-  // Extract port from WebSocket URL
-  const urlParts = wsProxyUrl.match(/:(\d+)$/);
-  const proxyPort = urlParts ? urlParts[1] : '3000';
+  const httpProxyDomain = process.env.NEXT_PUBLIC_HTTP_PROXY_DOMAIN || 'agentspod.dev';
   
   // For local dev, use lvh.me which resolves *.lvh.me to 127.0.0.1
-  // For production, determine domain based on WebSocket proxy URL
-  let proxyDomain;
-  if (isDevelopment) {
-    proxyDomain = `lvh.me:${proxyPort}`;
-  } else {
-    // Extract domain from WebSocket URL
-    const domain = wsProxyUrl.replace('wss://', '').replace('ws://', '');
-    if (domain.includes('proxy.agentsos.app')) {
-      proxyDomain = 'proxy.agentsos.app';
-    } else {
-      // Railway URL or other custom domain
-      proxyDomain = domain;
-    }
-  }
+  // For production, use the configured HTTP proxy domain
+  // let proxyDomain;
+  // if (isDevelopment) {
+  //   proxyDomain = 'lvh.me:3000';
+  // } else {
+  //   proxyDomain = httpProxyDomain;
+  // }
   
   // Use subdomain format: {port}-{sandbox-id}.domain
   // This ensures browser resolves relative URLs correctly in iframes
-  const portUrl = sandboxId ? `http://${portInput}-${sandboxId}.${proxyDomain}` : '';
+  const portUrl = sandboxId ? `http://${portInput}-${sandboxId}.${httpProxyDomain}` : '';
 
   // Handle click outside to close popup
   useEffect(() => {
