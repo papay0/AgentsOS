@@ -330,7 +330,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       resizeManager.current.setWebSocket(websocket.current);
       resizeManager.current.setFitAddon(fitAddon.current);
       resizeManager.current.setPort(port);
-      resizeManager.current.setConnected(true);
+      resizeManager.current.setConnected();
       
       // Don't send resize here - wait for first content
 
@@ -431,7 +431,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       onStatusChange?.(event.code === 1000 ? 'Disconnected' : `Connection failed (${event.code})`);
       
       // Stop periodic resize when disconnected
-      resizeManager.current.setConnected(false);
+      resizeManager.current.setConnected();
       
       // Reset first content flag for next connection
       hasReceivedFirstContent.current = false;
@@ -467,7 +467,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       // Handle resize - use ResizeManager to avoid duplicates
       onResizeDisposable.current = terminal.current.onResize(() => {
         // Let ResizeManager handle all resize logic with debouncing
-        resizeManager.current.triggerResize('terminal-event');
+        resizeManager.current.triggerResize();
       });
     }
   }, [wsUrl]); // Removed callback dependencies to prevent infinite re-renders

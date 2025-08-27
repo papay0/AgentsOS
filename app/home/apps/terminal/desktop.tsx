@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 export const TerminalDesktop = ({ terminalPort, onFocus }: TerminalAppProps & { onFocus?: () => void }) => {
   const { getToken } = useAuth();
   const [wsUrl, setWsUrl] = useState('');
-  const [authAttempt, setAuthAttempt] = useState(0);
+  const [authAttempt] = useState(0);
   
   // Build WebSocket URL with authentication token
   useEffect(() => {

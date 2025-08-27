@@ -16,7 +16,6 @@ export function PortShortcutIcon() {
   // Generate the port URL using HTTP subdomain proxy
   // This solves iframe asset loading issues that path-based proxy can't handle
   // Using lvh.me for local testing - it always resolves to 127.0.0.1
-  const isDevelopment = process.env.NODE_ENV === 'development';
   const httpProxyDomain = process.env.NEXT_PUBLIC_HTTP_PROXY_DOMAIN || 'agentspod.dev';
   
   // For local dev, use lvh.me which resolves *.lvh.me to 127.0.0.1

@@ -1,7 +1,9 @@
+import { ITerminalAddon } from '@xterm/xterm';
+
 // Simple ResizeManager with per-terminal debouncing
 export class ResizeManager {
   private websocket: WebSocket | null = null;
-  private fitAddon: any = null;
+  private fitAddon: ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null = null;
   private lastCols: number = 0;
   private lastRows: number = 0;
   private port: string = 'unknown';
@@ -12,7 +14,7 @@ export class ResizeManager {
     this.websocket = ws;
   }
 
-  setFitAddon(addon: any) {
+  setFitAddon(addon: ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null) {
     this.fitAddon = addon;
   }
 
@@ -70,7 +72,7 @@ export class ResizeManager {
    * SINGLE ENTRY POINT for all resize triggers
    * This method debounces all resize requests to prevent spam
    */
-  triggerResize(source: string = 'unknown') {
+  triggerResize() {
     // Clear any pending resize
     if (this.resizeTimeout) {
       clearTimeout(this.resizeTimeout);
@@ -90,15 +92,15 @@ export class ResizeManager {
   }
 
   sendFocusResize() {
-    this.triggerResize('focus');
+    this.triggerResize();
   }
 
   sendWindowResize() {
-    this.triggerResize('window');
+    this.triggerResize();
   }
 
-  sendDebouncedResize(delay?: number) {
-    this.triggerResize('debounced');
+  sendDebouncedResize() {
+    this.triggerResize();
   }
 
   sendDelayedResizes() {
@@ -106,7 +108,7 @@ export class ResizeManager {
     setTimeout(() => this.performResize(), 500);
   }
 
-  setConnected(connected: boolean) {
+  setConnected() {
     // No periodic resize needed - we resize on actual events
   }
 
