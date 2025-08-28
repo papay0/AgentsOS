@@ -50,14 +50,6 @@ export class DaytonaClient {
     return await this.manager.deleteWorkspace(sandboxId);
   }
 
-  async getWorkspaceUrls(sandboxId: string): Promise<{
-    terminalUrl: string;
-    claudeTerminalUrl: string;
-    vscodeUrl: string;
-  }> {
-    return await this.manager.getWorkspaceUrls(sandboxId);
-  }
-
   async getSandbox(sandboxId: string): Promise<Sandbox> {
     return await this.manager.getSandbox(sandboxId);
   }

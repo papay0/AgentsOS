@@ -470,7 +470,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         resizeManager.current.triggerResize();
       });
     }
-  }, [wsUrl]); // Removed callback dependencies to prevent infinite re-renders
+  }, [wsUrl]);
 
   // ATTEMPT 6: Proper SGR mouse protocol for tmux compatibility (Fixed coordinates)
   useEffect(() => {
@@ -588,6 +588,10 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
 
   useEffect(() => {
     if (!terminalRef.current) return;
+
+    // Capture ref values for cleanup
+    const currentTerminalRef = terminalRef.current;
+    const currentResizeManager = resizeManager.current;
 
     // Initialize terminal with current theme
     terminal.current = new Terminal({
@@ -708,19 +712,31 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('windowContentResize', handleWindowContentResize);
-      if (terminalRef.current) {
-        terminalRef.current.removeEventListener('focus', handleFocus, true);
+      if (currentTerminalRef) {
+        currentTerminalRef.removeEventListener('focus', handleFocus, true);
       }
-      resizeManager.current.cleanup();
+      currentResizeManager.cleanup();
       onDataDisposable.current?.dispose();
       onResizeDisposable.current?.dispose();
       terminal.current?.dispose();
     };
-  }, [resolvedTheme]); // Only recreate terminal when theme changes
+  }, [resolvedTheme, port]); // Only recreate terminal when theme changes
 
   // Separate useEffect for WebSocket connection management
   useEffect(() => {
-    if (!wsUrl || !terminal.current) return;
+    console.log('🔍 TTYDTerminal WebSocket effect:', {
+      wsUrl: wsUrl ? wsUrl.substring(0, 100) + '...' : 'empty',
+      hasTerminal: !!terminal.current,
+      extractedPort: port
+    });
+    
+    if (!wsUrl || !terminal.current) {
+      console.warn('⚠️ TTYDTerminal: Cannot connect -', { 
+        hasWsUrl: !!wsUrl, 
+        hasTerminal: !!terminal.current 
+      });
+      return;
+    }
     
     // Connect to WebSocket
     connectWebSocket();
@@ -740,7 +756,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       terminal.current.refresh(0, terminal.current.rows - 1);
       console.log(`[${port}] 🔄 Terminal theme updated and refreshed`);
     }
-  }, [resolvedTheme]);
+  }, [resolvedTheme, port]);
 
   // Handle terminal click/tap for mobile keyboard focus
   const handleTerminalInteraction = useCallback(() => {

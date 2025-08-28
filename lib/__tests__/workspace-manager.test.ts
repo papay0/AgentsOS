@@ -284,37 +284,4 @@ describe('WorkspaceManager', () => {
       });
     });
   });
-
-  describe('getWorkspaceUrls', () => {
-    it('returns all workspace URLs', async () => {
-      mockSandbox.getPreviewLink
-        .mockResolvedValueOnce({ url: 'https://terminal.example.com' })
-        .mockResolvedValueOnce({ url: 'https://claude.example.com' })
-        .mockResolvedValueOnce({ url: 'https://vscode.example.com' });
-
-      const result = await workspaceManager.getWorkspaceUrls('sandbox-123');
-
-      expect(result).toEqual({
-        terminalUrl: 'https://terminal.example.com',
-        claudeTerminalUrl: 'https://claude.example.com',
-        vscodeUrl: 'https://vscode.example.com',
-      });
-    });
-
-    it('handles URL fetch errors', async () => {
-      mockDaytona.get.mockRejectedValue(new Error('Sandbox not found'));
-
-      await expect(workspaceManager.getWorkspaceUrls('sandbox-123')).rejects.toThrow(
-        'Sandbox not found'
-      );
-    });
-
-    it('calls getPreviewLink with correct ports', async () => {
-      await workspaceManager.getWorkspaceUrls('sandbox-123');
-
-      expect(mockSandbox.getPreviewLink).toHaveBeenCalledWith(10000); // terminal
-      expect(mockSandbox.getPreviewLink).toHaveBeenCalledWith(4000);  // claude
-      expect(mockSandbox.getPreviewLink).toHaveBeenCalledWith(8080);  // vscode
-    });
-  });
 });

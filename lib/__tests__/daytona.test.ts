@@ -181,23 +181,6 @@ describe('DaytonaClient', () => {
     });
   });
 
-  describe('getWorkspaceUrls', () => {
-    it('delegates to WorkspaceManager', async () => {
-      const mockUrls = {
-        terminalUrl: 'https://terminal.example.com',
-        claudeTerminalUrl: 'https://claude.example.com',
-        vscodeUrl: 'https://vscode.example.com',
-      };
-
-      mockWorkspaceManager.getWorkspaceUrls.mockResolvedValue(mockUrls);
-
-      const result = await daytonaClient.getWorkspaceUrls('sandbox-123');
-
-      expect(mockWorkspaceManager.getWorkspaceUrls).toHaveBeenCalledWith('sandbox-123');
-      expect(result).toEqual(mockUrls);
-    });
-  });
-
   describe('getSandbox', () => {
     it('delegates to WorkspaceManager', async () => {
       const mockSandbox = {

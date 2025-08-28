@@ -310,36 +310,4 @@ export class WorkspaceManager {
       }
     });
   }
-
-  async getWorkspaceUrls(sandboxId: string): Promise<{
-    terminalUrl: string;
-    claudeTerminalUrl: string;
-    vscodeUrl: string;
-  }> {
-    try {
-      const sandbox = await this.daytona.get(sandboxId);
-      
-      // Get the preview links for each service
-      const ports = PortManager.getPortsForSlot(0);
-      const [terminalInfo, claudeTerminalInfo, vscodeInfo] = await Promise.all([
-        sandbox.getPreviewLink(ports.terminal),
-        sandbox.getPreviewLink(ports.claude),
-        sandbox.getPreviewLink(ports.vscode)
-      ]);
-      
-      return {
-        terminalUrl: terminalInfo.url,
-        claudeTerminalUrl: claudeTerminalInfo.url,
-        vscodeUrl: vscodeInfo.url
-      };
-    } catch (error) {
-      const errorData= {
-        error: error instanceof Error ? error : String(error),
-        code: 'GET_URLS_FAILED',
-        details: { sandboxId }
-      };
-      this.logger.logError('Failed to get workspace URLs', errorData);
-      throw error;
-    }
-  }
 }

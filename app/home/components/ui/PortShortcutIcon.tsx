@@ -18,17 +18,9 @@ export function PortShortcutIcon() {
   // Using lvh.me for local testing - it always resolves to 127.0.0.1
   const httpProxyDomain = process.env.NEXT_PUBLIC_HTTP_PROXY_DOMAIN || 'agentspod.dev';
   
-  // For local dev, use lvh.me which resolves *.lvh.me to 127.0.0.1
-  // For production, use the configured HTTP proxy domain
-  // let proxyDomain;
-  // if (isDevelopment) {
-  //   proxyDomain = 'lvh.me:3000';
-  // } else {
-  //   proxyDomain = httpProxyDomain;
-  // }
-  
-  // Use subdomain format: {port}-{sandbox-id}.domain
+  // Use subdomain format: {port}-{sandbox-id}.domain for production
   // This ensures browser resolves relative URLs correctly in iframes
+  // Use httpProxyDomain = 'lvh.me:3000' in order to dev locally on the proxy
   const portUrl = sandboxId ? `http://${portInput}-${sandboxId}.${httpProxyDomain}` : '';
 
   // Handle click outside to close popup
