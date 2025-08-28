@@ -11,6 +11,11 @@ interface RepositoryWithUrls extends Repository {
     terminal: string;
     claude: string;
   };
+  tokens?: {
+    vscode: string | null;
+    terminal: string | null;
+    claude: string | null;
+  };
 }
 
 export class WorkspaceServices {
@@ -47,12 +52,13 @@ export class WorkspaceServices {
       // Wait a bit for services to initialize
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Get preview URLs for this repository
-      const urls = await this.getRepositoryUrls(sandbox, ports);
+      // Get preview URLs and tokens for this repository
+      const urlsAndTokens = await this.getRepositoryUrls(sandbox, ports);
       
       repositoriesWithUrls.push({
         ...repo,
-        urls
+        urls: urlsAndTokens.urls,
+        tokens: urlsAndTokens.tokens
       });
       
       this.logger.success(`Services started for ${repo.name} - VSCode: ${ports.vscode}, Terminal: ${ports.terminal}, Claude: ${ports.claude}`);
@@ -129,7 +135,10 @@ export class WorkspaceServices {
     this.logger.info(`Started services for ${repoName} on ports ${ports.vscode}, ${ports.terminal}, ${ports.claude}`);
   }
 
-  private async getRepositoryUrls(sandbox: Sandbox, ports: { vscode: number; terminal: number; claude: number }): Promise<{ vscode: string; terminal: string; claude: string }> {
+  private async getRepositoryUrls(sandbox: Sandbox, ports: { vscode: number; terminal: number; claude: number }): Promise<{ 
+    urls: { vscode: string; terminal: string; claude: string };
+    tokens: { vscode: string | null; terminal: string | null; claude: string | null };
+  }> {
     const [vscodeInfo, terminalInfo, claudeInfo] = await Promise.all([
       sandbox.getPreviewLink(ports.vscode),
       sandbox.getPreviewLink(ports.terminal),
@@ -137,9 +146,16 @@ export class WorkspaceServices {
     ]);
     
     return {
-      vscode: vscodeInfo.url,
-      terminal: terminalInfo.url,
-      claude: claudeInfo.url
+      urls: {
+        vscode: vscodeInfo.url,
+        terminal: terminalInfo.url,
+        claude: claudeInfo.url
+      },
+      tokens: {
+        vscode: vscodeInfo.token || null,
+        terminal: terminalInfo.token || null,
+        claude: claudeInfo.token || null
+      }
     };
   }
 
