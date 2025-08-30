@@ -470,6 +470,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         resizeManager.current.triggerResize();
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsUrl]);
 
   // ATTEMPT 6: Proper SGR mouse protocol for tmux compatibility (Fixed coordinates)
@@ -744,6 +745,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     return () => {
       websocket.current?.close();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wsUrl, connectWebSocket]);
 
   // Update terminal theme when resolved theme changes

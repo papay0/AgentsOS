@@ -57,7 +57,7 @@ export async function POST(
       
       // Clean undefined values from repository data
       const cleanedRepositories = updatedRepositories.map(repo => {
-        const cleanedRepo: any = {
+        const cleanedRepo: Record<string, unknown> = {
           id: repo.id,
           name: repo.name,
           url: repo.url,
