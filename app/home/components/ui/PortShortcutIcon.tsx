@@ -5,6 +5,7 @@ import { Globe, ExternalLink, Copy } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@clerk/nextjs';
 
 export function PortShortcutIcon() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +13,7 @@ export function PortShortcutIcon() {
   const [copied, setCopied] = useState(false);
   const sandboxId = useWorkspaceStore((state) => state.sandboxId);
   const isMobile = useIsMobile();
+  const { getToken } = useAuth();
 
   // Generate the port URL using HTTP subdomain proxy
   // This solves iframe asset loading issues that path-based proxy can't handle
@@ -50,10 +52,25 @@ export function PortShortcutIcon() {
     };
   }, [isOpen]);
 
-  const handleOpenPort = () => {
+  const handleOpenPort = async () => {
     if (portUrl) {
-      window.open(portUrl, '_blank', 'noopener,noreferrer');
-      setIsOpen(false);
+      try {
+        // Get the current auth token from Clerk
+        const authToken = await getToken();
+        
+        if (!authToken) {
+          console.error('No auth token available');
+          return;
+        }
+        
+        // Add auth_token to the URL for initial authentication
+        const authenticatedUrl = `${portUrl}?auth_token=${authToken}`;
+        
+        window.open(authenticatedUrl, '_blank', 'noopener,noreferrer');
+        setIsOpen(false);
+      } catch (error) {
+        console.error('Failed to get auth token:', error);
+      }
     }
   };
 
