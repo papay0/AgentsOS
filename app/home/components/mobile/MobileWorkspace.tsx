@@ -22,6 +22,8 @@ export interface MobileApp {
   type: AppType;
   comingSoon?: boolean;
   repositoryUrl?: string;
+  terminalPort?: number;
+  claudePort?: number;
 }
 
 const getMobileAppColor = (primaryColor: string): string => {

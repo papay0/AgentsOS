@@ -47,12 +47,12 @@ export default function MobileApp({ app, onClose, theme, onThemeChange, isOpenin
     // Force TypeScript to recognize this as the full AppType union
     switch (app.type as AppType) {
       case 'terminal': {
-        const Component = MobileContent as React.ComponentType<{ repositoryUrl?: string }>;
-        return <Component repositoryUrl={app.repositoryUrl} />;
+        const Component = MobileContent as React.ComponentType<{ terminalPort?: number }>;
+        return <Component terminalPort={app.terminalPort} />;
       }
       case 'claude': {
-        const Component = MobileContent as React.ComponentType<{ repositoryUrl?: string }>;
-        return <Component repositoryUrl={app.repositoryUrl} />;
+        const Component = MobileContent as React.ComponentType<{ claudePort?: number }>;
+        return <Component claudePort={app.claudePort} />;
       }
       case 'vscode': {
         const Component = MobileContent as React.ComponentType<{ repositoryUrl?: string }>;
