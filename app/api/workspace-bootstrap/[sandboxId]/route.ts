@@ -55,17 +55,30 @@ export async function POST(
         throw new Error('Firebase Admin not initialized');
       }
       
-      await adminDb.collection('users').doc(userId).update({
-        'agentsOS.workspace.repositories': updatedRepositories.map(repo => ({
+      // Clean undefined values from repository data
+      const cleanedRepositories = updatedRepositories.map(repo => {
+        const cleanedRepo: any = {
           id: repo.id,
           name: repo.name,
           url: repo.url,
-          description: repo.description,
           sourceType: repo.sourceType,
           ports: repo.ports,
-          serviceUrls: repo.serviceUrls,
           tokens: repo.tokens
-        })),
+        };
+        
+        // Only include fields that have values
+        if (repo.description !== undefined) {
+          cleanedRepo.description = repo.description;
+        }
+        if (repo.serviceUrls !== undefined) {
+          cleanedRepo.serviceUrls = repo.serviceUrls;
+        }
+        
+        return cleanedRepo;
+      });
+      
+      await adminDb.collection('users').doc(userId).update({
+        'agentsOS.workspace.repositories': cleanedRepositories,
         'agentsOS.workspace.lastTokenRefresh': new Date().toISOString()
       });
       
