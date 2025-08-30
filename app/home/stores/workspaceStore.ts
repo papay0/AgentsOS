@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { WINDOW_Z_INDEX_BASE } from '../constants/layout';
 import type { Window } from './windowStore';
+import { AppStore } from '../apps';
 
 export interface Repository {
   url: string;
@@ -69,54 +70,78 @@ const createDefaultWindows = (repository: Repository): Window[] => {
   const baseX = 50;
   const baseY = 50;
   let zIndex = WINDOW_Z_INDEX_BASE;
+  const windows: Window[] = [];
+  let xOffset = 0;
+  let yOffset = 0;
   
-  return [
-    // VSCode window
-    {
+  // Check each app's metadata to determine if it should open at startup
+  // Only create windows for apps that:
+  // 1. Are not fully hidden
+  // 2. Have isOpenAtStartup flag set to true (or undefined for backward compatibility)
+  
+  const vscodeApp = AppStore.vscode;
+  const claudeApp = AppStore.claude;
+  const terminalApp = AppStore.terminal;
+  
+  // VSCode window - only if not hidden and should open at startup
+  if (!vscodeApp.metadata.isFullyHidden && vscodeApp.metadata.isOpenAtStartup !== false) {
+    windows.push({
       id: `vscode-${repository.name}-${Date.now()}`,
       type: 'vscode' as const,
       title: `VSCode - ${repository.name}`,
-      position: { x: baseX, y: baseY },
+      position: { x: baseX + xOffset, y: baseY + yOffset },
       size: { width: 1000, height: 700 },
       zIndex: zIndex++,
       minimized: false,
       maximized: false,
-      focused: true, // VSCode gets focus by default
+      focused: windows.length === 0, // First window gets focus
       repositoryName: repository.name,
       repositoryUrl: repository.urls?.vscode || '',
       vscodePort: repository.ports?.vscode
-    },
-    // Claude terminal window
-    {
+    });
+    xOffset += 150;
+    yOffset += 100;
+  }
+  
+  // Claude terminal window - only if not hidden and should open at startup
+  if (!claudeApp.metadata.isFullyHidden && claudeApp.metadata.isOpenAtStartup !== false) {
+    windows.push({
       id: `claude-${repository.name}-${Date.now()}`,
       type: 'claude' as const,
       title: `Claude - ${repository.name}`,
-      position: { x: baseX + 300, y: baseY + 100 },
+      position: { x: baseX + xOffset, y: baseY + yOffset },
       size: { width: 600, height: 400 },
       zIndex: zIndex++,
       minimized: false,
       maximized: false,
-      focused: false,
+      focused: windows.length === 0, // First window gets focus
       repositoryName: repository.name,
       repositoryUrl: repository.urls?.claude || '',
       claudePort: repository.ports?.claude
-    },
-    // Regular terminal window
-    {
+    });
+    xOffset += 150;
+    yOffset += 100;
+  }
+  
+  // Regular terminal window - only if not hidden and should open at startup
+  if (!terminalApp.metadata.isFullyHidden && terminalApp.metadata.isOpenAtStartup !== false) {
+    windows.push({
       id: `terminal-${repository.name}-${Date.now()}`,
       type: 'terminal' as const,
       title: `Terminal - ${repository.name}`,
-      position: { x: baseX + 150, y: baseY + 200 },
+      position: { x: baseX + xOffset, y: baseY + yOffset },
       size: { width: 700, height: 350 },
       zIndex: zIndex++,
       minimized: false,
       maximized: false,
-      focused: false,
+      focused: windows.length === 0, // First window gets focus
       repositoryName: repository.name,
       repositoryUrl: repository.urls?.terminal || '',
       terminalPort: repository.ports?.terminal
-    }
-  ];
+    });
+  }
+  
+  return windows;
 };
 
 export const useWorkspaceStore = create<WorkspaceStore>()(

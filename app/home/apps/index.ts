@@ -45,13 +45,20 @@ export const getApp = <T extends AppId>(id: T): AppRegistry[T] => AppStore[id];
 export const getAllApps = () => Object.values(AppStore) as readonly AppRegistry[AppId][];
 
 export const getAvailableApps = () => 
-  Object.values(AppStore).filter(app => !app.metadata.comingSoon) as readonly AppRegistry[AppId][];
+  Object.values(AppStore).filter(app => 
+    !app.metadata.comingSoon && !app.metadata.isFullyHidden
+  ) as readonly AppRegistry[AppId][];
 
 export const getComingSoonApps = () => 
   Object.values(AppStore).filter(app => app.metadata.comingSoon) as readonly AppRegistry[AppId][];
 
 export const getAppsByCategory = (category: string) =>
   Object.values(AppStore).filter(app => app.metadata.category === category) as readonly AppRegistry[AppId][];
+
+export const getStartupApps = () => 
+  Object.values(AppStore).filter(app => 
+    app.metadata.isOpenAtStartup && !app.metadata.isFullyHidden && !app.metadata.comingSoon
+  ) as readonly AppRegistry[AppId][];
 
 // Strongly typed exports for consumers
 export type { 

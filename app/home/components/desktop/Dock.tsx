@@ -5,7 +5,7 @@ import { useWindowAnimation } from '../../hooks/useWindowAnimation';
 import type { Window } from '../../stores/windowStore';
 import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
-import { getAllApps, getApp, AppStore } from '../../apps';
+import { getAvailableApps, getApp, AppStore } from '../../apps';
 import AppIcon from '../ui/AppIcon';
 import React, { useState } from 'react';
 
@@ -296,7 +296,7 @@ export default function Dock() {
         <GlassEffect className="rounded-3xl p-3 hover:p-3.5 transition-all duration-300">
           <div className="flex items-center justify-center space-x-2 px-2 py-1">
             {/* Main app icons */}
-            {getAllApps().map((app) => (
+            {getAvailableApps().map((app) => (
               <MacTooltip key={app.metadata.id} text={app.metadata.name}>
                 <GlassDockIcon
                   onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup')}

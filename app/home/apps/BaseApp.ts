@@ -60,6 +60,8 @@ export interface AppMetadata {
   };
   comingSoon?: boolean;
   premium?: boolean;
+  isOpenAtStartup: boolean;  // Opens automatically when workspace loads (REQUIRED)
+  isFullyHidden: boolean;     // Completely hidden from UI (for broken/development features) (REQUIRED)
 }
 
 export interface AppWindow {
