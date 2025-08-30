@@ -336,6 +336,7 @@ export default function Workspace() {
         
         {/* Boot screen overlay with high z-index */}
         <OSBootScreen 
+          sandboxId={sandboxId || undefined}
           onComplete={() => {
             // Complete after minimum time, regardless of loading state
             setShowBootScreen(false);
