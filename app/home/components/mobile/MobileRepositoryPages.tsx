@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { Repository } from '../../stores/workspaceStore';
 import MobileApp from './MobileApp';
-import { getAllApps } from '../../apps';
+import { getAvailableApps } from '../../apps';
 import { AppMetadata } from '../../apps/BaseApp';
 
 export interface MobileApp {
@@ -25,7 +25,7 @@ const getMobileAppColor = (primaryColor: string): string => {
 const getAppsForRepository = (repository: Repository): MobileApp[] => {
   const dockAppIds = ['settings']; // Only Settings is in the dock
   
-  return getAllApps()
+  return getAvailableApps()
     .filter(app => !dockAppIds.includes(app.metadata.id)) // Exclude dock apps (only Settings)
     .map(app => ({
       id: `${app.metadata.id}-${repository.name}`,
