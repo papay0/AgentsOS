@@ -2,15 +2,17 @@ import { ReactNode } from 'react';
 
 // App-specific props interfaces - each app defines its own props
 export interface TerminalAppProps {
-  repositoryUrl?: string;
+  terminalPort?: number;
 }
 
 export interface ClaudeAppProps {
-  repositoryUrl?: string;
+  claudePort?: number;
 }
 
 export interface VSCodeAppProps {
   repositoryUrl?: string;
+  vscodePort?: number;
+  workspaceId?: string;
 }
 
 // Create a proper "no props" type that's explicit about having no properties
@@ -58,6 +60,8 @@ export interface AppMetadata {
   };
   comingSoon?: boolean;
   premium?: boolean;
+  isOpenAtStartup: boolean;  // Opens automatically when workspace loads (REQUIRED)
+  isFullyHidden: boolean;     // Completely hidden from UI (for broken/development features) (REQUIRED)
 }
 
 export interface AppWindow {

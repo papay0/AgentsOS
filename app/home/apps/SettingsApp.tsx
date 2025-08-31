@@ -701,7 +701,9 @@ export const SettingsApp = createApp<'settings'>({
       primary: 'bg-gray-500',
       background: 'bg-white dark:bg-gray-800',
       text: 'text-gray-800 dark:text-gray-200'
-    }
+    },
+    isOpenAtStartup: false,  // Don't auto-open window on workspace load
+    isFullyHidden: false      // Show in dock and UI
   },
   window: {
     defaultSize: { width: 600, height: 500 },

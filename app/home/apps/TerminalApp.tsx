@@ -19,7 +19,9 @@ export const TerminalApp = createApp<'terminal'>({
       primary: 'bg-green-500',
       background: 'bg-black',
       text: 'text-green-400'
-    }
+    },
+    isOpenAtStartup: true,   // Auto-open window on workspace load
+    isFullyHidden: false      // Show in dock and UI
   },
   window: {
     defaultSize: { width: 800, height: 500 },

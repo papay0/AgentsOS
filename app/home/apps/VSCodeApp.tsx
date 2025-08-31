@@ -19,7 +19,9 @@ export const VSCodeApp = createApp<'vscode'>({
       primary: 'bg-blue-500',
       background: 'bg-gray-900',
       text: 'text-green-400'
-    }
+    },
+    isOpenAtStartup: false,  // Don't auto-open window on workspace load
+    isFullyHidden: true       // Hidden while VSCode integration is broken in development
   },
   window: {
     defaultSize: { width: 1000, height: 700 },

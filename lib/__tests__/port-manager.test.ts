@@ -54,7 +54,7 @@ describe('PortManager', () => {
       const defaultRepo = PortManager.createDefaultRepository();
       
       expect(defaultRepo).toEqual({
-        id: 'default-workspace',
+        id: 'repo-0000000000000-0',
         url: '',
         name: 'default',
         description: 'Default workspace for new projects',
@@ -87,7 +87,7 @@ describe('PortManager', () => {
       // This test demonstrates the supported source types
       const repositories: Repository[] = [
         {
-          id: 'default-workspace',
+          id: 'repo-0000000000000-0',
           url: '',
           name: 'default',
           description: 'Default workspace for new projects',

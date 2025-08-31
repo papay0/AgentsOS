@@ -232,7 +232,7 @@ export default function Window({ window }: WindowProps) {
       </div>
 
       <div className={`flex-1 overflow-hidden ${isDragging || isResizing ? 'opacity-90 pointer-events-none' : ''}`}>
-        <WindowContent window={window} />
+        <WindowContent window={window} onFocus={() => focusWindow(window.id)} />
       </div>
 
       {!window.maximized && (
@@ -251,7 +251,7 @@ export default function Window({ window }: WindowProps) {
   );
 }
 
-const WindowContent = memo(function WindowContent({ window }: { window: WindowType }) {
+const WindowContent = memo(function WindowContent({ window, onFocus }: { window: WindowType; onFocus: () => void }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const app = getApp(window.type);
   
@@ -284,12 +284,12 @@ const WindowContent = memo(function WindowContent({ window }: { window: WindowTy
     // Switch case ensures we handle all app types - compiler will error if we add new types
     switch (window.type) {
       case 'terminal': {
-        const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
-        return <Component repositoryUrl={window.repositoryUrl} />;
+        const Component = DesktopContent as React.ComponentType<{ terminalPort?: number; onFocus?: () => void }>;
+        return <Component terminalPort={window.terminalPort} onFocus={onFocus} />;
       }
       case 'claude': {
-        const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
-        return <Component repositoryUrl={window.repositoryUrl} />;
+        const Component = DesktopContent as React.ComponentType<{ claudePort?: number; onFocus?: () => void }>;
+        return <Component claudePort={window.claudePort} onFocus={onFocus} />;
       }
       case 'vscode': {
         const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;

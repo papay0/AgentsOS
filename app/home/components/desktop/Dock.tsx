@@ -2,9 +2,10 @@
 
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useWindowAnimation } from '../../hooks/useWindowAnimation';
+import type { Window } from '../../stores/windowStore';
 import { Code } from 'lucide-react';
 import { DOCK_Z_INDEX } from '../../constants/layout';
-import { getAllApps, getApp, AppStore } from '../../apps';
+import { getAvailableApps, getApp, AppStore } from '../../apps';
 import AppIcon from '../ui/AppIcon';
 import React, { useState } from 'react';
 
@@ -201,7 +202,7 @@ export default function Dock() {
       ? { x: 100 + Math.random() * 200, y: 100 + Math.random() * 150 }
       : app.window.position;
 
-    // Get repository URLs for this workspace
+    // Get repository URLs and ports for this workspace
     const repositoryUrl = (() => {
       switch (type) {
         case 'vscode':
@@ -215,7 +216,8 @@ export default function Dock() {
       }
     })();
 
-    addWindow({
+    // Get port information for this window type
+    const windowProps: Omit<Window, 'id' | 'zIndex'> = {
       type,
       title: `${app.metadata.name} - ${activeWorkspace.name}`,
       position,
@@ -225,7 +227,22 @@ export default function Dock() {
       focused: true,
       repositoryName: activeWorkspace.name,
       repositoryUrl,
-    });
+    };
+
+    // Add type-specific port information
+    switch (type) {
+      case 'terminal':
+        windowProps.terminalPort = activeWorkspace.repository.ports?.terminal;
+        break;
+      case 'claude':
+        windowProps.claudePort = activeWorkspace.repository.ports?.claude;
+        break;
+      case 'vscode':
+        windowProps.vscodePort = activeWorkspace.repository.ports?.vscode;
+        break;
+    }
+
+    addWindow(windowProps);
   };
 
   const handleMinimizedWindowClick = (windowId: string) => {
@@ -279,7 +296,7 @@ export default function Dock() {
         <GlassEffect className="rounded-3xl p-3 hover:p-3.5 transition-all duration-300">
           <div className="flex items-center justify-center space-x-2 px-2 py-1">
             {/* Main app icons */}
-            {getAllApps().map((app) => (
+            {getAvailableApps().map((app) => (
               <MacTooltip key={app.metadata.id} text={app.metadata.name}>
                 <GlassDockIcon
                   onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup')}

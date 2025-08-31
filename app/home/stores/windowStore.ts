@@ -21,6 +21,9 @@ export interface Window {
   // Repository-specific data
   repositoryName?: string;
   repositoryUrl?: string; // vscode URL, terminal URL, or claude URL
+  terminalPort?: number;
+  claudePort?: number;
+  vscodePort?: number;
 }
 
 interface Repository {
@@ -32,6 +35,11 @@ interface Repository {
     vscode: string;
     terminal: string;
     claude: string;
+  };
+  ports?: {
+    vscode: number;
+    terminal: number;
+    claude: number;
   };
 }
 
@@ -191,7 +199,8 @@ export const useWindowStore = create<WindowStore>()(
             maximized: false,
             focused: repoIndex === 0, // Focus first repo's VSCode
             repositoryName: repo.name,
-            repositoryUrl: repo.urls?.vscode || ''
+            repositoryUrl: repo.urls?.vscode || '',
+            vscodePort: repo.ports?.vscode
           });
           
           // Claude terminal window
@@ -206,7 +215,8 @@ export const useWindowStore = create<WindowStore>()(
             maximized: false,
             focused: false,
             repositoryName: repo.name,
-            repositoryUrl: repo.urls?.claude || ''
+            repositoryUrl: repo.urls?.claude || '',
+            claudePort: repo.ports?.claude
           });
           
           // Regular terminal window
@@ -221,7 +231,8 @@ export const useWindowStore = create<WindowStore>()(
             maximized: false,
             focused: false,
             repositoryName: repo.name,
-            repositoryUrl: repo.urls?.terminal || ''
+            repositoryUrl: repo.urls?.terminal || '',
+            terminalPort: repo.ports?.terminal
           });
         });
       } else {

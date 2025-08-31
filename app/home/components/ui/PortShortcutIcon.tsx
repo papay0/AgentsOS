@@ -5,6 +5,7 @@ import { Globe, ExternalLink, Copy } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@clerk/nextjs';
 
 export function PortShortcutIcon() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,9 +13,18 @@ export function PortShortcutIcon() {
   const [copied, setCopied] = useState(false);
   const sandboxId = useWorkspaceStore((state) => state.sandboxId);
   const isMobile = useIsMobile();
+  const { getToken } = useAuth();
 
-  // Generate the port URL
-  const portUrl = sandboxId ? `https://${portInput}-${sandboxId}.proxy.daytona.work` : '';
+  // Generate the port URL using HTTP subdomain proxy
+  // This solves iframe asset loading issues that path-based proxy can't handle
+  // Using lvh.me for local testing - it always resolves to 127.0.0.1
+  const httpProxyDomain = process.env.NEXT_PUBLIC_HTTP_PROXY_DOMAIN || 'agentspod.dev';
+  
+  // Use subdomain format: {port}-{sandbox-id}.domain for production
+  // This ensures browser resolves relative URLs correctly in iframes
+  // Use lvh.me:3000 for local development with subdomain proxy
+  // httpProxyDomain = 'lvh.me:3000'
+  const portUrl = sandboxId ? `http://${portInput}-${sandboxId}.${httpProxyDomain}` : '';
 
   // Handle click outside to close popup
   useEffect(() => {
@@ -43,10 +53,25 @@ export function PortShortcutIcon() {
     };
   }, [isOpen]);
 
-  const handleOpenPort = () => {
+  const handleOpenPort = async () => {
     if (portUrl) {
-      window.open(portUrl, '_blank', 'noopener,noreferrer');
-      setIsOpen(false);
+      try {
+        // Get the current auth token from Clerk
+        const authToken = await getToken();
+        
+        if (!authToken) {
+          console.error('No auth token available');
+          return;
+        }
+        
+        // Add auth_token to the URL for initial authentication
+        const authenticatedUrl = `${portUrl}?auth_token=${authToken}`;
+        
+        window.open(authenticatedUrl, '_blank', 'noopener,noreferrer');
+        setIsOpen(false);
+      } catch (error) {
+        console.error('Failed to get auth token:', error);
+      }
     }
   };
 
@@ -63,7 +88,7 @@ export function PortShortcutIcon() {
     setPortInput(value);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleOpenPort();
     }
@@ -115,7 +140,7 @@ export function PortShortcutIcon() {
                       type="text"
                       value={portInput}
                       onChange={handlePortChange}
-                      onKeyPress={handleKeyPress}
+                      onKeyDown={handleKeyDown}
                       placeholder="3000"
                       className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       autoFocus

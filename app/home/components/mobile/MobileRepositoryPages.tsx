@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { Repository } from '../../stores/workspaceStore';
 import MobileApp from './MobileApp';
-import { getAllApps } from '../../apps';
+import { getAvailableApps } from '../../apps';
 import { AppMetadata } from '../../apps/BaseApp';
 
 export interface MobileApp {
@@ -15,6 +15,8 @@ export interface MobileApp {
   type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup';
   comingSoon?: boolean;
   repositoryUrl?: string;
+  terminalPort?: number;
+  claudePort?: number;
 }
 
 const getMobileAppColor = (primaryColor: string): string => {
@@ -25,7 +27,7 @@ const getMobileAppColor = (primaryColor: string): string => {
 const getAppsForRepository = (repository: Repository): MobileApp[] => {
   const dockAppIds = ['settings']; // Only Settings is in the dock
   
-  return getAllApps()
+  return getAvailableApps()
     .filter(app => !dockAppIds.includes(app.metadata.id)) // Exclude dock apps (only Settings)
     .map(app => ({
       id: `${app.metadata.id}-${repository.name}`,
@@ -34,7 +36,9 @@ const getAppsForRepository = (repository: Repository): MobileApp[] => {
       color: getMobileAppColor(app.metadata.colors.primary),
       type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
       comingSoon: app.metadata.comingSoon || app.metadata.id === 'diff', // Force Code Diff to be coming soon
-      repositoryUrl: getRepositoryUrlForApp(repository, app.metadata.id)
+      repositoryUrl: getRepositoryUrlForApp(repository, app.metadata.id),
+      terminalPort: repository.ports?.terminal,
+      claudePort: repository.ports?.claude
     }));
 };
 

@@ -134,14 +134,26 @@ export class WorkspaceCreator {
    * This helps with Firebase integration and new data structure
    */
   createUserWorkspace(sandboxId: string, repositoriesWithUrls: RepositoryWithUrls[]): UserWorkspace {
-    // Convert RepositoryWithUrls to Repository with ports
+    // Convert RepositoryWithUrls to Repository with ports, URLs, and tokens
     const repositories: Repository[] = repositoriesWithUrls.map((repo, index) => ({
-      id: repo.url ? `repo-${Date.now()}-${index}` : 'default-workspace',
+      id: repo.url ? `repo-${Date.now()}-${index}` : 'repo-0000000000000-0',
       url: repo.url || '',
       name: repo.name,
       description: repo.description,
       sourceType: repo.url ? 'github' : 'default',
-      ports: PortManager.getPortsForSlot(index)
+      ports: PortManager.getPortsForSlot(index),
+      // Include service URLs
+      serviceUrls: repo.urls ? {
+        vscode: repo.urls.vscode,
+        terminal: repo.urls.terminal,
+        claude: repo.urls.claude
+      } : undefined,
+      // Include tokens if available
+      tokens: repo.tokens ? {
+        vscode: repo.tokens.vscode,
+        terminal: repo.tokens.terminal,
+        claude: repo.tokens.claude
+      } : undefined
     }));
 
     return {

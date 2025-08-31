@@ -89,7 +89,9 @@ export const DiffApp = createApp<'diff'>({
       background: 'bg-white dark:bg-gray-800',
       text: 'text-gray-800 dark:text-gray-200'
     },
-    comingSoon: true
+    comingSoon: true,
+    isOpenAtStartup: false,  // Don't auto-open window on workspace load
+    isFullyHidden: false      // Show in dock and UI
   },
   window: {
     defaultSize: { width: 1000, height: 700 },

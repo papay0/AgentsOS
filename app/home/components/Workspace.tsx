@@ -331,13 +331,11 @@ export default function Workspace() {
   if (showBootScreen) {
     return (
       <>
-        {/* Main content renders and starts loading behind boot screen */}
-        {mainContent}
-        
-        {/* Boot screen overlay with high z-index */}
+        {/* Boot screen overlay - no main content renders until tokens are refreshed */}
         <OSBootScreen 
+          sandboxId={sandboxId || undefined}
           onComplete={() => {
-            // Complete after minimum time, regardless of loading state
+            // Complete after minimum time AND token refresh is complete
             setShowBootScreen(false);
           }}
         />

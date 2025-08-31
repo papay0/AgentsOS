@@ -30,6 +30,11 @@ export interface RepositoryWithUrls {
     terminal: string;
     claude: string;
   };
+  tokens?: {
+    vscode: string | null;
+    terminal: string | null;
+    claude: string | null;
+  };
 }
 
 export interface CreateWorkspaceResponse {
@@ -81,6 +86,18 @@ export interface Repository {
     vscode: number;    // 8080+
     terminal: number;  // 10000+  
     claude: number;    // 4000+
+  };
+  // Service URLs from Daytona
+  serviceUrls?: {
+    vscode: string;
+    terminal: string;
+    claude: string;
+  };
+  // Preview tokens for accessing private workspaces
+  tokens?: {
+    vscode: string | null;
+    terminal: string | null;
+    claude: string | null;
   };
 }
 

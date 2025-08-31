@@ -30,6 +30,8 @@ Copy `.env.example` to `.env.local` and add:
 3. **Firebase**: Project config for analytics/Firestore
 4. **Firebase Admin**: Server-side auth (optional, via service-account-key.json)
 5. **Encryption**: Secret for encrypting user-provided API keys
+6. **WebSocket Proxy**: `NEXT_PUBLIC_WEBSOCKET_PROXY_URL=wss://agentsos-proxy-production.up.railway.app` (for terminal connections)
+7. **HTTP Proxy Domain**: `NEXT_PUBLIC_HTTP_PROXY_DOMAIN=agentspod.dev` (for subdomain port access)
 
 ## Architecture Overview
 

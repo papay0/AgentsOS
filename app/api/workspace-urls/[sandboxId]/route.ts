@@ -16,9 +16,21 @@ export async function GET(
     
     // Return repository data with URLs
     if (userWorkspace.repositories && userWorkspace.repositories.length > 0) {
+      // Sort repositories deterministically by ID to ensure consistent ordering
+      const sortedRepositories = [...userWorkspace.repositories].sort((a, b) => 
+        (a.id || '').localeCompare(b.id || '')
+      );
+      
+      console.log('🔍 DEBUG: Sorted repositories for URL generation:', sortedRepositories.map((r, i) => ({
+        index: i,
+        id: r.id,
+        name: r.name,
+        ports: r.ports
+      })));
+      
       // Generate URLs dynamically from ports for each repository
       const repositoriesWithUrls = await Promise.all(
-        userWorkspace.repositories.map(async (repo) => {
+        sortedRepositories.map(async (repo) => {
           const [vscodeInfo, terminalInfo, claudeInfo] = await Promise.all([
             sandbox.getPreviewLink(repo.ports.vscode),
             sandbox.getPreviewLink(repo.ports.terminal),

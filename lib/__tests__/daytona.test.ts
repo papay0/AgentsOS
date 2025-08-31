@@ -20,7 +20,6 @@ describe('DaytonaClient', () => {
     listWorkspaces: ReturnType<typeof vi.fn>;
     stopWorkspace: ReturnType<typeof vi.fn>;
     deleteWorkspace: ReturnType<typeof vi.fn>;
-    getWorkspaceUrls: ReturnType<typeof vi.fn>;
     getSandbox: ReturnType<typeof vi.fn>;
   };
   let mockWorkspaceCreator: {
@@ -37,7 +36,6 @@ describe('DaytonaClient', () => {
       listWorkspaces: vi.fn(),
       stopWorkspace: vi.fn(),
       deleteWorkspace: vi.fn(),
-      getWorkspaceUrls: vi.fn(),
       getSandbox: vi.fn(),
     };
     (WorkspaceManager as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => mockWorkspaceManager);
@@ -181,23 +179,6 @@ describe('DaytonaClient', () => {
     });
   });
 
-  describe('getWorkspaceUrls', () => {
-    it('delegates to WorkspaceManager', async () => {
-      const mockUrls = {
-        terminalUrl: 'https://terminal.example.com',
-        claudeTerminalUrl: 'https://claude.example.com',
-        vscodeUrl: 'https://vscode.example.com',
-      };
-
-      mockWorkspaceManager.getWorkspaceUrls.mockResolvedValue(mockUrls);
-
-      const result = await daytonaClient.getWorkspaceUrls('sandbox-123');
-
-      expect(mockWorkspaceManager.getWorkspaceUrls).toHaveBeenCalledWith('sandbox-123');
-      expect(result).toEqual(mockUrls);
-    });
-  });
-
   describe('getSandbox', () => {
     it('delegates to WorkspaceManager', async () => {
       const mockSandbox = {
@@ -242,7 +223,6 @@ describe('DaytonaClient', () => {
         'listWorkspaces',
         'stopWorkspace',
         'deleteWorkspace',
-        'getWorkspaceUrls',
         'getSandbox',
       ];
 

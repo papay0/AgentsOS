@@ -6,7 +6,7 @@ import MobileApp from './MobileApp';
 import { MobileRepositoryPages } from './MobileRepositoryPages';
 import { MobileStatusBar } from './MobileStatusBar';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
-import { getAllApps, getApp } from '../../apps';
+import { getAvailableApps, getApp } from '../../apps';
 import { AppMetadata, AppType } from '../../apps/BaseApp';
 import { WorkspaceStatusPanel } from '../workspace-status';
 import { useAuth } from '@clerk/nextjs';
@@ -22,6 +22,8 @@ export interface MobileApp {
   type: AppType;
   comingSoon?: boolean;
   repositoryUrl?: string;
+  terminalPort?: number;
+  claudePort?: number;
 }
 
 const getMobileAppColor = (primaryColor: string): string => {
@@ -32,8 +34,8 @@ const getMobileAppColor = (primaryColor: string): string => {
 
 // Get dock apps - only common apps (Settings)
 const getDockApps = (): MobileApp[] => {
-  const allApps = getAllApps();
-  const settingsApp = allApps.find(app => app.metadata.id === 'settings');
+  const availableApps = getAvailableApps();
+  const settingsApp = availableApps.find(app => app.metadata.id === 'settings');
   
   return [
     {

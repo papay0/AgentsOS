@@ -44,6 +44,7 @@
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Terminal, ITerminalAddon } from '@xterm/xterm';
 import '@xterm/xterm/css/xterm.css';
+import { ResizeManager } from '@/lib/terminal-resize-manager';
 
 const terminalThemes = {
   light: {
@@ -101,6 +102,10 @@ interface TTYDTerminalProps {
   onStatusChange?: (status: string) => void;
   /** Custom CSS class for the terminal container */
   className?: string;
+  /** Called when terminal gains focus */
+  onFocus?: () => void;
+  /** Called when connection fails and should retry */
+  onConnectionFailure?: () => void;
 }
 
 export interface TTYDTerminalRef {
@@ -125,8 +130,32 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   wsUrl, 
   onConnectionChange, 
   onStatusChange,
+  onFocus,
+  onConnectionFailure,
   className
 }, ref) => {
+  // Extract port number from wsUrl for debugging
+  const extractPortFromUrl = (url: string): string => {
+    try {
+      // Handle URL patterns like: ws://domain?port=8080&token=xyz
+      const urlObj = new URL(url);
+      const portParam = urlObj.searchParams.get('port');
+      if (portParam) return portParam;
+      
+      // Handle subdomain patterns like: ws://8080-workspace.domain.com
+      const hostname = urlObj.hostname;
+      const subdomainMatch = hostname.match(/^(\d+)-/);
+      if (subdomainMatch) return subdomainMatch[1];
+      
+      // Fallback to URL port or unknown
+      return urlObj.port || 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  };
+  
+  const port = extractPortFromUrl(wsUrl);
+  
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
   const fitAddon = useRef<ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined } | null>(null);
@@ -134,6 +163,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   const onDataDisposable = useRef<{ dispose: () => void } | null>(null);
   const onResizeDisposable = useRef<{ dispose: () => void } | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const resizeManager = useRef<ResizeManager>(new ResizeManager());
+  const hasReceivedFirstContent = useRef(false);
   
   // Get current theme from document (set by ThemeProvider)
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark');
@@ -143,6 +174,12 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     const updateResolvedTheme = () => {
       const isDark = document.documentElement.classList.contains('dark');
       const newTheme = isDark ? 'dark' : 'light';
+      console.log('🎨 Theme detection:', {
+        documentHasDarkClass: isDark,
+        documentClasses: document.documentElement.className,
+        newTheme: newTheme,
+        currentResolvedTheme: resolvedTheme
+      });
       setResolvedTheme(newTheme);
     };
 
@@ -164,7 +201,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [resolvedTheme]);
 
   // Handle mobile keyboard visibility for proper scrolling behavior
   useEffect(() => {
@@ -289,22 +326,13 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       
       websocket.current!.send(new TextEncoder().encode(authMessage));
       
-      // Wait for ttyd to process auth, then send proper resize
-      setTimeout(() => {
-        if (websocket.current?.readyState === WebSocket.OPEN && terminal.current && fitAddon.current) {
-          const dimensions = fitAddon.current.proposeDimensions();
-          if (dimensions) {
-            // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
-            const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
-            const resizeBytes = new TextEncoder().encode(resizeData);
-            const payload = new Uint8Array(resizeBytes.length + 1);
-            payload[0] = 0x31; // '1' as byte
-            payload.set(resizeBytes, 1);
-            
-            websocket.current!.send(payload);
-          }
-        }
-      }, 200);
+      // Set up ResizeManager
+      resizeManager.current.setWebSocket(websocket.current);
+      resizeManager.current.setFitAddon(fitAddon.current);
+      resizeManager.current.setPort(port);
+      resizeManager.current.setConnected();
+      
+      // Don't send resize here - wait for first content
 
     };
 
@@ -314,9 +342,46 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         
         if (typeof data === 'string') {
           if (data.startsWith('0')) {
-            // Output data - remove the '0' prefix
+            // Terminal output data - remove the '0' prefix
             const output = data.slice(1);
+            
+            // Check if this is the first content we've received
+            if (!hasReceivedFirstContent.current && output.trim().length > 0) {
+              hasReceivedFirstContent.current = true;
+              console.log(`[${port}] 📝 First content received! Scheduling ONE resize in 3 seconds...`);
+              
+              // Wait 3 seconds for everything to settle, then send ONE resize
+              setTimeout(() => {
+                // Fit terminal first to get correct dimensions
+                if (fitAddon.current) {
+                  fitAddon.current.fit();
+                }
+                console.log(`[${port}] 📐 Sending SINGLE post-load resize after 3 seconds...`);
+                resizeManager.current.sendInitialResize();
+              }, 3000);
+            }
+            
             terminal.current.write(output);
+          } else if (data.startsWith('1')) {
+            // Control message (resize, shell startup, etc) - don't display
+            const output = data.slice(1);
+            console.log('📝 Control message:', output.substring(0, 100));
+          } else {
+            // Check if this is a JSON control message from proxy
+            try {
+              const message = JSON.parse(data);
+              if (message.type === 'reconnecting') {
+                onStatusChange?.(`Reconnecting... (${message.attemptNumber}/${message.maxAttempts})`);
+              } else if (message.type === 'daytona_connected') {
+                onStatusChange?.('Connected');
+              } else if (message.type === 'error') {
+                onStatusChange?.(message.message || 'Connection error');
+              } else {
+                console.log('📝 Control message:', message.type);
+              }
+            } catch {
+              console.log('⚠️ Ignoring message type:', data.substring(0, 50));
+            }
           }
         } else {
           // Handle binary data (ArrayBuffer/Blob)
@@ -328,6 +393,23 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
               if (text.startsWith('0')) {
                 // Output data - remove the '0' prefix
                 const output = text.slice(1);
+                
+                // Check if this is the first content we've received
+                if (!hasReceivedFirstContent.current && output.trim().length > 0) {
+                  hasReceivedFirstContent.current = true;
+                  console.log(`[${port}] 📝 First content received (binary)! Scheduling resize...`);
+                  
+                  // Wait 3 seconds for everything to settle, then send ONE resize
+                  setTimeout(() => {
+                    // Fit terminal first to get correct dimensions
+                    if (fitAddon.current) {
+                      fitAddon.current.fit();
+                    }
+                    console.log(`[${port}] 📐 Sending SINGLE post-load resize after 3 seconds...`);
+                    resizeManager.current.sendInitialResize();
+                  }, 3000);
+                }
+                
                 terminal.current?.write(output);
               }
             }).catch(err => {
@@ -348,13 +430,15 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
       onConnectionChange?.(false);
       onStatusChange?.(event.code === 1000 ? 'Disconnected' : `Connection failed (${event.code})`);
       
-      // Auto-reconnect for network issues (not user-initiated close)
-      if (event.code !== 1000) {
-        setTimeout(() => {
-          if (websocket.current?.readyState === WebSocket.CLOSED) {
-            connectWebSocket();
-          }
-        }, 3000);
+      // Stop periodic resize when disconnected
+      resizeManager.current.setConnected();
+      
+      // Reset first content flag for next connection
+      hasReceivedFirstContent.current = false;
+      
+      // Notify parent of connection failure for retry logic
+      if (event.code !== 1000 && onConnectionFailure) {
+        onConnectionFailure();
       }
     };
 
@@ -380,20 +464,14 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         }
       });
 
-      // Handle resize
-      onResizeDisposable.current = terminal.current.onResize((dimensions) => {
-        if (websocket.current?.readyState === WebSocket.OPEN) {
-          // RESIZE_TERMINAL = '1' (0x31) + JSON data as binary
-          const resizeData = JSON.stringify({ columns: dimensions.cols, rows: dimensions.rows });
-          const resizeBytes = new TextEncoder().encode(resizeData);
-          const payload = new Uint8Array(resizeBytes.length + 1);
-          payload[0] = 0x31; // '1' as byte
-          payload.set(resizeBytes, 1);
-          websocket.current.send(payload);
-        }
+      // Handle resize - use ResizeManager to avoid duplicates
+      onResizeDisposable.current = terminal.current.onResize(() => {
+        // Let ResizeManager handle all resize logic with debouncing
+        resizeManager.current.triggerResize();
       });
     }
-  }, [wsUrl, onStatusChange, onConnectionChange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsUrl]);
 
   // ATTEMPT 6: Proper SGR mouse protocol for tmux compatibility (Fixed coordinates)
   useEffect(() => {
@@ -512,6 +590,10 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
   useEffect(() => {
     if (!terminalRef.current) return;
 
+    // Capture ref values for cleanup
+    const currentTerminalRef = terminalRef.current;
+    const currentResizeManager = resizeManager.current;
+
     // Initialize terminal with current theme
     terminal.current = new Terminal({
       theme: terminalThemes[resolvedTheme],
@@ -531,11 +613,37 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         fitAddon.current = new FitAddon() as ITerminalAddon & { fit: () => void; proposeDimensions: () => { cols: number; rows: number } | undefined };
         terminal.current.loadAddon(fitAddon.current);
         terminal.current.loadAddon(new WebLinksAddon());
+        
+        // Step 3: Send multiple delayed resizes to catch when terminal is fully ready
+        resizeManager.current.setFitAddon(fitAddon.current);
+        resizeManager.current.sendDelayedResizes(); // Multiple attempts with increasing delays
       }
     });
 
-    // Open terminal in DOM
-    terminal.current.open(terminalRef.current);
+    // Open terminal in DOM - with safety check
+    if (terminalRef.current && terminalRef.current.offsetWidth > 0 && terminalRef.current.offsetHeight > 0) {
+      console.log(`[${port}] 📺 Opening terminal with dimensions:`, {
+        width: terminalRef.current.offsetWidth,
+        height: terminalRef.current.offsetHeight
+      });
+      terminal.current.open(terminalRef.current);
+    } else {
+      console.error('❌ Terminal container not ready, dimensions:', {
+        exists: !!terminalRef.current,
+        width: terminalRef.current?.offsetWidth || 0,
+        height: terminalRef.current?.offsetHeight || 0
+      });
+      // Retry after a delay
+      setTimeout(() => {
+        if (terminalRef.current && terminal.current && terminalRef.current.offsetWidth > 0) {
+          console.log(`[${port}] 🔄 Retrying terminal open with dimensions:`, {
+            width: terminalRef.current.offsetWidth,
+            height: terminalRef.current.offsetHeight
+          });
+          terminal.current.open(terminalRef.current);
+        }
+      }, 100);
+    }
     
     // Force xterm elements to take full height and fit properly
     const fitTerminal = () => {
@@ -572,49 +680,97 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
     setTimeout(fitTerminal, 350);
     setTimeout(fitTerminal, 600);
 
-    // Connect to WebSocket
-    connectWebSocket();
-
     // Handle window resize
     const handleResize = () => {
       if (fitAddon.current) {
         fitAddon.current.fit();
+        // Use the unified resize trigger
+        resizeManager.current.sendWindowResize();
       }
     };
     
     // Handle window content resize (from AgentsOS windows)
     const handleWindowContentResize = () => {
-      // Add a small delay to ensure the container has resized
-      setTimeout(() => {
-        if (fitAddon.current) {
-          fitAddon.current.fit();
-        }
-      }, 50);
+      if (fitAddon.current) {
+        fitAddon.current.fit();
+        // Use the unified resize trigger - debouncing is built-in now
+        resizeManager.current.sendWindowResize();
+      }
     };
     
     window.addEventListener('resize', handleResize);
     window.addEventListener('windowContentResize', handleWindowContentResize);
+    
+    // Handle focus event for resize
+    const handleFocus = () => {
+      resizeManager.current.sendFocusResize();
+    };
+    
+    if (terminalRef.current) {
+      terminalRef.current.addEventListener('focus', handleFocus, true);
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('windowContentResize', handleWindowContentResize);
-      websocket.current?.close();
+      if (currentTerminalRef) {
+        currentTerminalRef.removeEventListener('focus', handleFocus, true);
+      }
+      currentResizeManager.cleanup();
       onDataDisposable.current?.dispose();
       onResizeDisposable.current?.dispose();
       terminal.current?.dispose();
     };
-  }, [wsUrl, connectWebSocket]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resolvedTheme, port]); // Only recreate terminal when theme changes
+
+  // Separate useEffect for WebSocket connection management
+  useEffect(() => {
+    console.log('🔍 TTYDTerminal WebSocket effect:', {
+      wsUrl: wsUrl ? wsUrl.substring(0, 100) + '...' : 'empty',
+      hasTerminal: !!terminal.current,
+      extractedPort: port
+    });
+    
+    if (!wsUrl || !terminal.current) {
+      console.warn('⚠️ TTYDTerminal: Cannot connect -', { 
+        hasWsUrl: !!wsUrl, 
+        hasTerminal: !!terminal.current 
+      });
+      return;
+    }
+    
+    // Connect to WebSocket
+    connectWebSocket();
+
+    return () => {
+      websocket.current?.close();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsUrl, connectWebSocket]);
 
   // Update terminal theme when resolved theme changes
   useEffect(() => {
     if (terminal.current) {
+      console.log(`[${port}] 🎨 Updating terminal theme to:`, resolvedTheme, terminalThemes[resolvedTheme]);
       terminal.current.options.theme = terminalThemes[resolvedTheme];
+      
+      // Force a refresh to apply the new theme
+      terminal.current.refresh(0, terminal.current.rows - 1);
+      console.log(`[${port}] 🔄 Terminal theme updated and refreshed`);
     }
-  }, [resolvedTheme]);
+  }, [resolvedTheme, port]);
 
   // Handle terminal click/tap for mobile keyboard focus
   const handleTerminalInteraction = useCallback(() => {
-    // Only trigger on mobile devices
+    // ALWAYS call onFocus immediately to bring window to front
+    if (onFocus) {
+      onFocus();
+    }
+    
+    // Send resize on focus to ensure perfect layout
+    resizeManager.current.sendFocusResize();
+    
+    // Only trigger mobile keyboard logic on mobile devices
     if (window.visualViewport && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
       // Small delay to allow keyboard to start appearing
       setTimeout(() => {
@@ -641,7 +797,7 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         }
       }, 300);
     }
-  }, []);
+  }, [onFocus]);
 
   return (
     <div 
@@ -655,7 +811,8 @@ const TTYDTerminal = forwardRef<TTYDTerminalRef, TTYDTerminalProps>(({
         height: '100%',
         overflow: 'hidden',
         position: 'relative',
-        touchAction: 'none' // Prevent default touch behaviors
+        touchAction: 'none', // Prevent default touch behaviors
+        backgroundColor: terminalThemes[resolvedTheme].background
       }}
     />
   );

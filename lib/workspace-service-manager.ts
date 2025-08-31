@@ -271,9 +271,22 @@ export class WorkspaceServiceManager {
     rootDir: string
   ): Promise<ServiceResult[]> {
     return await this.logger.time('Service Restart', async () => {
+      // IMPORTANT: Sort repositories deterministically by ID to ensure consistent port assignments
+      const sortedRepositories = [...repositories].sort((a, b) => {
+        // Sort by ID which includes creation timestamp, ensuring consistent order
+        return (a.id || '').localeCompare(b.id || '');
+      });
+      
+      console.log('🔍 DEBUG: Sorted repositories for service restart:', sortedRepositories.map((r, i) => ({
+        index: i,
+        id: r.id,
+        name: r.name,
+        ports: r.ports
+      })));
+      
       this.logger.info(`Starting service restart`, { 
         sandboxId, 
-        repositories: repositories.length 
+        repositories: sortedRepositories.length 
       }, 'RESTART');
       
       // Sandbox should already be started by authenticateWorkspaceAccess, but double-check
@@ -290,9 +303,9 @@ export class WorkspaceServiceManager {
         });
       }
       
-      // Get all ports from user's repositories
+      // Get all ports from user's repositories (sorted)
       const allPorts: number[] = [];
-      for (const repo of repositories) {
+      for (const repo of sortedRepositories) {
         allPorts.push(repo.ports.vscode, repo.ports.terminal, repo.ports.claude);
       }
       
@@ -317,7 +330,7 @@ export class WorkspaceServiceManager {
     
     const results: ServiceResult[] = [];
     
-    for (const repo of repositories) {
+    for (const repo of sortedRepositories) {
       const repoPath = `${rootDir}/projects/${repo.name}`;
       
       // Check if repository directory exists (for fix-services compatibility)

@@ -60,6 +60,50 @@ vi.mock('../../apps', () => ({
       component: () => null
     }
   ],
+  getAvailableApps: () => [
+    {
+      id: 'vscode',
+      metadata: {
+        id: 'vscode',
+        name: 'VSCode',
+        description: 'Code editor',
+        icon: { emoji: '💻', fallback: '💻' },
+        colors: {
+          primary: 'bg-blue-500',
+          hover: 'hover:bg-blue-600',
+          text: 'text-white'
+        }
+      },
+      window: {
+        defaultSize: { width: 1000, height: 700 },
+        minSize: { width: 600, height: 400 },
+        position: 'center',
+        resizable: true
+      },
+      component: () => null
+    },
+    {
+      id: 'claude',
+      metadata: {
+        id: 'claude',
+        name: 'Claude Code',
+        description: 'AI assistant',
+        icon: { emoji: '🤖', fallback: '🤖' },
+        colors: {
+          primary: 'bg-purple-500',
+          hover: 'hover:bg-purple-600',
+          text: 'text-white'
+        }
+      },
+      window: {
+        defaultSize: { width: 600, height: 400 },
+        minSize: { width: 400, height: 300 },
+        position: 'cascade',
+        resizable: true
+      },
+      component: () => null
+    }
+  ],
   getApp: (type: string) => ({
     metadata: {
       id: type,

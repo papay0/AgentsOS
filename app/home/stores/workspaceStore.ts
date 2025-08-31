@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { WINDOW_Z_INDEX_BASE } from '../constants/layout';
 import type { Window } from './windowStore';
+import { AppStore } from '../apps';
 
 export interface Repository {
   url: string;
@@ -12,6 +13,11 @@ export interface Repository {
     vscode: string;
     terminal: string;
     claude: string;
+  };
+  ports?: {
+    vscode: number;
+    terminal: number;
+    claude: number;
   };
 }
 
@@ -64,51 +70,78 @@ const createDefaultWindows = (repository: Repository): Window[] => {
   const baseX = 50;
   const baseY = 50;
   let zIndex = WINDOW_Z_INDEX_BASE;
+  const windows: Window[] = [];
+  let xOffset = 0;
+  let yOffset = 0;
   
-  return [
-    // VSCode window
-    {
+  // Check each app's metadata to determine if it should open at startup
+  // Only create windows for apps that:
+  // 1. Are not fully hidden
+  // 2. Have isOpenAtStartup flag set to true (or undefined for backward compatibility)
+  
+  const vscodeApp = AppStore.vscode;
+  const claudeApp = AppStore.claude;
+  const terminalApp = AppStore.terminal;
+  
+  // VSCode window - only if not hidden and should open at startup
+  if (!vscodeApp.metadata.isFullyHidden && vscodeApp.metadata.isOpenAtStartup !== false) {
+    windows.push({
       id: `vscode-${repository.name}-${Date.now()}`,
       type: 'vscode' as const,
       title: `VSCode - ${repository.name}`,
-      position: { x: baseX, y: baseY },
+      position: { x: baseX + xOffset, y: baseY + yOffset },
       size: { width: 1000, height: 700 },
       zIndex: zIndex++,
       minimized: false,
       maximized: false,
-      focused: true, // VSCode gets focus by default
+      focused: windows.length === 0, // First window gets focus
       repositoryName: repository.name,
-      repositoryUrl: repository.urls?.vscode || ''
-    },
-    // Claude terminal window
-    {
+      repositoryUrl: repository.urls?.vscode || '',
+      vscodePort: repository.ports?.vscode
+    });
+    xOffset += 150;
+    yOffset += 100;
+  }
+  
+  // Claude terminal window - only if not hidden and should open at startup
+  if (!claudeApp.metadata.isFullyHidden && claudeApp.metadata.isOpenAtStartup !== false) {
+    windows.push({
       id: `claude-${repository.name}-${Date.now()}`,
       type: 'claude' as const,
       title: `Claude - ${repository.name}`,
-      position: { x: baseX + 300, y: baseY + 100 },
+      position: { x: baseX + xOffset, y: baseY + yOffset },
       size: { width: 600, height: 400 },
       zIndex: zIndex++,
       minimized: false,
       maximized: false,
-      focused: false,
+      focused: windows.length === 0, // First window gets focus
       repositoryName: repository.name,
-      repositoryUrl: repository.urls?.claude || ''
-    },
-    // Regular terminal window
-    {
+      repositoryUrl: repository.urls?.claude || '',
+      claudePort: repository.ports?.claude
+    });
+    xOffset += 150;
+    yOffset += 100;
+  }
+  
+  // Regular terminal window - only if not hidden and should open at startup
+  if (!terminalApp.metadata.isFullyHidden && terminalApp.metadata.isOpenAtStartup !== false) {
+    windows.push({
       id: `terminal-${repository.name}-${Date.now()}`,
       type: 'terminal' as const,
       title: `Terminal - ${repository.name}`,
-      position: { x: baseX + 150, y: baseY + 200 },
+      position: { x: baseX + xOffset, y: baseY + yOffset },
       size: { width: 700, height: 350 },
       zIndex: zIndex++,
       minimized: false,
       maximized: false,
-      focused: false,
+      focused: windows.length === 0, // First window gets focus
       repositoryName: repository.name,
-      repositoryUrl: repository.urls?.terminal || ''
-    }
-  ];
+      repositoryUrl: repository.urls?.terminal || '',
+      terminalPort: repository.ports?.terminal
+    });
+  }
+  
+  return windows;
 };
 
 export const useWorkspaceStore = create<WorkspaceStore>()(
@@ -365,47 +398,71 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
     },
 
     updateWorkspaceUrls: (repositories: Repository[]) => {
+      console.log('🔍 DEBUG: updateWorkspaceUrls called with repositories:', repositories.map((r, i) => ({ 
+        index: i, 
+        name: r.name, 
+        ports: r.ports 
+      })));
       
-      set((state) => ({
-        workspaces: state.workspaces.map(workspace => {
-          // Find the matching repository with updated URLs
-          const updatedRepo = repositories.find(repo => repo.name === workspace.repository.name);
-          if (!updatedRepo) {
-            return workspace;
-          }
-
-
-          // Update the workspace's repository URLs
-          const updatedWorkspace = {
-            ...workspace,
-            repository: { ...workspace.repository, urls: updatedRepo.urls }
-          };
-
-          // Update all windows in this workspace with new URLs
-          const updatedWindows = workspace.windows.map(window => {
-
-            // Update URL based on window type
-            let newUrl = '';
-            switch (window.type) {
-              case 'vscode':
-                newUrl = updatedRepo.urls?.vscode || '';
-                break;
-              case 'claude':
-                newUrl = updatedRepo.urls?.claude || '';
-                break;
-              case 'terminal':
-                newUrl = updatedRepo.urls?.terminal || '';
-                break;
-              default:
-                newUrl = window.repositoryUrl || '';
+      set((state) => {
+        console.log('🔍 DEBUG: Current workspaces:', state.workspaces.map(w => ({ 
+          name: w.name, 
+          repoName: w.repository.name 
+        })));
+        
+        return {
+          workspaces: state.workspaces.map(workspace => {
+            console.log(`🔍 DEBUG: Looking for repository match for workspace "${workspace.name}" (repo: "${workspace.repository.name}")`);
+            
+            // Find the matching repository with updated URLs
+            const updatedRepo = repositories.find(repo => repo.name === workspace.repository.name);
+            console.log(`🔍 DEBUG: Found match:`, updatedRepo ? { 
+              name: updatedRepo.name, 
+              ports: updatedRepo.ports 
+            } : 'NO MATCH');
+            
+            if (!updatedRepo) {
+              console.warn(`⚠️ DEBUG: No repository found for workspace "${workspace.name}" looking for repo "${workspace.repository.name}"`);
+              return workspace;
             }
 
-            return { ...window, repositoryUrl: newUrl };
-          });
+            // Update the workspace's repository URLs
+            const updatedWorkspace = {
+              ...workspace,
+              repository: { ...workspace.repository, urls: updatedRepo.urls }
+            };
 
-          return { ...updatedWorkspace, windows: updatedWindows };
-        })
-      }));
+            // Update all windows in this workspace with new URLs and ports
+            const updatedWindows = workspace.windows.map(window => {
+
+              // Update URL and port based on window type
+              let newUrl = '';
+              const updates: Partial<typeof window> = {};
+              
+              switch (window.type) {
+                case 'vscode':
+                  newUrl = updatedRepo.urls?.vscode || '';
+                  updates.vscodePort = updatedRepo.ports?.vscode;
+                  break;
+                case 'claude':
+                  newUrl = updatedRepo.urls?.claude || '';
+                  updates.claudePort = updatedRepo.ports?.claude;
+                  break;
+                case 'terminal':
+                  newUrl = updatedRepo.urls?.terminal || '';
+                  updates.terminalPort = updatedRepo.ports?.terminal;
+                  break;
+                default:
+                  newUrl = window.repositoryUrl || '';
+              }
+
+              return { ...window, repositoryUrl: newUrl, ...updates };
+            });
+
+            return { ...updatedWorkspace, windows: updatedWindows };
+          })
+        }
+      });
     },
 
     setSandboxId: (sandboxId: string | null) => {
