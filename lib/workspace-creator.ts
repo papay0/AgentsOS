@@ -168,14 +168,6 @@ export class WorkspaceCreator {
 
   private async cloneRepositories(sandbox: Sandbox, projectDir: string, repositories: Repository[]): Promise<void> {
     try {
-      console.log('🔍 DEBUG: cloneRepositories input order:', repositories.map((r, i) => ({ 
-        index: i, 
-        name: r.name,
-        id: r.id,
-        url: r.url,
-        sourceType: r.sourceType 
-      })));
-      
       const clonedRepos: string[] = [];
       
       for (const repository of repositories) {

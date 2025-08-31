@@ -278,7 +278,7 @@ describe('WorkspaceManager', () => {
 
       expect(result).toBe(mockSandbox);
       expect(mockDaytona.create).toHaveBeenCalledWith({
-        public: true,
+        public: false,
         image: 'node:20',
         resources: options,
       });

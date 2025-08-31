@@ -4,6 +4,52 @@ import { render, screen, fireEvent } from '@/src/test/utils'
 // Unmock the MobileWorkspace component to test the real implementation
 vi.unmock('@/app/home/components/mobile/MobileWorkspace')
 
+// Mock the apps module
+vi.mock('@/app/home/apps', () => ({
+  getAvailableApps: () => [
+    {
+      id: 'vscode',
+      metadata: {
+        id: 'vscode',
+        name: 'VSCode',
+        icon: { emoji: '💻', fallback: '💻' },
+        colors: { primary: 'bg-blue-500' }
+      }
+    },
+    {
+      id: 'claude',
+      metadata: {
+        id: 'claude', 
+        name: 'Claude Code',
+        icon: { emoji: '🤖', fallback: '🤖' },
+        colors: { primary: 'bg-purple-500' }
+      }
+    },
+    {
+      id: 'terminal',
+      metadata: {
+        id: 'terminal',
+        name: 'Terminal', 
+        icon: { emoji: '💻', fallback: '💻' },
+        colors: { primary: 'bg-gray-500' }
+      }
+    },
+    {
+      id: 'settings',
+      metadata: {
+        id: 'settings',
+        name: 'Settings',
+        icon: { emoji: '⚙️', fallback: '⚙️' },
+        colors: { primary: 'bg-gray-600' }
+      }
+    }
+  ],
+  getApp: (id: string) => ({
+    metadata: { id, name: id, icon: { emoji: '📱', fallback: '📱' } },
+    component: () => null
+  })
+}))
+
 // Import after unmocking
 import MobileWorkspace from './MobileWorkspace'
 
