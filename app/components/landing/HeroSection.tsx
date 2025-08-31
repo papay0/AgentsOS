@@ -2,16 +2,12 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, Code, Sparkles } from 'lucide-react';
+import { Zap, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedBackground } from './AnimatedBackground';
 import { trackButtonClick } from '@/lib/analytics';
 
-interface HeroSectionProps {
-  shouldShowWaitlist: boolean;
-}
-
-export function HeroSection({ shouldShowWaitlist }: HeroSectionProps) {
+export function HeroSection() {
   const fadeUpVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: (i: number) => ({
@@ -77,27 +73,16 @@ export function HeroSection({ shouldShowWaitlist }: HeroSectionProps) {
             animate="visible"
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            {shouldShowWaitlist ? (
+            <Link href="/home" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
-                className="px-10 py-6 text-lg bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 border-0 shadow-lg hover:shadow-xl transition-all text-white"
-                onClick={() => document.getElementById('waitlist-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="w-full px-10 py-6 text-lg bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 border-0 shadow-lg hover:shadow-xl transition-all text-white"
+                onClick={() => trackButtonClick('launch_workspace', 'hero_section')}
               >
-                Join Waitlist
-                <Sparkles className="ml-2 h-5 w-5" />
+                Launch AgentsOS
+                <Zap className="ml-2 h-5 w-5" />
               </Button>
-            ) : (
-              <Link href="/home" className="w-full sm:w-auto">
-                <Button 
-                  size="lg" 
-                  className="w-full px-10 py-6 text-lg bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 border-0 shadow-lg hover:shadow-xl transition-all text-white"
-                  onClick={() => trackButtonClick('launch_workspace', 'hero_section')}
-                >
-                  Launch AgentsOS
-                  <Zap className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            )}
+            </Link>
             <Button 
               variant="outline" 
               size="lg" 

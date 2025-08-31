@@ -9,8 +9,7 @@ import {
   HeroSection,
   FeaturesSection,
   ShowcaseSection,
-  CTASection,
-  WaitlistSection
+  CTASection
 } from './components/landing';
 import './components/landing/AgentsOSArchitecture.css';
 
@@ -22,8 +21,6 @@ export default function HomePage() {
   useEffect(() => {
     trackPageView('landing_page');
   }, []);
-
-  const shouldShowWaitlist = !isDevMode || showProdMode;
 
   return (
     <div className="relative min-h-screen w-full bg-white dark:bg-[#030303] overflow-x-hidden transition-colors">
@@ -44,7 +41,7 @@ export default function HomePage() {
       )}
 
       {/* Hero Section */}
-      <HeroSection shouldShowWaitlist={shouldShowWaitlist} />
+      <HeroSection />
 
       {/* Features Section */}
       <FeaturesSection />
@@ -53,10 +50,7 @@ export default function HomePage() {
       <ShowcaseSection />
 
       {/* CTA Section */}
-      <CTASection shouldShowWaitlist={shouldShowWaitlist} />
-
-      {/* Waitlist Section */}
-      {shouldShowWaitlist && <WaitlistSection />}
+      <CTASection />
     </div>
   );
 }

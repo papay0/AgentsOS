@@ -2,14 +2,10 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Sparkles, Zap, Code } from 'lucide-react';
+import { Zap, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface CTASectionProps {
-  shouldShowWaitlist: boolean;
-}
-
-export function CTASection({ shouldShowWaitlist }: CTASectionProps) {
+export function CTASection() {
   return (
     <section className="relative py-32">
       <div className="container mx-auto px-4 md:px-6">
@@ -32,26 +28,15 @@ export function CTASection({ shouldShowWaitlist }: CTASectionProps) {
                 Your development OS is ready.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {shouldShowWaitlist ? (
+                <Link href="/home" className="w-full sm:w-auto">
                   <Button 
                     size="lg" 
-                    className="px-10 py-6 text-lg bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 border-0 shadow-lg hover:shadow-xl transition-all text-white"
-                    onClick={() => document.getElementById('waitlist-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full px-10 py-6 text-lg bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 border-0 shadow-lg hover:shadow-xl transition-all text-white"
                   >
-                    Join the Waitlist
-                    <Sparkles className="ml-2 h-5 w-5" />
+                    Launch AgentsOS
+                    <Zap className="ml-2 h-5 w-5" />
                   </Button>
-                ) : (
-                  <Link href="/home" className="w-full sm:w-auto">
-                    <Button 
-                      size="lg" 
-                      className="w-full px-10 py-6 text-lg bg-gradient-to-r from-indigo-500 to-rose-500 hover:from-indigo-600 hover:to-rose-600 border-0 shadow-lg hover:shadow-xl transition-all text-white"
-                    >
-                      Launch AgentsOS
-                      <Zap className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                )}
+                </Link>
                 <Button 
                   size="lg" 
                   className="px-10 py-6 text-lg bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10 backdrop-blur-sm" 
