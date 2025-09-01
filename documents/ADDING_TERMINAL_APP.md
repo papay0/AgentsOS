@@ -93,35 +93,44 @@ static getPortsForSlot(slot: number) {
 
 ### 4. Add CLI Installation
 
+**🚨 CRITICAL: Use the Scalable CLI Installation System**
+
+The modern approach is to add your CLI to the centralized `CLI_TOOLS` configuration:
+
 **File**: `/lib/workspace-installer.ts`
 
 ```typescript
-async installYourNewAppCLI(sandbox: Sandbox, rootDir: string): Promise<void> {
-  this.logger.workspace.installing('Your App CLI');
-  const result = await sandbox.process.executeCommand(
-    `npm install -g @your-company/your-cli-package`,
-    rootDir,
-    undefined,
-    180000
-  );
-  
-  if (result.exitCode !== 0) {
-    const errorData = {
-      error: result.result,
-      code: 'YOUR_APP_CLI_INSTALL_FAILED',
-      details: { exitCode: result.exitCode, optional: true }
-    };
-    this.logger.logError('Your App CLI installation failed, continuing without it', errorData);
-    return;
+// Add to CLI_TOOLS constant
+private static readonly CLI_TOOLS = {
+  claude: {
+    name: 'Claude Code CLI',
+    command: 'claude',
+    installCommand: 'curl -L https://github.com/anthropics/claude-cli/releases/latest/download/linux-amd64.tar.gz | tar xz && mv claude /usr/local/bin/',
+    checkCommand: 'claude --version'
+  },
+  gemini: {
+    name: 'Gemini CLI',
+    command: 'gemini',
+    installCommand: 'npm install -g @google/gemini-cli',
+    checkCommand: 'gemini --version'
+  },
+  'your-new-app': {
+    name: 'Your App CLI',
+    command: 'your-cli-command',
+    installCommand: 'npm install -g @your-company/your-cli-package',
+    checkCommand: 'your-cli-command --version'
   }
-}
+} as const;
 ```
 
-**File**: `/lib/workspace-creator.ts` (add to installation sequence)
+**Benefits**:
+- ✅ **Automatic installation** during workspace creation via `ensureCLITools()`
+- ✅ **Automatic installation** for existing workspaces during service restart
+- ✅ **Graceful error handling** - continues if installation fails
+- ✅ **Only installs missing tools** - checks if already installed first
+- ✅ **Scalable** - future CLI tools just need config additions
 
-```typescript
-await this.installer.installYourNewAppCLI(sandbox, rootDir);
-```
+**No code changes needed elsewhere** - the `ensureCLITools()` method automatically handles all CLI tools!
 
 ### 5. Add Tmux Script Generation
 
@@ -290,7 +299,51 @@ case 'your-new-app':
 
 Update any local Repository interfaces in store files to include your new service in the same pattern as shown in the type definitions.
 
-### 11. Update Tests
+### 11. Update WebSocket Proxy Types
+
+**🚨 CRITICAL: Update AgentsOS-websocket-proxy Repository Types**
+
+**File**: `/AgentsOS-websocket-proxy/src/firebase-service.ts`
+
+```typescript
+interface Repository {
+  name: string;
+  sourceType: string;
+  ports: {
+    vscode: number;
+    terminal: number;
+    claude: number;
+    gemini: number;
+    'your-new-app': number; // Add this line
+  };
+  tokens?: {
+    vscode: string | null;
+    terminal: string | null;
+    claude: string | null;
+    gemini: string | null;
+    'your-new-app': string | null; // Add this line
+  };
+}
+```
+
+**And update the port validation logic:**
+
+```typescript
+// In validateUserPort method, add your service to both port checks
+if (repo.ports.terminal === port ||
+    repo.ports.vscode === port ||
+    repo.ports.claude === port ||
+    repo.ports.gemini === port ||
+    repo.ports['your-new-app'] === port) {
+```
+
+**⚠️ WHY THIS IS CRITICAL:**
+- The WebSocket proxy validates incoming connections by checking if the requested port exists in the user's workspace
+- If your service isn't included in the validation logic, the proxy will **reject all WebSocket connections**
+- This causes infinite re-renders and connection failures in the UI
+- The bootstrap API will correctly add the port to Firestore, but the proxy won't recognize it
+
+### 12. Update Tests
 
 Add your new service to all test mock objects:
 - Port objects: `{ vscode: 8080, terminal: 10000, claude: 4000, gemini: 5000, 'your-new-app': 6000 }`
@@ -327,6 +380,62 @@ The next terminal app will be even faster to add using this pattern.
 ❌ **Don't add service-specific migration logic** - Let the generic bootstrap handle it  
 ❌ **Don't forget to update test mocks** - All ports, URLs, and tokens need updating  
 ❌ **Don't skip the CLI installation step** - Apps won't work without their CLI tools  
+❌ **Don't forget the WebSocket proxy types** - This is the #1 cause of connection failures
+
+## Debugging Guide
+
+### Problem: App Shows Black/Blue Screen or Infinite Re-renders
+
+**Root Cause**: WebSocket proxy rejecting connections because port validation fails.
+
+**Symptoms**:
+- Component renders but shows loading state forever
+- Console logs show connection failures and retry attempts
+- Proxy logs show: `Port XXXX not found in cached workspace`
+
+**Debug Steps**:
+
+1. **Check Daytona Service**: SSH into workspace and verify service works directly
+   ```bash
+   curl -I http://localhost:YOUR_PORT  # Should return 200 OK
+   wscat -c ws://localhost:YOUR_PORT/ws  # Should connect successfully
+   ```
+
+2. **Check Bootstrap Logs**: Verify bootstrap API is adding your port to Firestore
+   ```
+   🔍 Bootstrap: Checking default - current ports: { ..., your-app: XXXX }
+   ✅ Bootstrap: Updated N repositories with fresh tokens and service URLs
+   ```
+
+3. **Check Proxy Logs**: Look for port validation failures
+   ```
+   Port XXXX not found in cached workspace for user
+   Connection setup failed: Error: Port XXXX not found
+   ```
+
+4. **Fix**: Update WebSocket proxy Repository interface and validation logic
+
+### Problem: CLI Not Found in Terminal
+
+**Root Cause**: CLI installation failed or wasn't added to scalable system.
+
+**Debug Steps**:
+1. SSH into workspace: `which your-cli-command`
+2. Check installation logs in service manager output
+3. Manually test CLI installation command
+
+**Fix**: Add CLI to `CLI_TOOLS` constant in workspace-installer.ts
+
+### Problem: Service Won't Start
+
+**Root Cause**: Tmux script errors or CLI command failures.
+
+**Debug Steps**:
+1. Check tmux session: `tmux list-sessions`
+2. Check service logs: `cat /tmp/your-app-repo-port.log`  
+3. Test script manually: `bash /tmp/start-your-app-repo.sh`
+
+**Fix**: Update tmux script generation or CLI command  
 
 ## Verification Checklist
 
