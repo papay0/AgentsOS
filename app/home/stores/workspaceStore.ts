@@ -13,11 +13,13 @@ export interface Repository {
     vscode: string;
     terminal: string;
     claude: string;
+    gemini: string;
   };
   ports?: {
     vscode: number;
     terminal: number;
     claude: number;
+    gemini: number;
   };
 }
 
@@ -117,7 +119,8 @@ const createDefaultWindows = (repository: Repository): Window[] => {
       focused: windows.length === 0, // First window gets focus
       repositoryName: repository.name,
       repositoryUrl: repository.urls?.claude || '',
-      claudePort: repository.ports?.claude
+      claudePort: repository.ports?.claude,
+      geminiPort: repository.ports?.gemini
     });
     xOffset += 150;
     yOffset += 100;
@@ -447,6 +450,10 @@ export const useWorkspaceStore = create<WorkspaceStore>()(
                 case 'claude':
                   newUrl = updatedRepo.urls?.claude || '';
                   updates.claudePort = updatedRepo.ports?.claude;
+                  break;
+                case 'gemini':
+                  newUrl = updatedRepo.urls?.gemini || '';
+                  updates.geminiPort = updatedRepo.ports?.gemini;
                   break;
                 case 'terminal':
                   newUrl = updatedRepo.urls?.terminal || '';

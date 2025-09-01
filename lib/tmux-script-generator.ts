@@ -48,6 +48,18 @@ export class TmuxScriptGenerator {
   }
 
   /**
+   * Generate Gemini CLI startup script with tmux session management
+   */
+  static generateGeminiScript(repoPath: string, repoName: string): string {
+    return this.generateScript({
+      repoPath,
+      repoName,
+      sessionName: `gemini-${repoName}`,
+      command: 'gemini'
+    });
+  }
+
+  /**
    * Generate custom command startup script with tmux session management
    */
   static generateCustomScript(repoPath: string, repoName: string, command: string, sessionPrefix = 'custom'): string {

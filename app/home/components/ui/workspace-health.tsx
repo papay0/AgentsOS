@@ -52,7 +52,7 @@ export function WorkspaceHealth() {
           {getHealthText(healthData?.sandboxId || null, isRestarting, isLoading, error, healthData, restartStartTime)}
         </Button>
       </HoverCardTrigger>
-      <HoverCardContent className="w-80" align="end">
+      <HoverCardContent className="w-80 max-h-96 overflow-y-auto" align="end">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold flex items-center gap-2">
@@ -95,24 +95,26 @@ export function WorkspaceHealth() {
           {healthData && healthData.sandboxState === 'started' && (
             <div className="space-y-2">
               <div className="text-xs font-medium text-gray-500">Services</div>
-              {healthData.services.map((service, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between text-xs p-2 rounded bg-gray-50 dark:bg-gray-800"
-                >
-                  <div className="flex items-center gap-2">
-                    {getServiceIcon(service)}
-                    <span className="font-medium">{service.service}</span>
+              <div className="max-h-48 overflow-y-auto space-y-2">
+                {healthData.services.map((service, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between text-xs p-2 rounded bg-gray-50 dark:bg-gray-800"
+                  >
+                    <div className="flex items-center gap-2">
+                      {getServiceIcon(service)}
+                      <span className="font-medium">{service.service}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <span>:{service.port}</span>
+                      <span className="text-xs">({service.status})</span>
+                      {service.pid && (
+                        <span className="text-xs">PID: {service.pid}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <span>:{service.port}</span>
-                    <span className="text-xs">({service.status})</span>
-                    {service.pid && (
-                      <span className="text-xs">PID: {service.pid}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
               
               {healthData.services.some(s => s.status !== 'running') && (
                 <Button

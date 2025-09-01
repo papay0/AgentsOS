@@ -21,3 +21,26 @@ export const TTYD_THEME = JSON.stringify({
   brightCyan: "#6BFFFF",
   brightWhite: "#FFFFFF"
 });
+
+// Service definitions
+export const WORKSPACE_SERVICES = ['vscode', 'terminal', 'claude', 'gemini'] as const;
+export type WorkspaceService = typeof WORKSPACE_SERVICES[number];
+
+// Number of services per repository
+export const SERVICES_PER_REPOSITORY = WORKSPACE_SERVICES.length;
+
+// Port ranges for services
+export const SERVICE_PORT_RANGES = {
+  vscode: 8080,    // 8080+
+  terminal: 10000, // 10000+  
+  claude: 4000,    // 4000+
+  gemini: 5000,    // 5000+
+} as const;
+
+// Service display names
+export const SERVICE_DISPLAY_NAMES: Record<WorkspaceService, string> = {
+  vscode: 'VSCode',
+  terminal: 'Terminal',
+  claude: 'Claude',
+  gemini: 'Gemini'
+} as const;

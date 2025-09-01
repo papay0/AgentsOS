@@ -54,6 +54,10 @@ export default function MobileApp({ app, onClose, theme, onThemeChange, isOpenin
         const Component = MobileContent as React.ComponentType<{ claudePort?: number }>;
         return <Component claudePort={app.claudePort} />;
       }
+      case 'gemini': {
+        const Component = MobileContent as React.ComponentType<{ geminiPort?: number }>;
+        return <Component geminiPort={app.geminiPort} />;
+      }
       case 'vscode': {
         const Component = MobileContent as React.ComponentType<{ repositoryUrl?: string }>;
         return <Component repositoryUrl={app.repositoryUrl} />;
@@ -69,6 +73,11 @@ export default function MobileApp({ app, onClose, theme, onThemeChange, isOpenin
       case 'setup': {
         const Component = MobileContent as React.ComponentType<Record<string, never>>;
         return <Component />;
+      }
+      default: {
+        // Fallback for any unhandled app types
+        console.warn(`Unhandled app type: ${app.type}`);
+        return <div className="w-full h-full flex items-center justify-center text-red-500">Unsupported app type: {app.type}</div>;
       }
     }
   };

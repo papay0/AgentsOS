@@ -12,6 +12,22 @@ export class WorkspaceInstaller {
     additional: ['net-tools']
   } as const;
 
+  // Single source of truth for CLI tools
+  private static readonly CLI_TOOLS = {
+    claude: {
+      name: 'Claude Code CLI',
+      command: 'claude',
+      installCommand: 'curl -L https://github.com/anthropics/claude-cli/releases/latest/download/linux-amd64.tar.gz | tar xz && mv claude /usr/local/bin/',
+      checkCommand: 'claude --version'
+    },
+    gemini: {
+      name: 'Gemini CLI',
+      command: 'gemini',
+      installCommand: 'npm install -g @google/gemini-cli',
+      checkCommand: 'gemini --version'
+    }
+  } as const;
+
   /**
    * Ensure critical system packages are installed (for existing workspaces)
    * Only installs missing packages, doesn't update existing ones
@@ -81,6 +97,69 @@ export class WorkspaceInstaller {
       this.logger.success(`Installed missing packages: ${missingPackages.join(', ')}`);
     } else {
       this.logger.success('All critical system packages already present');
+    }
+  }
+
+  /**
+   * Ensure CLI tools are installed (for existing workspaces)
+   * Only installs missing tools, doesn't update existing ones
+   */
+  async ensureCLITools(sandbox: Sandbox, rootDir: string): Promise<void> {
+    this.logger.info('Checking CLI tools...');
+    
+    // Check which CLI tools are missing
+    const toolsToCheck = Object.entries(WorkspaceInstaller.CLI_TOOLS);
+    const missingTools: Array<{ name: string; tool: typeof WorkspaceInstaller.CLI_TOOLS[keyof typeof WorkspaceInstaller.CLI_TOOLS] }> = [];
+    
+    for (const [key, tool] of toolsToCheck) {
+      try {
+        const checkResult = await sandbox.process.executeCommand(
+          `which ${tool.command}`,
+          rootDir,
+          undefined,
+          5000
+        );
+        
+        if (checkResult.exitCode === 0) {
+          this.logger.info(`✓ ${tool.name} already installed`);
+        } else {
+          this.logger.info(`✗ ${tool.name} missing, will install`);
+          missingTools.push({ name: key, tool });
+        }
+      } catch {
+        this.logger.info(`✗ ${tool.name} check failed, will install`);
+        missingTools.push({ name: key, tool });
+      }
+    }
+    
+    // Install missing CLI tools
+    for (const { name, tool } of missingTools) {
+      this.logger.workspace.installing(tool.name);
+      
+      const result = await sandbox.process.executeCommand(
+        tool.installCommand,
+        rootDir,
+        undefined,
+        120000 // 2 minutes timeout for CLI installs
+      );
+      
+      if (result.exitCode !== 0) {
+        const errorData = {
+          error: result.result,
+          code: `${name.toUpperCase()}_CLI_INSTALL_FAILED`,
+          details: { exitCode: result.exitCode, tool: name }
+        };
+        this.logger.logError(`${tool.name} installation failed, continuing without it`, errorData);
+        // Continue with other tools instead of throwing
+      } else {
+        this.logger.success(`${tool.name} installed successfully`);
+      }
+    }
+    
+    if (missingTools.length === 0) {
+      this.logger.success('All CLI tools already present');
+    } else {
+      this.logger.success(`CLI tools installation completed (${missingTools.length} tools processed)`);
     }
   }
 
@@ -154,25 +233,6 @@ export class WorkspaceInstaller {
     }
   }
 
-  async installClaudeCode(sandbox: Sandbox, rootDir: string): Promise<void> {
-    this.logger.workspace.installing('Claude Code CLI');
-    const result = await sandbox.process.executeCommand(
-      `npm install -g @anthropic-ai/claude-code`,
-      rootDir,
-      undefined,
-      180000
-    );
-    
-    if (result.exitCode !== 0) {
-      const errorData= {
-        error: result.result,
-        code: 'CLAUDE_CLI_INSTALL_FAILED',
-        details: { exitCode: result.exitCode, optional: true }
-      };
-      this.logger.logError('Claude CLI installation failed, continuing without it', errorData);
-      return;
-    }
-  }
 
   async installGitHubCLI(sandbox: Sandbox, rootDir: string): Promise<void> {
     this.logger.workspace.installing('GitHub CLI (gh)');

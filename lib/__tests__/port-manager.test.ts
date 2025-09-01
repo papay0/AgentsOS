@@ -15,6 +15,7 @@ describe('PortManager', () => {
         vscode: 8080,
         terminal: 10000,
         claude: 4000,
+        gemini: 5000,
       });
     });
 
@@ -25,6 +26,7 @@ describe('PortManager', () => {
         vscode: 8081,
         terminal: 10001,
         claude: 4001,
+        gemini: 5001,
       });
     });
 
@@ -35,6 +37,7 @@ describe('PortManager', () => {
         vscode: 8090,
         terminal: 10010,
         claude: 4010,
+        gemini: 5010,
       });
     });
 
@@ -45,6 +48,7 @@ describe('PortManager', () => {
         vscode: 9079,
         terminal: 10999,
         claude: 4999,
+        gemini: 5999,
       });
     });
   });
@@ -63,6 +67,7 @@ describe('PortManager', () => {
           vscode: 8080,
           terminal: 10000,
           claude: 4000,
+          gemini: 5000,
         },
       });
     });
@@ -116,7 +121,7 @@ describe('PortManager', () => {
       expect(repositories[2].sourceType).toBe('manual');
 
       // Each should have unique ports
-      const allPorts = repositories.flatMap(r => [r.ports.vscode, r.ports.terminal, r.ports.claude]);
+      const allPorts = repositories.flatMap(r => [r.ports.vscode, r.ports.terminal, r.ports.claude, r.ports.gemini]);
       const uniquePorts = new Set(allPorts);
       expect(uniquePorts.size).toBe(allPorts.length);
     });
@@ -130,13 +135,13 @@ describe('PortManager', () => {
       // Generate ports for 50 repositories
       for (let i = 0; i < numRepos; i++) {
         const ports = PortManager.getPortsForSlot(i);
-        allPorts.push(ports.vscode, ports.terminal, ports.claude);
+        allPorts.push(ports.vscode, ports.terminal, ports.claude, ports.gemini);
       }
 
       // Check no duplicates
       const uniquePorts = new Set(allPorts);
       expect(uniquePorts.size).toBe(allPorts.length);
-      expect(allPorts.length).toBe(numRepos * 3); // 3 ports per repo
+      expect(allPorts.length).toBe(numRepos * 4); // 4 ports per repo
     });
 
     it('should generate predictable port sequences', () => {
@@ -147,11 +152,11 @@ describe('PortManager', () => {
       }
 
       expect(ports).toEqual([
-        { vscode: 8080, terminal: 10000, claude: 4000 },
-        { vscode: 8081, terminal: 10001, claude: 4001 },
-        { vscode: 8082, terminal: 10002, claude: 4002 },
-        { vscode: 8083, terminal: 10003, claude: 4003 },
-        { vscode: 8084, terminal: 10004, claude: 4004 },
+        { vscode: 8080, terminal: 10000, claude: 4000, gemini: 5000 },
+        { vscode: 8081, terminal: 10001, claude: 4001, gemini: 5001 },
+        { vscode: 8082, terminal: 10002, claude: 4002, gemini: 5002 },
+        { vscode: 8083, terminal: 10003, claude: 4003, gemini: 5003 },
+        { vscode: 8084, terminal: 10004, claude: 4004, gemini: 5004 },
       ]);
     });
   });
@@ -163,6 +168,7 @@ describe('PortManager', () => {
       expect(ports.vscode).toBe(8080);
       expect(ports.terminal).toBe(10000);
       expect(ports.claude).toBe(4000);
+      expect(ports.gemini).toBe(5000);
     });
 
     it('should handle negative slots (though not recommended)', () => {
@@ -171,6 +177,7 @@ describe('PortManager', () => {
       expect(ports.vscode).toBe(8079);
       expect(ports.terminal).toBe(9999);
       expect(ports.claude).toBe(3999);
+      expect(ports.gemini).toBe(4999);
     });
   });
 

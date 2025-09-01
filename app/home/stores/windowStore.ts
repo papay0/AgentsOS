@@ -4,7 +4,7 @@ import { WINDOW_Z_INDEX_BASE, WINDOW_Z_INDEX_MAX } from '../constants/layout';
 
 export interface Window {
   id: string;
-  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup';
+  type: 'vscode' | 'claude' | 'gemini' | 'diff' | 'settings' | 'terminal' | 'setup';
   title: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
@@ -23,6 +23,7 @@ export interface Window {
   repositoryUrl?: string; // vscode URL, terminal URL, or claude URL
   terminalPort?: number;
   claudePort?: number;
+  geminiPort?: number;
   vscodePort?: number;
 }
 
@@ -35,11 +36,13 @@ interface Repository {
     vscode: string;
     terminal: string;
     claude: string;
+    gemini: string;
   };
   ports?: {
     vscode: number;
     terminal: number;
     claude: number;
+    gemini: number;
   };
 }
 
@@ -216,7 +219,8 @@ export const useWindowStore = create<WindowStore>()(
             focused: false,
             repositoryName: repo.name,
             repositoryUrl: repo.urls?.claude || '',
-            claudePort: repo.ports?.claude
+            claudePort: repo.ports?.claude,
+            geminiPort: repo.ports?.gemini
           });
           
           // Regular terminal window

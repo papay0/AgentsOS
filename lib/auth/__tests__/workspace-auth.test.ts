@@ -48,7 +48,7 @@ describe('workspace-auth', () => {
         name: 'test-repo',
         url: 'https://github.com/test/repo',
         sourceType: 'github',
-        ports: { vscode: 8080, terminal: 9999, claude: 9998 }
+        ports: { vscode: 8080, terminal: 9999, claude: 9998, gemini: 9997 }
       }
     ],
     status: 'running',

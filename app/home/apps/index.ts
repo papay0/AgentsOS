@@ -2,6 +2,7 @@
 import { AppRegistry, validateApp, AppId, BaseApp } from './BaseApp';
 import { VSCodeApp } from './VSCodeApp';
 import { ClaudeApp } from './ClaudeApp';
+import { GeminiApp } from './GeminiApp';
 import { DiffApp } from './DiffApp';
 import { SettingsApp } from './SettingsApp';
 import { TerminalApp } from './TerminalApp';
@@ -11,6 +12,7 @@ import { SetupApp } from './setup';
 export const AppStore: AppRegistry = {
   vscode: VSCodeApp,
   claude: ClaudeApp,
+  gemini: GeminiApp,
   diff: DiffApp,
   settings: SettingsApp,
   terminal: TerminalApp,
@@ -25,6 +27,7 @@ if (process.env.NODE_ENV === 'development') {
       switch (id) {
         case 'terminal': return validateApp(app as BaseApp<'terminal'>);
         case 'claude': return validateApp(app as BaseApp<'claude'>);
+        case 'gemini': return validateApp(app as BaseApp<'gemini'>);
         case 'vscode': return validateApp(app as BaseApp<'vscode'>);
         case 'settings': return validateApp(app as BaseApp<'settings'>);
         case 'diff': return validateApp(app as BaseApp<'diff'>);
@@ -73,6 +76,7 @@ export type {
   PropsForApp,
   TerminalAppProps,
   ClaudeAppProps,
+  GeminiAppProps,
   VSCodeAppProps,
   SettingsAppProps,
   DiffAppProps,

@@ -12,11 +12,12 @@ export interface MobileApp {
   name: string;
   icon: AppMetadata['icon'];
   color: string;
-  type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup';
+  type: 'vscode' | 'claude' | 'gemini' | 'diff' | 'settings' | 'terminal' | 'setup';
   comingSoon?: boolean;
   repositoryUrl?: string;
   terminalPort?: number;
   claudePort?: number;
+  geminiPort?: number;
 }
 
 const getMobileAppColor = (primaryColor: string): string => {
@@ -34,11 +35,12 @@ const getAppsForRepository = (repository: Repository): MobileApp[] => {
       name: app.metadata.name,
       icon: app.metadata.icon,
       color: getMobileAppColor(app.metadata.colors.primary),
-      type: app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal',
+      type: app.metadata.id as 'vscode' | 'claude' | 'gemini' | 'diff' | 'settings' | 'terminal',
       comingSoon: app.metadata.comingSoon || app.metadata.id === 'diff', // Force Code Diff to be coming soon
       repositoryUrl: getRepositoryUrlForApp(repository, app.metadata.id),
       terminalPort: repository.ports?.terminal,
-      claudePort: repository.ports?.claude
+      claudePort: repository.ports?.claude,
+      geminiPort: repository.ports?.gemini
     }));
 };
 
@@ -48,6 +50,8 @@ const getRepositoryUrlForApp = (repository: Repository, appType: string): string
       return repository.urls?.vscode || '';
     case 'claude':
       return repository.urls?.claude || '';
+    case 'gemini':
+      return repository.urls?.gemini || '';
     case 'terminal':
       return repository.urls?.terminal || '';
     default:

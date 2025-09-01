@@ -9,6 +9,10 @@ export interface ClaudeAppProps {
   claudePort?: number;
 }
 
+export interface GeminiAppProps {
+  geminiPort?: number;
+}
+
 export interface VSCodeAppProps {
   repositoryUrl?: string;
   vscodePort?: number;
@@ -31,6 +35,7 @@ export type SetupAppProps = NoProps;
 export interface AppPropsMap {
   terminal: TerminalAppProps;
   claude: ClaudeAppProps;
+  gemini: GeminiAppProps;
   vscode: VSCodeAppProps;
   settings: SettingsAppProps;
   diff: DiffAppProps;

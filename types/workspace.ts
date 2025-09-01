@@ -29,11 +29,13 @@ export interface RepositoryWithUrls {
     vscode: string;
     terminal: string;
     claude: string;
+    gemini: string;
   };
   tokens?: {
     vscode: string | null;
     terminal: string | null;
     claude: string | null;
+    gemini: string | null;
   };
 }
 
@@ -86,18 +88,21 @@ export interface Repository {
     vscode: number;    // 8080+
     terminal: number;  // 10000+  
     claude: number;    // 4000+
+    gemini: number;    // 5000+
   };
   // Service URLs from Daytona
   serviceUrls?: {
     vscode: string;
     terminal: string;
     claude: string;
+    gemini: string;
   };
   // Preview tokens for accessing private workspaces
   tokens?: {
     vscode: string | null;
     terminal: string | null;
     claude: string | null;
+    gemini: string | null;
   };
 }
 
