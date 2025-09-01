@@ -303,6 +303,7 @@ export class WorkspaceManager {
     return await this.daytona.create({
       public: false,
       image: "node:20",
+      autoStopInterval: 480,
       resources: {
         cpu: options.cpu,
         memory: options.memory,

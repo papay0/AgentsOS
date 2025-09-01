@@ -280,6 +280,7 @@ describe('WorkspaceManager', () => {
       expect(mockDaytona.create).toHaveBeenCalledWith({
         public: false,
         image: 'node:20',
+        autoStopInterval: 480,
         resources: options,
       });
     });
