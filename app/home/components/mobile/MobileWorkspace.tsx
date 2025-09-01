@@ -24,6 +24,7 @@ export interface MobileApp {
   repositoryUrl?: string;
   terminalPort?: number;
   claudePort?: number;
+  geminiPort?: number;
 }
 
 const getMobileAppColor = (primaryColor: string): string => {

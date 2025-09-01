@@ -165,7 +165,7 @@ export default function Dock() {
     }
   });
 
-  const handleAppClick = (type: 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup') => {
+  const handleAppClick = (type: 'vscode' | 'claude' | 'gemini' | 'diff' | 'settings' | 'terminal' | 'setup') => {
     // Only work with the active workspace
     if (!activeWorkspace) return;
     
@@ -209,6 +209,8 @@ export default function Dock() {
           return activeWorkspace.repository.urls?.vscode || '';
         case 'claude':
           return activeWorkspace.repository.urls?.claude || '';
+        case 'gemini':
+          return activeWorkspace.repository.urls?.gemini || '';
         case 'terminal':
           return activeWorkspace.repository.urls?.terminal || '';
         default:
@@ -236,6 +238,11 @@ export default function Dock() {
         break;
       case 'claude':
         windowProps.claudePort = activeWorkspace.repository.ports?.claude;
+        break;
+      case 'gemini':
+        windowProps.geminiPort = activeWorkspace.repository.ports?.gemini;
+        console.log('🔍 [DOCK] Opening Gemini with port:', activeWorkspace.repository.ports?.gemini);
+        console.log('🔍 [DOCK] Full activeWorkspace.repository.ports:', activeWorkspace.repository.ports);
         break;
       case 'vscode':
         windowProps.vscodePort = activeWorkspace.repository.ports?.vscode;
@@ -299,7 +306,7 @@ export default function Dock() {
             {getAvailableApps().map((app) => (
               <MacTooltip key={app.metadata.id} text={app.metadata.name}>
                 <GlassDockIcon
-                  onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'diff' | 'settings' | 'terminal' | 'setup')}
+                  onClick={() => handleAppClick(app.metadata.id as 'vscode' | 'claude' | 'gemini' | 'diff' | 'settings' | 'terminal' | 'setup')}
                   className={`${app.metadata.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
                   title="" // Remove default tooltip since we have custom one
                   dataAttribute={app.metadata.id}

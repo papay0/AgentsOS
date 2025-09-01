@@ -65,7 +65,7 @@ describe('DaytonaClient', () => {
           url: 'https://github.com/test/repo',
           description: 'Test repository',
           sourceType: 'github' as const,
-          ports: { vscode: 8080, terminal: 10000, claude: 4000 },
+          ports: { vscode: 8080, terminal: 10000, claude: 4000, gemini: 5000 },
         }],
         workspaceName: 'test-workspace',
         resources: { cpu: 2, memory: 4096, disk: 20480 },
@@ -79,6 +79,7 @@ describe('DaytonaClient', () => {
           vscode: 'https://vscode.example.com',
           terminal: 'https://terminal.example.com',
           claude: 'https://claude.example.com',
+          gemini: 'https://gemini.example.com',
         },
       };
 

@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { UserServiceAdmin } from '@/lib/user-service-admin';
 import type { UserWorkspace, Repository } from '@/types/workspace';
 import { Logger } from '@/lib/logger';
-import { TTYD_THEME } from '@/lib/workspace-constants';
+import { TTYD_THEME, SERVICES_PER_REPOSITORY } from '@/lib/workspace-constants';
 import { WorkspaceInstaller } from '@/lib/workspace-installer';
 import { TmuxScriptGenerator } from '@/lib/tmux-script-generator';
 
@@ -38,11 +38,13 @@ export interface ServiceResult {
     vscode: number;
     terminal: number;
     claude: number;
+    gemini: number;
   };
   services: {
     vscode: { status: 'success' | 'failed'; error?: string; url?: string; };
     terminal: { status: 'success' | 'failed'; error?: string; url?: string; };
     claude: { status: 'success' | 'failed'; error?: string; url?: string; };
+    gemini: { status: 'success' | 'failed'; error?: string; url?: string; };
   };
 }
 
@@ -179,7 +181,8 @@ export class WorkspaceServiceManager {
       portsToCheck.push(
         { name: `VSCode (${repo.name})`, port: repo.ports.vscode },
         { name: `Terminal (${repo.name})`, port: repo.ports.terminal },
-        { name: `Claude (${repo.name})`, port: repo.ports.claude }
+        { name: `Claude (${repo.name})`, port: repo.ports.claude },
+        { name: `Gemini (${repo.name})`, port: repo.ports.gemini }
       );
     }
     
@@ -306,7 +309,7 @@ export class WorkspaceServiceManager {
       // Get all ports from user's repositories (sorted)
       const allPorts: number[] = [];
       for (const repo of sortedRepositories) {
-        allPorts.push(repo.ports.vscode, repo.ports.terminal, repo.ports.claude);
+        allPorts.push(repo.ports.vscode, repo.ports.terminal, repo.ports.claude, repo.ports.gemini);
       }
       
       this.logger.debug(`Killing existing processes`, { 
@@ -349,7 +352,8 @@ export class WorkspaceServiceManager {
         sourceType: repo.sourceType,
         vscodePort: repo.ports.vscode,
         terminalPort: repo.ports.terminal,
-        claudePort: repo.ports.claude
+        claudePort: repo.ports.claude,
+        geminiPort: repo.ports.gemini
       }, 'RESTART');
       
       const repoResult: ServiceResult = {
@@ -360,13 +364,15 @@ export class WorkspaceServiceManager {
         services: {
           vscode: { status: 'failed', error: 'Unknown error' },
           terminal: { status: 'failed', error: 'Unknown error' },
-          claude: { status: 'failed', error: 'Unknown error' }
+          claude: { status: 'failed', error: 'Unknown error' },
+          gemini: { status: 'failed', error: 'Unknown error' }
         }
       };
       
       // Prepare startup scripts first (parallel script creation)
       const terminalScript = `/tmp/start-zsh-${repo.name}.sh`;
       const claudeScript = `/tmp/start-claude-${repo.name}.sh`;
+      const geminiScript = `/tmp/start-gemini-${repo.name}.sh`;
       
       const scriptPromises = [
         // Terminal script with tmux and environment variables
@@ -383,6 +389,15 @@ export class WorkspaceServiceManager {
           TmuxScriptGenerator.generateScriptCreationCommand(
             TmuxScriptGenerator.generateClaudeScript(repoPath, repo.name),
             claudeScript
+          ),
+          rootDir
+        ),
+        
+        // Gemini script with tmux and environment variables
+        sandbox.process.executeCommand(
+          TmuxScriptGenerator.generateScriptCreationCommand(
+            TmuxScriptGenerator.generateGeminiScript(repoPath, repo.name),
+            geminiScript
           ),
           rootDir
         )
@@ -409,6 +424,12 @@ export class WorkspaceServiceManager {
         // Claude
         sandbox.process.executeCommand(
           `nohup ttyd --port ${repo.ports.claude} --writable -t 'theme=${TTYD_THEME}' "${claudeScript}" > /tmp/claude-${repo.name}-${repo.ports.claude}.log 2>&1 &`,
+          rootDir
+        ),
+        
+        // Gemini
+        sandbox.process.executeCommand(
+          `nohup ttyd --port ${repo.ports.gemini} --writable -t 'theme=${TTYD_THEME}' "${geminiScript}" > /tmp/gemini-${repo.name}-${repo.ports.gemini}.log 2>&1 &`,
           rootDir
         )
       ];
@@ -491,6 +512,29 @@ export class WorkspaceServiceManager {
             status: 'failed', 
             error: error instanceof Error ? error.message : String(error)
           };
+        }),
+        
+        // Gemini health check
+        sandbox.process.executeCommand(
+          `curl -s -o /dev/null -w "%{http_code}" http://localhost:${repo.ports.gemini}`,
+          rootDir
+        ).then(result => {
+          if (result.result.trim() === '200') {
+            repoResult.services.gemini = { 
+              status: 'success', 
+              url: `https://${repo.ports.gemini}-${sandboxId}.proxy.daytona.work`
+            };
+          } else {
+            repoResult.services.gemini = { 
+              status: 'failed', 
+              error: `Health check failed: HTTP ${result.result}`
+            };
+          }
+        }).catch(error => {
+          repoResult.services.gemini = { 
+            status: 'failed', 
+            error: error instanceof Error ? error.message : String(error)
+          };
         })
       ];
       
@@ -515,7 +559,7 @@ export class WorkspaceServiceManager {
     const totalSuccessful = results.reduce((count, repo) => {
       return count + Object.values(repo.services).filter(service => service.status === 'success').length;
     }, 0);
-    const totalServices = results.length * 3;
+    const totalServices = results.length * SERVICES_PER_REPOSITORY;
     
     this.logger.success(`Service restart completed`, {
       sandboxId,
@@ -567,6 +611,10 @@ export class WorkspaceServiceManager {
       this.logger.info('Ensuring critical system packages are present...');
       await this.installer.ensureSystemPackages(sandbox, rootDir);
       
+      // Ensure all CLI tools are installed (for workspaces created before CLI tools support)
+      this.logger.info('Ensuring CLI tools are installed...');
+      await this.installer.ensureCLITools(sandbox, rootDir);
+      
       // Restart/fix services for all repositories
       const results = await this.restartServices(
         sandbox,
@@ -577,7 +625,7 @@ export class WorkspaceServiceManager {
       
       // Summary
       const reposWithServices = results.filter(repo => 'services' in repo);
-      const totalServices = reposWithServices.length * 3; // 3 services per repo
+      const totalServices = reposWithServices.length * SERVICES_PER_REPOSITORY; // services per repo
       const successfulServices = reposWithServices.reduce((count, repo) => {
         return count + Object.values(repo.services).filter(service => service.status === 'success').length;
       }, 0);

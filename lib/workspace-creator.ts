@@ -68,7 +68,7 @@ export class WorkspaceCreator {
       await this.installer.installGitHubCLI(sandbox, rootDir);
       await this.installer.installTtyd(sandbox, rootDir);
       await this.installer.installCodeServer(sandbox, rootDir);
-      await this.installer.installClaudeCode(sandbox, rootDir);
+      await this.installer.ensureCLITools(sandbox, rootDir); // This handles Claude + Gemini + future CLIs
       await this.installer.installOhMyZsh(sandbox, rootDir);
       
       // Set up services for each repository (separate instances)
@@ -146,13 +146,15 @@ export class WorkspaceCreator {
       serviceUrls: repo.urls ? {
         vscode: repo.urls.vscode,
         terminal: repo.urls.terminal,
-        claude: repo.urls.claude
+        claude: repo.urls.claude,
+        gemini: repo.urls.gemini
       } : undefined,
       // Include tokens if available
       tokens: repo.tokens ? {
         vscode: repo.tokens.vscode,
         terminal: repo.tokens.terminal,
-        claude: repo.tokens.claude
+        claude: repo.tokens.claude,
+        gemini: repo.tokens.gemini
       } : undefined
     }));
 

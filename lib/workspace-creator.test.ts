@@ -21,12 +21,13 @@ vi.mock('./port-manager', () => ({
       url: '',
       description: 'Default workspace',
       sourceType: 'default',
-      ports: { vscode: 8080, terminal: 9999, claude: 9998 },
+      ports: { vscode: 8080, terminal: 9999, claude: 9998, gemini: 9997 },
     }),
     getPortsForSlot: vi.fn().mockReturnValue({
       vscode: 8080,
       terminal: 9999,
       claude: 9998,
+      gemini: 9997,
     }),
   },
 }))
@@ -89,7 +90,7 @@ describe('WorkspaceCreator', () => {
       installGitHubCLI: vi.fn().mockResolvedValue(undefined),
       installTtyd: vi.fn().mockResolvedValue(undefined),
       installCodeServer: vi.fn().mockResolvedValue(undefined),
-      installClaudeCode: vi.fn().mockResolvedValue(undefined),
+      ensureCLITools: vi.fn().mockResolvedValue(undefined),
       installOhMyZsh: vi.fn().mockResolvedValue(undefined),
     } as unknown as WorkspaceInstaller
 
@@ -104,6 +105,7 @@ describe('WorkspaceCreator', () => {
             vscode: 'http://localhost:8080',
             terminal: 'http://localhost:9999',
             claude: 'http://localhost:9998',
+            gemini: 'http://localhost:9997',
           },
         },
       ]),
@@ -127,7 +129,7 @@ describe('WorkspaceCreator', () => {
             url: 'https://github.com/test/repo',
             description: 'Test repository',
             sourceType: 'github',
-            ports: { vscode: 8080, terminal: 9999, claude: 9998 },
+            ports: { vscode: 8080, terminal: 9999, claude: 9998, gemini: 9997 },
           },
         ],
         resources: { cpu: 2, memory: 4, disk: 10 },
@@ -138,7 +140,7 @@ describe('WorkspaceCreator', () => {
       expect(mockWorkspaceInstaller.installGitHubCLI).toHaveBeenCalledWith(mockSandbox, rootDir)
       expect(mockWorkspaceInstaller.installTtyd).toHaveBeenCalledWith(mockSandbox, rootDir)
       expect(mockWorkspaceInstaller.installCodeServer).toHaveBeenCalledWith(mockSandbox, rootDir)
-      expect(mockWorkspaceInstaller.installClaudeCode).toHaveBeenCalledWith(mockSandbox, rootDir)
+      expect(mockWorkspaceInstaller.ensureCLITools).toHaveBeenCalledWith(mockSandbox, rootDir)
       expect(mockWorkspaceInstaller.installOhMyZsh).toHaveBeenCalledWith(mockSandbox, rootDir)
 
       // Verify proper response
@@ -154,6 +156,7 @@ describe('WorkspaceCreator', () => {
               vscode: 'http://localhost:8080',
               terminal: 'http://localhost:9999',
               claude: 'http://localhost:9998',
+              gemini: 'http://localhost:9997',
             },
           },
         ],
@@ -177,7 +180,7 @@ describe('WorkspaceCreator', () => {
         mockWorkspaceInstaller.installGitHubCLI,
         mockWorkspaceInstaller.installTtyd,
         mockWorkspaceInstaller.installCodeServer,
-        mockWorkspaceInstaller.installClaudeCode,
+        mockWorkspaceInstaller.ensureCLITools,
         mockWorkspaceInstaller.installOhMyZsh,
       ]
 
@@ -229,7 +232,7 @@ describe('WorkspaceCreator', () => {
             url: 'https://github.com/user/my-project',
             description: 'My project',
             sourceType: 'github' as const,
-            ports: { vscode: 8080, terminal: 9999, claude: 9998 },
+            ports: { vscode: 8080, terminal: 9999, claude: 9998, gemini: 9997 },
           },
         ],
         workspaceName: 'Test Workspace',
@@ -256,7 +259,7 @@ describe('WorkspaceCreator', () => {
         mockWorkspaceInstaller.installGitHubCLI,
         mockWorkspaceInstaller.installTtyd,
         mockWorkspaceInstaller.installCodeServer,
-        mockWorkspaceInstaller.installClaudeCode,
+        mockWorkspaceInstaller.ensureCLITools,
         mockWorkspaceInstaller.installOhMyZsh,
       ]
 
@@ -302,6 +305,7 @@ describe('WorkspaceCreator', () => {
             vscode: 'http://localhost:8080',
             terminal: 'http://localhost:9999',
             claude: 'http://localhost:9998',
+            gemini: 'http://localhost:9997',
           },
         },
       ]

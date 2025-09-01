@@ -31,7 +31,7 @@ vi.mock('../workspace-installer', () => ({
     installSystemPackages: vi.fn(),
     installTtyd: vi.fn(),
     installCodeServer: vi.fn(),
-    installClaudeCode: vi.fn(),
+    ensureCLITools: vi.fn(),
     installOhMyZsh: vi.fn(),
   })),
 }));
@@ -65,6 +65,7 @@ describe('WorkspaceCreator', () => {
             vscode: 'http://example.com:8080',
             terminal: 'http://example.com:10000',
             claude: 'http://example.com:4000',
+            gemini: 'http://example.com:5000',
           }
         },
         {
@@ -75,6 +76,7 @@ describe('WorkspaceCreator', () => {
             vscode: 'http://example.com:8081',
             terminal: 'http://example.com:10001',
             claude: 'http://example.com:4001',
+            gemini: 'http://example.com:5001',
           }
         }
       ];
@@ -111,17 +113,17 @@ describe('WorkspaceCreator', () => {
         {
           url: 'https://github.com/user/repo1.git',
           name: 'Repo 1',
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         },
         {
           url: 'https://github.com/user/repo2.git', 
           name: 'Repo 2',
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         },
         {
           url: 'https://github.com/user/repo3.git',
           name: 'Repo 3', 
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         }
       ];
 
@@ -142,7 +144,7 @@ describe('WorkspaceCreator', () => {
         {
           url: '',
           name: 'Manual Project',
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         }
       ];
 
@@ -161,12 +163,12 @@ describe('WorkspaceCreator', () => {
         {
           url: '',
           name: 'Default Workspace',
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         },
         {
           url: 'https://github.com/user/repo.git',
           name: 'GitHub Project',
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         }
       ];
 
@@ -189,7 +191,7 @@ describe('WorkspaceCreator', () => {
         const repositoriesWithUrls: RepositoryWithUrls[] = [{
           url,
           name: `Test Repo ${index}`,
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         }];
 
         const userWorkspace = workspaceCreator.createUserWorkspace('test', repositoriesWithUrls);
@@ -205,7 +207,7 @@ describe('WorkspaceCreator', () => {
           url: 'https://github.com/user/repo.git',
           name: 'Test Repo',
           description: 'Test description',
-          urls: { vscode: '', terminal: '', claude: '' }
+          urls: { vscode: '', terminal: '', claude: '', gemini: '' }
         }
       ];
 

@@ -188,15 +188,19 @@ describe('WorkspaceInstaller', () => {
       expect(mockLogger.workspace.installing).toHaveBeenCalledWith('VSCode (code-server)')
     })
 
-    it('installClaudeCode still works correctly', async () => {
-      vi.mocked(mockSandbox.process.executeCommand).mockResolvedValue({
-        exitCode: 0,
-        result: 'Claude CLI installed',
-      })
+    it('ensureCLITools checks and installs missing CLI tools', async () => {
+      // Mock which commands - gemini missing, claude present
+      vi.mocked(mockSandbox.process.executeCommand)
+        .mockResolvedValueOnce({ exitCode: 0, result: '/usr/local/bin/claude' }) // claude exists
+        .mockResolvedValueOnce({ exitCode: 1, result: 'gemini: not found' }) // gemini missing
+        .mockResolvedValueOnce({ exitCode: 0, result: 'Gemini CLI installed' }) // gemini install succeeds
 
-      await installer.installClaudeCode(mockSandbox, rootDir)
+      await installer.ensureCLITools(mockSandbox, rootDir)
 
-      expect(mockLogger.workspace.installing).toHaveBeenCalledWith('Claude Code CLI')
+      expect(mockLogger.info).toHaveBeenCalledWith('✓ Claude Code CLI already installed')
+      expect(mockLogger.info).toHaveBeenCalledWith('✗ Gemini CLI missing, will install')
+      expect(mockLogger.workspace.installing).toHaveBeenCalledWith('Gemini CLI')
+      expect(mockLogger.success).toHaveBeenCalledWith('Gemini CLI installed successfully')
     })
 
     it('installOhMyZsh still works correctly', async () => {
@@ -382,14 +386,8 @@ describe('WorkspaceInstaller', () => {
           result: 'Installation failed',
         })
 
-        if (method === 'installClaudeCode') {
-          // Claude CLI installation is allowed to fail
-          await expect(installer[method as keyof WorkspaceInstaller](mockSandbox, rootDir)).resolves.toBeUndefined()
-          expect(mockLogger.logError).toHaveBeenCalled()
-        } else {
-          await expect(installer[method as keyof WorkspaceInstaller](mockSandbox, rootDir)).rejects.toThrow()
-          expect(mockLogger.logError).toHaveBeenCalled()
-        }
+        await expect(installer[method as keyof WorkspaceInstaller](mockSandbox, rootDir)).rejects.toThrow()
+        expect(mockLogger.logError).toHaveBeenCalled()
       }
     })
   })

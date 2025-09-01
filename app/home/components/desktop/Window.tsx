@@ -291,6 +291,10 @@ const WindowContent = memo(function WindowContent({ window, onFocus }: { window:
         const Component = DesktopContent as React.ComponentType<{ claudePort?: number; onFocus?: () => void }>;
         return <Component claudePort={window.claudePort} onFocus={onFocus} />;
       }
+      case 'gemini': {
+        const Component = DesktopContent as React.ComponentType<{ geminiPort?: number; onFocus?: () => void }>;
+        return <Component geminiPort={window.geminiPort} onFocus={onFocus} />;
+      }
       case 'vscode': {
         const Component = DesktopContent as React.ComponentType<{ repositoryUrl?: string }>;
         return <Component repositoryUrl={window.repositoryUrl} />;
@@ -306,6 +310,11 @@ const WindowContent = memo(function WindowContent({ window, onFocus }: { window:
       case 'setup': {
         const Component = DesktopContent as React.ComponentType<Record<string, never>>;
         return <Component />;
+      }
+      default: {
+        // Fallback for any unhandled app types
+        console.warn(`Unhandled window type: ${window.type}`);
+        return <div className="w-full h-full flex items-center justify-center text-red-500">Unsupported app type: {window.type}</div>;
       }
     }
   };

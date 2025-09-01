@@ -7,14 +7,15 @@ import { Repository } from '@/types/workspace';
 export class PortManager {
   /**
    * Calculate ports for a repository slot
-   * Slot 0 = default (8080, 10000, 4000)
-   * Slot N = (8080+N, 10000+N, 4000+N)
+   * Slot 0 = default (8080, 10000, 4000, 5000)
+   * Slot N = (8080+N, 10000+N, 4000+N, 5000+N)
    */
   static getPortsForSlot(slot: number) {
     return {
       vscode: 8080 + slot,
       terminal: 10000 + slot,
       claude: 4000 + slot,
+      gemini: 5000 + slot,
     };
   }
 

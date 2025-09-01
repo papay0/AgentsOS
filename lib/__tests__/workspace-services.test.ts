@@ -8,7 +8,7 @@ import { PortManager } from '../port-manager';
 
 // Type for accessing private methods in tests
 type WorkspaceServicesPrivate = {
-  allocatePorts: (slot: number) => { vscode: number; terminal: number; claude: number };
+  allocatePorts: (slot: number) => { vscode: number; terminal: number; claude: number; gemini: number };
 };
 
 // Mock the Daytona SDK
@@ -45,6 +45,7 @@ describe('WorkspaceServices', () => {
         vscode: 8080,
         terminal: 10000,
         claude: 4000,
+        gemini: 5000,
       });
     });
 
@@ -62,9 +63,9 @@ describe('WorkspaceServices', () => {
       
       // Should be unique
       const allPorts = [
-        ports0.vscode, ports0.terminal, ports0.claude,
-        ports1.vscode, ports1.terminal, ports1.claude,
-        ports2.vscode, ports2.terminal, ports2.claude,
+        ports0.vscode, ports0.terminal, ports0.claude, ports0.gemini,
+        ports1.vscode, ports1.terminal, ports1.claude, ports1.gemini,
+        ports2.vscode, ports2.terminal, ports2.claude, ports2.gemini,
       ];
       const uniquePorts = new Set(allPorts);
       expect(uniquePorts.size).toBe(allPorts.length);
@@ -79,11 +80,11 @@ describe('WorkspaceServices', () => {
       }
       
       expect(sequences).toEqual([
-        { vscode: 8080, terminal: 10000, claude: 4000 }, // Default
-        { vscode: 8081, terminal: 10001, claude: 4001 }, // Repo 1
-        { vscode: 8082, terminal: 10002, claude: 4002 }, // Repo 2
-        { vscode: 8083, terminal: 10003, claude: 4003 }, // Repo 3
-        { vscode: 8084, terminal: 10004, claude: 4004 }, // Repo 4
+        { vscode: 8080, terminal: 10000, claude: 4000, gemini: 5000 }, // Default
+        { vscode: 8081, terminal: 10001, claude: 4001, gemini: 5001 }, // Repo 1
+        { vscode: 8082, terminal: 10002, claude: 4002, gemini: 5002 }, // Repo 2
+        { vscode: 8083, terminal: 10003, claude: 4003, gemini: 5003 }, // Repo 3
+        { vscode: 8084, terminal: 10004, claude: 4004, gemini: 5004 }, // Repo 4
       ]);
     });
   });
