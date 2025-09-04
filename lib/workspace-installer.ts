@@ -17,7 +17,7 @@ export class WorkspaceInstaller {
     claude: {
       name: 'Claude Code CLI',
       command: 'claude',
-      installCommand: 'curl -L https://github.com/anthropics/claude-cli/releases/latest/download/linux-amd64.tar.gz | tar xz && mv claude /usr/local/bin/',
+      installCommand: 'npm install -g @anthropic-ai/claude-code',
       checkCommand: 'claude --version'
     },
     gemini: {
