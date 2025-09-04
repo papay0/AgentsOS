@@ -17,7 +17,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const { clerkUser, userProfile, isLoading: isUserLoading } = useAgentsOSUser()
   const [isCreating, setIsCreating] = useState(false)
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0)
-  const [daytonaApiKey, setDaytonaApiKey] = useState('')
+  
+  // Feature flag to control whether users provide their own API key
+  const requireUserApiKey = process.env.REQUIRE_USER_API_KEY === 'true'
+  const defaultApiKey = process.env.DAYTONA_API_KEY || ''
+  
+  const [daytonaApiKey, setDaytonaApiKey] = useState(requireUserApiKey ? '' : defaultApiKey)
   const [showApiKey, setShowApiKey] = useState(false)
   const [apiKeyError, setApiKeyError] = useState('')
 
@@ -71,10 +76,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   }
 
   const handleLaunch = async () => {
-    // Validate API key before proceeding
-    if (!validateApiKey(daytonaApiKey)) {
+    // Only validate if user needs to provide key
+    if (requireUserApiKey && !validateApiKey(daytonaApiKey)) {
       return
     }
+    
+    // Use environment key if not requiring user key
+    const apiKeyToUse = requireUserApiKey ? daytonaApiKey.trim() : defaultApiKey
 
     setIsCreating(true)
     setCurrentActivityIndex(0)
@@ -88,7 +96,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       // Create default workspace (no repositories specified)
       const workspaceData = await workspaceApi.createWorkspace({
         workspaceName: 'AgentsOS Workspace',
-        daytonaApiKey: daytonaApiKey.trim()
+        daytonaApiKey: apiKeyToUse
       })
       
       clearInterval(activityInterval)
@@ -168,71 +176,73 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
               </div>
 
-              {/* API Key Section */}
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-start gap-3">
-                    <Key className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div className="space-y-2">
-                      <h3 className="font-medium text-blue-900 dark:text-blue-100">
-                        Use your own Daytona API key
-                      </h3>
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        Use your own Daytona API key for free until we figure out scaling to millions of users.
-                      </p>
-                      <a 
-                        href="https://app.daytona.io/dashboard/keys" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium underline underline-offset-2"
-                      >
-                        <Key className="w-3.5 h-3.5" />
-                        Get your API key from Daytona
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+              {/* API Key Section - Only show if required */}
+              {requireUserApiKey && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-3">
+                      <Key className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-blue-900 dark:text-blue-100">
+                          Use your own Daytona API key
+                        </h3>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          Use your own Daytona API key for free until we figure out scaling to millions of users.
+                        </p>
+                        <a 
+                          href="https://app.daytona.io/dashboard/keys" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium underline underline-offset-2"
+                        >
+                          <Key className="w-3.5 h-3.5" />
+                          Get your API key from Daytona
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="daytona-api-key" className="text-sm font-medium">
-                    Daytona API Key
-                  </label>
-                  <div className="relative">
-                    <Input
-                      id="daytona-api-key"
-                      type={showApiKey ? "text" : "password"}
-                      placeholder="Enter your Daytona API key..."
-                      value={daytonaApiKey}
-                      onChange={(e) => {
-                        setDaytonaApiKey(e.target.value)
-                        if (apiKeyError) setApiKeyError('')
-                      }}
-                      className={apiKeyError ? "border-destructive" : ""}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showApiKey ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </button>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="daytona-api-key" className="text-sm font-medium">
+                      Daytona API Key
+                    </label>
+                    <div className="relative">
+                      <Input
+                        id="daytona-api-key"
+                        type={showApiKey ? "text" : "password"}
+                        placeholder="Enter your Daytona API key..."
+                        value={daytonaApiKey}
+                        onChange={(e) => {
+                          setDaytonaApiKey(e.target.value)
+                          if (apiKeyError) setApiKeyError('')
+                        }}
+                        className={apiKeyError ? "border-destructive" : ""}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      >
+                        {showApiKey ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    {apiKeyError && (
+                      <p className="text-sm text-destructive">{apiKeyError}</p>
+                    )}
                   </div>
-                  {apiKeyError && (
-                    <p className="text-sm text-destructive">{apiKeyError}</p>
-                  )}
                 </div>
-              </div>
+              )}
 
               {/* Launch Button */}
               <Button 
                 size="lg" 
                 onClick={handleLaunch}
-                disabled={!daytonaApiKey.trim() || isCreating}
+                disabled={(requireUserApiKey && !daytonaApiKey.trim()) || isCreating}
                 className="w-full text-lg py-6 rounded-xl"
               >
                 Launch Workspace
