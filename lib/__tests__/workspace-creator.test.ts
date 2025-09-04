@@ -30,7 +30,6 @@ vi.mock('../workspace-installer', () => ({
   WorkspaceInstaller: vi.fn().mockImplementation(() => ({
     installSystemPackages: vi.fn(),
     installTtyd: vi.fn(),
-    installCodeServer: vi.fn(),
     ensureCLITools: vi.fn(),
     installOhMyZsh: vi.fn(),
   })),

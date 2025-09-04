@@ -67,7 +67,6 @@ export class WorkspaceCreator {
       await this.installer.installSystemPackages(sandbox, rootDir);
       await this.installer.installGitHubCLI(sandbox, rootDir);
       await this.installer.installTtyd(sandbox, rootDir);
-      await this.installer.installCodeServer(sandbox, rootDir);
       await this.installer.ensureCLITools(sandbox, rootDir); // This handles Claude + Gemini + future CLIs
       await this.installer.installOhMyZsh(sandbox, rootDir);
       

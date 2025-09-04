@@ -177,17 +177,6 @@ describe('WorkspaceInstaller', () => {
       expect(mockLogger.workspace.installing).toHaveBeenCalledWith('terminal (ttyd)')
     })
 
-    it('installCodeServer still works correctly', async () => {
-      vi.mocked(mockSandbox.process.executeCommand).mockResolvedValue({
-        exitCode: 0,
-        result: 'code-server installed',
-      })
-
-      await installer.installCodeServer(mockSandbox, rootDir)
-
-      expect(mockLogger.workspace.installing).toHaveBeenCalledWith('VSCode (code-server)')
-    })
-
     it('ensureCLITools checks and installs missing CLI tools', async () => {
       // Mock which commands - gemini missing, claude present
       vi.mocked(mockSandbox.process.executeCommand)
@@ -374,7 +363,6 @@ describe('WorkspaceInstaller', () => {
         'installSystemPackages',
         'installGitHubCLI',
         'installTtyd',
-        'installCodeServer',
         'installOhMyZsh',
         'ensureSystemPackages',
       ]

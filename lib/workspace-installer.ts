@@ -213,27 +213,6 @@ export class WorkspaceInstaller {
     }
   }
 
-  async installCodeServer(sandbox: Sandbox, rootDir: string): Promise<void> {
-    this.logger.workspace.installing('VSCode (code-server)');
-    const result = await sandbox.process.executeCommand(
-      `curl -fsSL https://code-server.dev/install.sh | sh`,
-      rootDir,
-      undefined,
-      120000
-    );
-    
-    if (result.exitCode !== 0) {
-      const errorData= {
-        error: result.result,
-        code: 'CODE_SERVER_INSTALL_FAILED',
-        details: { exitCode: result.exitCode }
-      };
-      this.logger.logError('code-server installation failed', errorData);
-      throw new Error(`code-server installation failed: ${result.result}`);
-    }
-  }
-
-
   async installGitHubCLI(sandbox: Sandbox, rootDir: string): Promise<void> {
     this.logger.workspace.installing('GitHub CLI (gh)');
     const result = await sandbox.process.executeCommand(

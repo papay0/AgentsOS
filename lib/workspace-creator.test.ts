@@ -89,7 +89,6 @@ describe('WorkspaceCreator', () => {
       installSystemPackages: vi.fn().mockResolvedValue(undefined),
       installGitHubCLI: vi.fn().mockResolvedValue(undefined),
       installTtyd: vi.fn().mockResolvedValue(undefined),
-      installCodeServer: vi.fn().mockResolvedValue(undefined),
       ensureCLITools: vi.fn().mockResolvedValue(undefined),
       installOhMyZsh: vi.fn().mockResolvedValue(undefined),
     } as unknown as WorkspaceInstaller
@@ -139,7 +138,6 @@ describe('WorkspaceCreator', () => {
       expect(mockWorkspaceInstaller.installSystemPackages).toHaveBeenCalledWith(mockSandbox, rootDir)
       expect(mockWorkspaceInstaller.installGitHubCLI).toHaveBeenCalledWith(mockSandbox, rootDir)
       expect(mockWorkspaceInstaller.installTtyd).toHaveBeenCalledWith(mockSandbox, rootDir)
-      expect(mockWorkspaceInstaller.installCodeServer).toHaveBeenCalledWith(mockSandbox, rootDir)
       expect(mockWorkspaceInstaller.ensureCLITools).toHaveBeenCalledWith(mockSandbox, rootDir)
       expect(mockWorkspaceInstaller.installOhMyZsh).toHaveBeenCalledWith(mockSandbox, rootDir)
 
@@ -179,7 +177,6 @@ describe('WorkspaceCreator', () => {
         mockWorkspaceInstaller.installSystemPackages,
         mockWorkspaceInstaller.installGitHubCLI,
         mockWorkspaceInstaller.installTtyd,
-        mockWorkspaceInstaller.installCodeServer,
         mockWorkspaceInstaller.ensureCLITools,
         mockWorkspaceInstaller.installOhMyZsh,
       ]
@@ -210,7 +207,6 @@ describe('WorkspaceCreator', () => {
       expect(mockWorkspaceInstaller.installSystemPackages).toHaveBeenCalled()
       // But should fail before other installations
       expect(mockWorkspaceInstaller.installTtyd).not.toHaveBeenCalled()
-      expect(mockWorkspaceInstaller.installCodeServer).not.toHaveBeenCalled()
 
       expect(mockLogger.logError).toHaveBeenCalledWith('Failed to create workspace', {
         error: gitHubError,
@@ -258,7 +254,6 @@ describe('WorkspaceCreator', () => {
         mockWorkspaceInstaller.installSystemPackages,
         mockWorkspaceInstaller.installGitHubCLI,
         mockWorkspaceInstaller.installTtyd,
-        mockWorkspaceInstaller.installCodeServer,
         mockWorkspaceInstaller.ensureCLITools,
         mockWorkspaceInstaller.installOhMyZsh,
       ]
