@@ -9,6 +9,10 @@
     <a href="https://github.com/papay0/agentspod/issues"><img src="https://img.shields.io/github/issues/papay0/agentspod" alt="GitHub issues" /></a>
 </p>
 
+<p align="center">
+    <a href="https://daytona.io/startups?utm_source=www.agentsos.app"><img src="https://img.shields.io/badge/SPONSORED%20BY-DAYTONA%20STARTUP%20GRID-2ECC71?style=for-the-badge" alt="SPONSORED BY DAYTONA STARTUP GRID" /></a>
+</p>
+
 ## 📸 Screenshots
 
 ### Desktop Experience
