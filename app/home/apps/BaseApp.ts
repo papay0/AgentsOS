@@ -25,8 +25,10 @@ export type NoProps = Record<string, never>;
 // Settings app doesn't need any props
 export type SettingsAppProps = NoProps;
 
-// Diff app doesn't need any props
-export type DiffAppProps = NoProps;
+// Diff app props for git diff functionality
+export interface DiffAppProps {
+  workspaceId?: string | null;
+}
 
 // Setup app doesn't need any props
 export type SetupAppProps = NoProps;
