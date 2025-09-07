@@ -254,6 +254,7 @@ export default function Window({ window }: WindowProps) {
 const WindowContent = memo(function WindowContent({ window, onFocus }: { window: WindowType; onFocus: () => void }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const app = getApp(window.type);
+  const { sandboxId } = useWorkspaceStore();
   
   useEffect(() => {
     if (!contentRef.current) return;
@@ -304,8 +305,12 @@ const WindowContent = memo(function WindowContent({ window, onFocus }: { window:
         return <Component />;
       }
       case 'diff': {
-        const Component = DesktopContent as React.ComponentType<Record<string, never>>;
-        return <Component />;
+        const Component = DesktopContent as React.ComponentType<{ workspaceId: string }>;
+        return sandboxId ? <Component workspaceId={sandboxId} /> : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            No workspace active
+          </div>
+        );
       }
       case 'setup': {
         const Component = DesktopContent as React.ComponentType<Record<string, never>>;

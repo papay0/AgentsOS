@@ -76,46 +76,48 @@ export async function GET(request: NextRequest) {
       logger.debug('Root git check failed:', error);
     }
 
-    // Check projects directory
+    // Check projects directory structure
     try {
       const projectsDir = `${rootDir}/projects`;
-      const projectsList = await sandbox.process.executeCommand(
-        'ls -1',
-        projectsDir,
+      
+      // First check if projects directory exists
+      const projectsDirCheck = await sandbox.process.executeCommand(
+        'test -d projects && echo "EXISTS" || echo "NOT_EXISTS"',
+        rootDir,
         undefined,
         5000
       );
 
-      if (projectsList.result && projectsList.result.trim()) {
-        const projects = projectsList.result.trim().split('\n');
-        
-        for (const project of projects) {
-          if (project.trim()) {
-            const projectPath = `${projectsDir}/${project.trim()}`;
-            
-            // Check if this project has git
-            try {
-              const gitCheck = await sandbox.process.executeCommand(
-                'test -d .git && echo "HAS_GIT" || echo "NO_GIT"',
-                projectPath,
-                undefined,
-                5000
-              );
+      if (projectsDirCheck.result?.includes('EXISTS')) {
+        // List all subdirectories in projects (including 'default' subdirectory)
+        const projectsList = await sandbox.process.executeCommand(
+          'find projects -type d -name ".git" | sed "s|/.git$||"',
+          rootDir,
+          undefined,
+          10000
+        );
+
+        logger.debug('Git directories found:', projectsList.result);
+
+        if (projectsList.result && projectsList.result.trim()) {
+          const gitDirs = projectsList.result.trim().split('\n');
+          
+          for (const gitDir of gitDirs) {
+            if (gitDir.trim()) {
+              const fullPath = `${rootDir}/${gitDir.trim()}`;
+              const projectName = gitDir.split('/').pop() || gitDir;
               
-              if (gitCheck.result?.includes('HAS_GIT')) {
-                repositories.push({ 
-                  path: projectPath, 
-                  name: project.trim()
-                });
-              }
-            } catch (error) {
-              logger.debug(`Git check failed for project ${project}:`, error);
+              repositories.push({ 
+                path: fullPath, 
+                name: projectName
+              });
+              logger.debug(`Added git repository: ${projectName} at ${fullPath}`);
             }
           }
         }
       }
     } catch (error) {
-      logger.debug('Projects directory check failed:', error);
+      logger.debug('Projects directory scan failed:', error);
     }
 
     // Look for other common git locations

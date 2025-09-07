@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
 
     if (mode === 'git') {
       // Execute git diff command
+      console.log(`[DIFF API] Executing git command: ${command} in workspace: ${workspaceId} at path: ${targetDir}`);
       logger.info(`Executing git command: ${command} in workspace: ${workspaceId} at path: ${targetDir}`);
       
       try {
@@ -94,17 +95,28 @@ export async function GET(request: NextRequest) {
         );
 
         const diff = result.result || '';
+        console.log(`[DIFF API] Git command result:`, { diff, diffLength: diff.length });
         
         // Parse files from diff output
         const files: string[] = [];
-        const lines = diff.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('diff --git')) {
-            const match = line.match(/b\/(.+)$/);
-            if (match) {
-              files.push(match[1]);
+        
+        if (command.includes('--name-only')) {
+          // For --name-only, each line is a filename
+          const lines = diff.split('\n').filter(line => line.trim());
+          files.push(...lines);
+          console.log(`[DIFF API] Parsed files from --name-only:`, files);
+        } else {
+          // For regular diff, parse diff --git headers
+          const lines = diff.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('diff --git')) {
+              const match = line.match(/b\/(.+)$/);
+              if (match) {
+                files.push(match[1]);
+              }
             }
           }
+          console.log(`[DIFF API] Parsed files from diff headers:`, files);
         }
 
         return NextResponse.json({
@@ -146,6 +158,8 @@ export async function GET(request: NextRequest) {
       }
 
       try {
+        console.log(`[DIFF API] File comparison mode for: ${filePath} in ${targetDir}`);
+        
         // Get current file content
         const currentContent = await sandbox.process.executeCommand(
           `cat "${filePath}" 2>/dev/null || echo ""`,
@@ -153,6 +167,7 @@ export async function GET(request: NextRequest) {
           undefined,
           10000
         );
+        console.log(`[DIFF API] Current content length:`, currentContent.result?.length || 0);
 
         // Get previous version from git
         const previousContent = await sandbox.process.executeCommand(
@@ -161,6 +176,7 @@ export async function GET(request: NextRequest) {
           undefined,
           10000
         );
+        console.log(`[DIFF API] Previous content length:`, previousContent.result?.length || 0);
 
         // Detect file language from extension
         const fileExt = filePath.split('.').pop() || '';
@@ -319,12 +335,20 @@ export async function POST(request: NextRequest) {
       
       // Parse files from diff output
       const diffFiles: string[] = [];
-      const lines = diff.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('diff --git')) {
-          const match = line.match(/b\/(.+)$/);
-          if (match) {
-            diffFiles.push(match[1]);
+      
+      if (command.includes('--name-only')) {
+        // For --name-only, each line is a filename
+        const lines = diff.split('\n').filter(line => line.trim());
+        diffFiles.push(...lines);
+      } else {
+        // For regular diff, parse diff --git headers
+        const lines = diff.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('diff --git')) {
+            const match = line.match(/b\/(.+)$/);
+            if (match) {
+              diffFiles.push(match[1]);
+            }
           }
         }
       }

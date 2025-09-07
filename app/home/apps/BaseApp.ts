@@ -27,7 +27,7 @@ export type SettingsAppProps = NoProps;
 
 // Diff app props for git diff functionality
 export interface DiffAppProps {
-  workspaceId?: string | null;
+  workspaceId: string;
 }
 
 // Setup app doesn't need any props

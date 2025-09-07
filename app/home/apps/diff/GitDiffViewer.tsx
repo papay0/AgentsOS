@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DiffFile } from '@git-diff-view/core';
 import { DiffView, DiffModeEnum } from '@git-diff-view/react';
+import { generateDiffFile } from '@git-diff-view/file';
 import '@git-diff-view/react/styles/diff-view-pure.css';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,11 +35,16 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ workspaceId }) => 
       const response = await fetch(`/api/git/repositories?workspaceId=${workspaceId}`);
       const result = await response.json();
 
+      console.log('Repository discovery result:', result); // Debug log
+
       if (result.success) {
         setRepositories(result.data.repositories);
+        console.log('Found repositories:', result.data.repositories); // Debug log
         if (result.data.defaultPath && !selectedPath) {
           setSelectedPath(result.data.defaultPath);
         }
+      } else {
+        console.error('Repository discovery failed:', result.error);
       }
     } catch (err) {
       console.error('Failed to fetch repositories:', err);
@@ -60,28 +66,82 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ workspaceId }) => 
     setError(null);
     
     try {
+      // First get list of changed files
       const params = new URLSearchParams({
         workspaceId,
         mode: 'git',
-        command: 'git diff HEAD',
+        command: 'git diff --name-only',
         workingDir: selectedPath
       });
       
       const response = await fetch(`/api/git/diff?${params}`);
       const result = await response.json();
+      
+      console.log('[FRONTEND] Initial git diff result:', result);
 
-      if (result.success) {
-        const diff = result.data.diff || '';
+      if (result.success && result.data.files && result.data.files.length > 0) {
+        console.log('[FRONTEND] Found changed files:', result.data.files);
+        // For each file, get the file comparison
+        const filePromises = result.data.files.map(async (filePath: string) => {
+          const fileParams = new URLSearchParams({
+            workspaceId,
+            mode: 'file',
+            path: filePath,
+            workingDir: selectedPath
+          });
+          
+          const fileResponse = await fetch(`/api/git/diff?${fileParams}`);
+          const fileResult = await fileResponse.json();
+          
+          console.log(`[FRONTEND] File result for ${filePath}:`, fileResult);
+          
+          if (fileResult.success) {
+            return fileResult.data;
+          }
+          return null;
+        });
         
-        // Parse the git diff into individual file diffs
-        if (diff) {
-          const files = parseGitDiff(diff);
-          setDiffFiles(files);
-        } else {
-          setDiffFiles([]);
+        const fileData = await Promise.all(filePromises);
+        const validFiles = fileData.filter(data => data !== null);
+        
+        console.log('[FRONTEND] Valid file data:', validFiles);
+        
+        // Create DiffFile instances
+        const files: DiffFile[] = [];
+        for (const data of validFiles) {
+          try {
+            console.log(`[FRONTEND] Creating DiffFile for:`, {
+              oldFileName: data.oldFile.fileName,
+              newFileName: data.newFile.fileName,
+              oldContentLength: data.oldFile.content.length,
+              newContentLength: data.newFile.content.length,
+              oldLang: data.oldFile.fileLang,
+              newLang: data.newFile.fileLang
+            });
+            
+            const file = generateDiffFile(
+              data.oldFile.fileName,
+              data.oldFile.content,
+              data.newFile.fileName,
+              data.newFile.content,
+              data.oldFile.fileLang,
+              data.newFile.fileLang
+            );
+            
+            file.initRaw();
+            file.initTheme(theme === 'dark' ? 'dark' : 'light');
+            
+            console.log(`[FRONTEND] DiffFile created successfully for:`, data.oldFile.fileName);
+            files.push(file);
+          } catch (error) {
+            console.error(`[FRONTEND] Error creating DiffFile for ${data.oldFile.fileName}:`, error);
+          }
         }
+        
+        console.log(`[FRONTEND] Total DiffFile instances created:`, files.length);
+        setDiffFiles(files);
       } else {
-        setError(result.error || 'Failed to fetch diff');
+        setDiffFiles([]);
       }
     } catch (err) {
       setError('Failed to fetch diff');
@@ -91,62 +151,6 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ workspaceId }) => 
     }
   };
 
-  // Parse git diff output into DiffFile instances
-  const parseGitDiff = (diff: string): DiffFile[] => {
-    const files: DiffFile[] = [];
-    const fileSections = diff.split(/^diff --git/m).filter(Boolean);
-    
-    for (const section of fileSections) {
-      const lines = section.split('\n');
-      const fileMatch = lines[0]?.match(/a\/(.+?)\s+b\/(.+)/);
-      
-      if (fileMatch) {
-        const fileName = fileMatch[2];
-        const hunks: string[] = [];
-        
-        // Extract hunks from this file's diff
-        let currentHunk = '';
-        let inHunk = false;
-        
-        for (const line of lines) {
-          if (line.startsWith('@@')) {
-            if (currentHunk) {
-              hunks.push(currentHunk);
-            }
-            currentHunk = line + '\n';
-            inHunk = true;
-          } else if (inHunk) {
-            currentHunk += line + '\n';
-          }
-        }
-        
-        if (currentHunk) {
-          hunks.push(currentHunk);
-        }
-        
-        if (hunks.length > 0) {
-          const file = new DiffFile(
-            fileName,
-            '',
-            fileName,
-            '',
-            hunks,
-            getFileLanguage(fileName),
-            getFileLanguage(fileName)
-          );
-          
-          file.initTheme(theme === 'dark' ? 'dark' : 'light');
-          file.init();
-          file.buildSplitDiffLines();
-          file.buildUnifiedDiffLines();
-          
-          files.push(file);
-        }
-      }
-    }
-    
-    return files;
-  };
 
   const getFileLanguage = (fileName: string): string => {
     const ext = fileName.split('.').pop() || '';
@@ -235,11 +239,17 @@ export const GitDiffViewer: React.FC<GitDiffViewerProps> = ({ workspaceId }) => 
             <SelectValue placeholder="Select repository path" />
           </SelectTrigger>
           <SelectContent>
-            {repositories.map((repo) => (
-              <SelectItem key={repo.path} value={repo.path}>
-                {repo.name} ({repo.path})
+            {repositories.length > 0 ? (
+              repositories.map((repo) => (
+                <SelectItem key={repo.path} value={repo.path}>
+                  {repo.name} ({repo.path})
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="/root" disabled>
+                No git repositories found - check console for details
               </SelectItem>
-            ))}
+            )}
           </SelectContent>
         </Select>
         
