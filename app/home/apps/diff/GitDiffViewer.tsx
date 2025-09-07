@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DiffFile } from '@git-diff-view/core';
 import { DiffView, DiffModeEnum } from '@git-diff-view/react';
-import '@git-diff-view/react/styles/diff-view.css';
+import '@git-diff-view/react/styles/diff-view-pure.css';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, Folder } from 'lucide-react';
